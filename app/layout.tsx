@@ -46,18 +46,18 @@ export const metadata: Metadata = {
     template: "%s | Hệ thống phiên dịch âm thanh thông minh",
   },
   description:
-    "Nền tảng phiên dịch âm thanh thông minh hỗ trợ bóc băng, quản lý biên bản và theo dõi lịch sử cuộc họp.",
+    "Nền tảng phiên dịch âm thanh thông minh hỗ trợ dịch băng, quản lý biên bản và theo dõi lịch sử cuộc họp.",
   keywords: [
     "hệ thống phiên dịch âm thanh thông minh",
     "phiên dịch âm thanh",
-    "bóc băng cuộc họp",
+    "dịch băng cuộc họp",
     "quản lý biên bản",
     "transcript",
   ],
   openGraph: {
     title: "Hệ thống phiên dịch âm thanh thông minh",
     description:
-      "Nền tảng phiên dịch âm thanh thông minh hỗ trợ bóc băng, quản lý biên bản và theo dõi lịch sử cuộc họp.",
+      "Nền tảng phiên dịch âm thanh thông minh hỗ trợ dịch băng, quản lý biên bản và theo dõi lịch sử cuộc họp.",
     locale: "vi_VN",
     type: "website",
     siteName: "Hệ thống phiên dịch âm thanh thông minh",
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Hệ thống phiên dịch âm thanh thông minh",
     description:
-      "Nền tảng phiên dịch âm thanh thông minh hỗ trợ bóc băng, quản lý biên bản và theo dõi lịch sử cuộc họp.",
+      "Nền tảng phiên dịch âm thanh thông minh hỗ trợ dịch băng, quản lý biên bản và theo dõi lịch sử cuộc họp.",
   },
   robots: {
     index: true,

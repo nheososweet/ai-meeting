@@ -1,3 +1,5 @@
+"use client";
+
 import { LoaderCircleIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -15,10 +17,17 @@ type SendEmailDialogProps = {
   open: boolean;
   recordFilename?: string;
   reportUrl?: string | null;
+  emailSubjectInput: string;
+  emailBodyInput: string;
+  emailIsHtml: boolean;
   emailRecipientsInput: string;
   emailValidationError: string | null;
+  emailTemplateValidationError: string | null;
   isSendingEmail: boolean;
   onOpenChange: (nextOpen: boolean) => void;
+  onEmailSubjectInputChange: (value: string) => void;
+  onEmailBodyInputChange: (value: string) => void;
+  onEmailIsHtmlChange: (nextValue: boolean) => void;
   onEmailRecipientsInputChange: (value: string) => void;
   onSendEmail: () => void;
 };
@@ -27,10 +36,17 @@ export function SendEmailDialog({
   open,
   recordFilename,
   reportUrl,
+  emailSubjectInput,
+  emailBodyInput,
+  emailIsHtml,
   emailRecipientsInput,
   emailValidationError,
+  emailTemplateValidationError,
   isSendingEmail,
   onOpenChange,
+  onEmailSubjectInputChange,
+  onEmailBodyInputChange,
+  onEmailIsHtmlChange,
   onEmailRecipientsInputChange,
   onSendEmail,
 }: SendEmailDialogProps) {
@@ -59,6 +75,70 @@ export function SendEmailDialog({
             </a>
           </div>
         ) : null}
+        <div className="space-y-2">
+          <label
+            htmlFor="email-subject-input"
+            className="text-sm font-medium text-foreground"
+          >
+            Tiêu đề email
+          </label>
+          <input
+            id="email-subject-input"
+            value={emailSubjectInput}
+            onChange={(event) => {
+              onEmailSubjectInputChange(event.target.value);
+            }}
+            disabled={isSendingEmail}
+            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          />
+        </div>
+        <div className="space-y-2">
+          <label
+            htmlFor="email-body-input"
+            className="text-sm font-medium text-foreground"
+          >
+            Nội dung email
+          </label>
+          <textarea
+            id="email-body-input"
+            value={emailBodyInput}
+            onChange={(event) => {
+              onEmailBodyInputChange(event.target.value);
+            }}
+            rows={6}
+            disabled={isSendingEmail}
+            className="w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          />
+
+          {emailIsHtml ? (
+            <div className="space-y-1 rounded-md border border-border/70 bg-muted/20 p-3">
+              <p className="text-[11px] font-medium text-muted-foreground">
+                Xem trước email
+              </p>
+              <div
+                className="max-h-44 overflow-auto text-xs text-foreground [&_a]:text-primary [&_p]:mb-2"
+                dangerouslySetInnerHTML={{ __html: emailBodyInput }}
+              />
+            </div>
+          ) : null}
+          <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={emailIsHtml}
+              onChange={(event) => {
+                onEmailIsHtmlChange(event.target.checked);
+              }}
+              disabled={isSendingEmail}
+              className="size-4 rounded border border-input"
+            />
+            Gửi dưới dạng HTML
+          </label>
+          {emailTemplateValidationError ? (
+            <p className="text-xs text-rose-600 dark:text-rose-400">
+              {emailTemplateValidationError}
+            </p>
+          ) : null}
+        </div>
         <div className="space-y-3">
           <div className="space-y-2">
             <label

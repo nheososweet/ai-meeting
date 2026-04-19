@@ -1,8 +1,20 @@
 import { useMemo, useState } from "react";
-import axios from "axios";
 import { z } from "zod";
 
-import type { PipelineRecord } from "@/services/pipeline-records.service";
+import {
+  sendMail,
+  type PipelineRecord,
+} from "@/services/pipeline-records.service";
+
+const DEFAULT_EMAIL_BODY =
+  "<p>Kính gửi Quý thành viên,</p><p>Liên quan đến cuộc họp vừa diễn ra, Ban tổ chức xin gửi đến Quý vị Biên bản họp chi tiết.</p><p>Vui lòng truy cập liên kết sau để xem hoặc tải tài liệu:</p><p><a href=\"{{mom_file_url}}\">{{mom_file_url}}</a></p><p>Mọi thắc mắc vui lòng phản hồi trực tiếp cho Thư ký.</p><p>Trân trọng,</p><p>Admin</p>";
+
+function buildDefaultSubject(fileName: string): string {
+  const trimmedFileName = fileName.trim();
+  return trimmedFileName
+    ? `Thông báo Biên bản Họp - ${trimmedFileName}`
+    : "Thông báo Biên bản Họp";
+}
 
 const recipientEmailsSchema = z
   .string()
@@ -31,6 +43,11 @@ export function useHistoryEmail({ records, showActionToast }: UseHistoryEmailPar
   const [emailValidationError, setEmailValidationError] = useState<
     string | null
   >(null);
+  const [emailTemplateValidationError, setEmailTemplateValidationError] =
+    useState<string | null>(null);
+  const [emailSubjectInput, setEmailSubjectInput] = useState("");
+  const [emailBodyInput, setEmailBodyInput] = useState("");
+  const [emailIsHtml, setEmailIsHtml] = useState(true);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const selectedSendEmailRecord = useMemo(() => {
@@ -42,15 +59,23 @@ export function useHistoryEmail({ records, showActionToast }: UseHistoryEmailPar
   }, [sendEmailRecordId, records]);
 
   function handleOpenSendEmailDialog(recordId: number) {
+    const record = records?.find((candidate) => candidate.id === recordId);
+    const fallbackSubject = buildDefaultSubject(record?.filename ?? "");
+
+    setEmailSubjectInput(record?.mailTemplate?.subject?.trim() || fallbackSubject);
+    setEmailBodyInput(record?.mailTemplate?.body?.trim() || DEFAULT_EMAIL_BODY);
+    setEmailIsHtml(record?.mailTemplate?.isHtml ?? true);
     setSendEmailRecordId(recordId);
     setEmailRecipientsInput("");
     setEmailValidationError(null);
+    setEmailTemplateValidationError(null);
   }
 
   function handleCloseSendEmailDialog() {
     setSendEmailRecordId(null);
     setEmailRecipientsInput("");
     setEmailValidationError(null);
+    setEmailTemplateValidationError(null);
   }
 
   function handleEmailRecipientsInputChange(value: string) {
@@ -58,6 +83,24 @@ export function useHistoryEmail({ records, showActionToast }: UseHistoryEmailPar
     if (emailValidationError) {
       setEmailValidationError(null);
     }
+  }
+
+  function handleEmailSubjectInputChange(value: string) {
+    setEmailSubjectInput(value);
+    if (emailTemplateValidationError) {
+      setEmailTemplateValidationError(null);
+    }
+  }
+
+  function handleEmailBodyInputChange(value: string) {
+    setEmailBodyInput(value);
+    if (emailTemplateValidationError) {
+      setEmailTemplateValidationError(null);
+    }
+  }
+
+  function handleEmailIsHtmlChange(nextValue: boolean) {
+    setEmailIsHtml(nextValue);
   }
 
   function handleSendEmailDialogOpenChange(nextOpen: boolean) {
@@ -85,16 +128,43 @@ export function useHistoryEmail({ records, showActionToast }: UseHistoryEmailPar
       return;
     }
 
+    const subject = emailSubjectInput.trim();
+    const body = emailBodyInput.trim();
+
+    if (!subject) {
+      setEmailTemplateValidationError("Vui lòng nhập tiêu đề email.");
+      return;
+    }
+
+    if (!body) {
+      setEmailTemplateValidationError("Vui lòng nhập nội dung email.");
+      return;
+    }
+
     setEmailValidationError(null);
+    setEmailTemplateValidationError(null);
     setIsSendingEmail(true);
 
     try {
-      await axios.post("/api/agent/send-email", {
-        recipients: parsed.data,
-        meetingTitle: record.filename,
-        reportUrl: record.reportUrl,
-        sessionId: process.env.NEXT_PUBLIC_AGENT_MOM_EMAIL_SESSION_ID,
+      const sendResult = await sendMail({
+        emails: parsed.data,
+        momFileUrl: record.reportUrl,
+        template: {
+          subject,
+          body,
+          isHtml: emailIsHtml,
+        },
       });
+
+      if (sendResult.failed > 0) {
+        setEmailValidationError(
+          `Đã gửi ${sendResult.sent}/${sendResult.total}, còn ${sendResult.failed} email lỗi.`,
+        );
+        showActionToast(
+          `Đã gửi ${sendResult.sent}/${sendResult.total}, còn ${sendResult.failed} email lỗi.`,
+        );
+        return;
+      }
 
       handleCloseSendEmailDialog();
       showActionToast("Đã gửi email thành công.");
@@ -112,12 +182,19 @@ export function useHistoryEmail({ records, showActionToast }: UseHistoryEmailPar
     sendEmailRecordId,
     selectedSendEmailRecord,
     emailRecipientsInput,
+    emailSubjectInput,
+    emailBodyInput,
+    emailIsHtml,
     emailValidationError,
+    emailTemplateValidationError,
     isSendingEmail,
     handleOpenSendEmailDialog,
     handleCloseSendEmailDialog,
     handleSendEmailDialogOpenChange,
     handleEmailRecipientsInputChange,
+    handleEmailSubjectInputChange,
+    handleEmailBodyInputChange,
+    handleEmailIsHtmlChange,
     handleSendEmail,
   };
 }

@@ -11,7 +11,7 @@ Hệ thống này phục vụ nhu cầu ghi nhận nội dung họp một cách 
 Bạn có thể hình dung quy trình như sau:
 
 1. Tải file âm thanh cuộc họp lên hoặc ghi âm trực tiếp.
-2. Hệ thống bóc băng ra transcript.
+2. Hệ thống dịch băng ra transcript.
 3. Hệ thống tách ai nói đoạn nào.
 4. Hệ thống tóm tắt ý chính theo từng người.
 5. Hệ thống tạo biên bản cuộc họp.

@@ -12,6 +12,7 @@ import {
 } from "@/app/(main)/workspace/_lib/transcript-utils";
 import type {
   AudioInputSource,
+  MeetingMailTemplate,
   MeetingRecord,
   SpeakerSummary,
   TranscriptSegment,
@@ -36,6 +37,7 @@ type SummaryMinutesMutation = {
   }) => Promise<{
     speakerSummaries: SpeakerSummary[];
     minutesMarkdown: string;
+    mailTemplate?: MeetingMailTemplate;
   }>;
 };
 
@@ -154,8 +156,8 @@ export function useWorkspacePipeline({
       clearTimer(processingTimerRef);
       markPipelineAsError(
         source === "upload"
-          ? "Không tìm thấy file upload để gọi API bóc băng."
-          : "Không tìm thấy bản thu để gọi API bóc băng.",
+          ? "Không tìm thấy file upload để gọi API dịch băng."
+          : "Không tìm thấy bản thu để gọi API dịch băng.",
         "raw_transcript",
       );
       return;
@@ -187,6 +189,7 @@ export function useWorkspacePipeline({
       rawTranscript: "Transcript thô đang được tạo từ audio...",
       refinedTranscript: "Bản làm sạch đang được chuẩn bị...",
       speakerCount: 0,
+      mailTemplate: undefined,
     }));
     setNotice("Bắt đầu chạy từng bước xử lý...");
 
@@ -288,6 +291,7 @@ export function useWorkspacePipeline({
             sourceMeeting.speakerSummaries,
           );
           let nextMinutes = "Không có biên bản từ API cho phiên hiện tại.";
+          let nextMailTemplate: MeetingMailTemplate | undefined;
 
           setNotice("Đang tạo tóm tắt ý chính theo từng người...");
 
@@ -314,6 +318,7 @@ export function useWorkspacePipeline({
             nextMinutes =
               combinedResult.minutesMarkdown.trim() ||
               "Không có biên bản từ API cho phiên hiện tại.";
+            nextMailTemplate = combinedResult.mailTemplate;
           } catch (error) {
             clearInterval(speakerSummaryTimer);
             markPipelineAsError(
@@ -376,6 +381,7 @@ export function useWorkspacePipeline({
               processingStatus: "completed",
               durationSecond: Math.max(durationSecond, 30),
               minutes: nextMinutes,
+              mailTemplate: nextMailTemplate,
             }));
             setMinutesDraft(nextMinutes);
             setNotice("Xử lý hoàn tất. Biên bản đã được tạo từ API.");

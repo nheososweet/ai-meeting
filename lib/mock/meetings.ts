@@ -37,7 +37,7 @@ export const meetingRecords: MeetingRecord[] = [
       },
     ],
     minutes:
-      "1) Hoàn tất pipeline bóc băng cho dữ liệu nội bộ. 2) Bổ sung bộ test speaker verification cho audio chồng lấn. 3) Gửi biên bản và checklist hành động trước 18:00.",
+      "1) Hoàn tất pipeline dịch băng cho dữ liệu nội bộ. 2) Bổ sung bộ test speaker verification cho audio chồng lấn. 3) Gửi biên bản và checklist hành động trước 18:00.",
     speakerSummaries: [
       {
         speaker: "Long",
@@ -81,7 +81,7 @@ export const meetingRecords: MeetingRecord[] = [
     processingStatus: "processing",
     emailStatus: "not_sent",
     rawTranscript:
-      "Đang xử lý transcript tự động, nội dung bóc băng sẽ hiển thị theo từng cụm người nói ngay sau khi hoàn tất.",
+      "Đang xử lý transcript tự động, nội dung dịch băng sẽ hiển thị theo từng cụm người nói ngay sau khi hoàn tất.",
     segments: [
       {
         id: "seg-4",

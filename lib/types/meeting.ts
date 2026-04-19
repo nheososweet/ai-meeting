@@ -29,6 +29,12 @@ export interface MeetingEmailLog {
   status: EmailStatus
 }
 
+export interface MeetingMailTemplate {
+  subject: string
+  body: string
+  isHtml: boolean
+}
+
 export interface MeetingRecord {
   id: string
   title: string
@@ -45,6 +51,7 @@ export interface MeetingRecord {
   minutes: string
   speakerSummaries: SpeakerSummary[]
   emailLogs: MeetingEmailLog[]
+  mailTemplate?: MeetingMailTemplate
   audioUrl?: string
   apiRecordId?: number
   reportUrl?: string

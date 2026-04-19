@@ -23,6 +23,7 @@ interface UpstreamRecord {
   transcribe_url?: unknown;
   report?: unknown;
   filename?: unknown;
+  mail_template?: unknown;
 }
 
 interface UpstreamChatResponse {
@@ -33,6 +34,25 @@ interface UpstreamChatResponse {
 interface ChatReplyPayload {
   summary_by_speaker?: unknown;
   mom_markdown?: unknown;
+  mail_template?: unknown;
+}
+
+interface ChatReplyMailTemplate {
+  subject?: unknown;
+  body?: unknown;
+  is_html?: unknown;
+}
+
+interface UpstreamSendMailResponse {
+  total?: unknown;
+  sent?: unknown;
+  failed?: unknown;
+  results?: unknown;
+}
+
+interface UpstreamSendMailResultItem {
+  email?: unknown;
+  status?: unknown;
 }
 
 interface ChatSummaryBySpeakerItem {
@@ -62,6 +82,7 @@ export interface PipelineRecord {
   transcribeUrl: string;
   reportUrl: string | null;
   filename: string;
+  mailTemplate?: MailTemplatePayload;
 }
 
 export interface SpeakerSummaryFromChat {
@@ -69,9 +90,26 @@ export interface SpeakerSummaryFromChat {
   keyPoints: string[];
 }
 
+export interface MailTemplatePayload {
+  subject: string;
+  body: string;
+  isHtml: boolean;
+}
+
 export interface SummaryAndMinutesResponse {
   speakerSummaries: SpeakerSummaryFromChat[];
   minutesMarkdown: string;
+  mailTemplate?: MailTemplatePayload;
+}
+
+export interface SendMailResponse {
+  total: number;
+  sent: number;
+  failed: number;
+  results: {
+    email: string;
+    status: string;
+  }[];
 }
 
 function ensureStringArray(value: unknown): string[] {
@@ -111,6 +149,70 @@ function parseChatReplyPayload(reply: string): ChatReplyPayload {
     const slicedReply = normalizedReply.slice(firstBrace, lastBrace + 1);
     return JSON.parse(slicedReply) as ChatReplyPayload;
   }
+}
+
+function parseMailTemplatePayload(value: unknown): MailTemplatePayload | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  const template = value as ChatReplyMailTemplate;
+  const subject =
+    typeof template.subject === "string" ? template.subject.trim() : "";
+  const body = typeof template.body === "string" ? template.body.trim() : "";
+
+  if (!subject && !body) {
+    return undefined;
+  }
+
+  return {
+    subject,
+    body,
+    isHtml: typeof template.is_html === "boolean" ? template.is_html : true,
+  };
+}
+
+function parseSendMailResponse(data: unknown): SendMailResponse {
+  if (!data || typeof data !== "object") {
+    throw new Error("API send-mail trả về dữ liệu không hợp lệ.");
+  }
+
+  const payload = data as UpstreamSendMailResponse;
+  const total = typeof payload.total === "number" ? payload.total : 0;
+  const sent = typeof payload.sent === "number" ? payload.sent : 0;
+  const failed = typeof payload.failed === "number" ? payload.failed : 0;
+
+  const results = Array.isArray(payload.results)
+    ? payload.results
+        .map((item) => {
+          const parsedItem = item as UpstreamSendMailResultItem;
+          const email =
+            typeof parsedItem.email === "string" ? parsedItem.email.trim() : "";
+          const status =
+            typeof parsedItem.status === "string"
+              ? parsedItem.status.trim()
+              : "unknown";
+
+          if (!email) {
+            return null;
+          }
+
+          return {
+            email,
+            status: status || "unknown",
+          };
+        })
+        .filter((item): item is { email: string; status: string } =>
+          Boolean(item),
+        )
+    : [];
+
+  return {
+    total,
+    sent,
+    failed,
+    results,
+  };
 }
 
 export async function diarizeAndTranscribe(input: {
@@ -259,7 +361,50 @@ export async function generateSummaryAndMinutes(input: {
   return {
     speakerSummaries,
     minutesMarkdown,
+    mailTemplate: parseMailTemplatePayload(payload.mail_template),
   };
+}
+
+export async function sendMail(input: {
+  emails: string[];
+  momFileUrl: string;
+  template: MailTemplatePayload;
+}): Promise<SendMailResponse> {
+  const cleanedEmails = input.emails
+    .map((email) => String(email ?? "").trim())
+    .filter(Boolean);
+
+  if (!cleanedEmails.length) {
+    throw new Error("Thiếu danh sách email người nhận.");
+  }
+
+  const momFileUrl = input.momFileUrl.trim();
+  if (!momFileUrl) {
+    throw new Error("Thiếu URL file biên bản để gửi mail.");
+  }
+
+  const subject = input.template.subject.trim();
+  const body = input.template.body.trim();
+
+  if (!subject) {
+    throw new Error("Thiếu tiêu đề email.");
+  }
+
+  if (!body) {
+    throw new Error("Thiếu nội dung email.");
+  }
+
+  const response = await pipelineApi.post<unknown>("/send-mail", {
+    template: {
+      subject,
+      body,
+      is_html: input.template.isHtml,
+    },
+    emails: cleanedEmails,
+    mom_file_url: momFileUrl,
+  });
+
+  return parseSendMailResponse(response.data);
 }
 
 export async function getRecords(): Promise<PipelineRecord[]> {
@@ -291,6 +436,7 @@ export async function getRecords(): Promise<PipelineRecord[]> {
             ? record.report
             : null,
         filename: record.filename,
+        mailTemplate: parseMailTemplatePayload(record.mail_template),
       };
     })
     .filter((record): record is PipelineRecord => Boolean(record));

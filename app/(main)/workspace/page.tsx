@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeftIcon, Maximize2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -45,15 +45,19 @@ import { useWorkspaceUpload } from "@/app/(main)/workspace/_hooks/useWorkspaceUp
 import { useDiarizeTranscribeMutation } from "@/hooks/services/use-diarize-transcribe-mutation";
 import { useSummaryMinutesMutation } from "@/hooks/services/use-summary-minutes-mutation";
 import { useUpdateReportMutation } from "@/hooks/services/use-update-report-mutation";
-import { sendMeetingEmailViaAgent } from "@/lib/agent-client";
 import { meetingRecords } from "@/lib/mock/meetings";
+import { sendMail } from "@/services/pipeline-records.service";
 import type {
   AudioInputSource,
+  MeetingMailTemplate,
   MeetingRecord,
   TranscriptSegment,
 } from "@/lib/types/meeting";
 
 const sourceMeeting = meetingRecords[0];
+const DEFAULT_EMAIL_SUBJECT_PREFIX = "Thông báo Biên bản Họp";
+const DEFAULT_EMAIL_BODY =
+  '<p>Kính gửi Quý thành viên,</p><p>Liên quan đến cuộc họp vừa diễn ra, Ban tổ chức xin gửi đến Quý vị Biên bản họp chi tiết.</p><p>Vui lòng truy cập liên kết sau để xem hoặc tải tài liệu:</p><p><a href="{{mom_file_url}}">{{mom_file_url}}</a></p><p>Mọi thắc mắc vui lòng phản hồi trực tiếp cho Thư ký.</p><p>Trân trọng,</p><p>Admin</p>';
 
 function speakerToneClass(speaker: string): string {
   const palette = [
@@ -66,6 +70,35 @@ function speakerToneClass(speaker: string): string {
     .split("")
     .reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return palette[hash % palette.length] ?? palette[0];
+}
+
+function buildDefaultMailTemplate(meetingTitle: string): MeetingMailTemplate {
+  const cleanTitle = meetingTitle.trim();
+
+  return {
+    subject: cleanTitle
+      ? `${DEFAULT_EMAIL_SUBJECT_PREFIX} - ${cleanTitle}`
+      : DEFAULT_EMAIL_SUBJECT_PREFIX,
+    body: DEFAULT_EMAIL_BODY,
+    isHtml: true,
+  };
+}
+
+function resolveMailTemplate(
+  template: MeetingMailTemplate | undefined,
+  meetingTitle: string,
+): MeetingMailTemplate {
+  const fallback = buildDefaultMailTemplate(meetingTitle);
+
+  if (!template) {
+    return fallback;
+  }
+
+  return {
+    subject: template.subject.trim() || fallback.subject,
+    body: template.body.trim() || fallback.body,
+    isHtml: template.isHtml,
+  };
 }
 
 const initialMeeting: MeetingRecord = {
@@ -85,6 +118,7 @@ const initialMeeting: MeetingRecord = {
   emailLogs: [],
   durationSecond: 0,
   speakerCount: 0,
+  mailTemplate: buildDefaultMailTemplate(""),
 };
 
 export default function WorkspacePage() {
@@ -103,6 +137,15 @@ export default function WorkspacePage() {
   const [emailValidationError, setEmailValidationError] = useState<
     string | null
   >(null);
+  const [emailTemplateValidationError, setEmailTemplateValidationError] =
+    useState<string | null>(null);
+  const [emailSubjectInput, setEmailSubjectInput] = useState(
+    buildDefaultMailTemplate("").subject,
+  );
+  const [emailBodyInput, setEmailBodyInput] = useState(
+    buildDefaultMailTemplate("").body,
+  );
+  const [emailIsHtml, setEmailIsHtml] = useState(true);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [isMinutesDialogOpen, setIsMinutesDialogOpen] = useState(false);
   const [minutesDraft, setMinutesDraft] = useState(initialMeeting.minutes);
@@ -241,6 +284,17 @@ export default function WorkspacePage() {
   }, [activeMeeting.refinedTranscript]);
   const shouldShowRefinedDiarization = refinedSegments.length > 0;
 
+  useEffect(() => {
+    const nextTemplate = resolveMailTemplate(
+      activeMeeting.mailTemplate,
+      activeMeeting.title,
+    );
+
+    setEmailSubjectInput(nextTemplate.subject);
+    setEmailBodyInput(nextTemplate.body);
+    setEmailIsHtml(nextTemplate.isHtml);
+  }, [activeMeeting.mailTemplate, activeMeeting.title]);
+
   function handleRetryPipeline() {
     retryPipeline({
       busyProcessing,
@@ -336,6 +390,7 @@ export default function WorkspacePage() {
         minutes: initialMeeting.minutes,
         speakerCount: 0,
         durationSecond: 0,
+        mailTemplate: buildDefaultMailTemplate(""),
       }));
       setInputMode("upload");
       return;
@@ -355,6 +410,7 @@ export default function WorkspacePage() {
       minutes: initialMeeting.minutes,
       speakerCount: 0,
       durationSecond: 0,
+      mailTemplate: buildDefaultMailTemplate(""),
     }));
     setInputMode("recording");
   }
@@ -451,7 +507,10 @@ export default function WorkspacePage() {
     })();
   }
 
-  function handleSendEmail(recipients: string[]) {
+  function handleSendEmail(
+    recipients: string[],
+    template: MeetingMailTemplate,
+  ) {
     if (!canSendEmail || isSendingEmail) {
       if (!activeMeeting.reportUrl?.trim()) {
         setNotice("Vui lòng xem, chỉnh sửa và lưu biên bản để gửi email.");
@@ -460,34 +519,58 @@ export default function WorkspacePage() {
     }
 
     setIsSendingEmail(true);
-    setNotice("Đang gọi agent để gửi email...");
+    setNotice("Đang gửi email biên bản...");
 
     void (async () => {
       try {
-        await sendMeetingEmailViaAgent({
-          recipients,
-          meetingTitle: activeMeeting.title,
-          minutes: activeMeeting.minutes,
-          rawTranscript: activeMeeting.rawTranscript,
-          reportUrl: activeMeeting.reportUrl,
-          sessionId: process.env.NEXT_PUBLIC_AGENT_MOM_EMAIL_SESSION_ID,
+        const sendResult = await sendMail({
+          emails: recipients,
+          momFileUrl: activeMeeting.reportUrl ?? "",
+          template,
         });
+
+        const failedRecipients = new Set(
+          sendResult.results
+            .filter((item) => item.status !== "sent")
+            .map((item) => item.email.toLowerCase()),
+        );
+        const shouldMarkAllFailed =
+          sendResult.failed > 0 && sendResult.results.length === 0;
 
         setActiveMeeting((prev) => ({
           ...prev,
-          emailStatus: "sent",
+          emailStatus: sendResult.failed > 0 ? "failed" : "sent",
           emailLogs: [
-            ...recipients.map((recipient) => ({
-              id: `email-${recipient}-${Date.now()}`,
-              recipient,
-              sentAt: new Date().toISOString(),
-              status: "sent" as const,
-            })),
+            ...recipients.map((recipient, index) => {
+              const failed =
+                shouldMarkAllFailed ||
+                failedRecipients.has(recipient.trim().toLowerCase());
+
+              return {
+                id: `email-${recipient}-${Date.now()}-${index}`,
+                recipient,
+                sentAt: new Date().toISOString(),
+                status: failed ? ("failed" as const) : ("sent" as const),
+              };
+            }),
             ...prev.emailLogs,
           ],
+          mailTemplate: template,
         }));
-        setIsEmailDialogOpen(false);
-        setNotice("Agent đã xử lý gửi email thành công.");
+
+        setIsEmailDialogOpen(sendResult.failed > 0);
+
+        if (sendResult.failed > 0) {
+          setNotice(
+            `Gửi email hoàn tất với ${sendResult.sent}/${sendResult.total} thành công.`,
+          );
+          showActionToast(
+            `Đã gửi ${sendResult.sent}/${sendResult.total} email, còn ${sendResult.failed} lỗi.`,
+          );
+          return;
+        }
+
+        setNotice("Đã gửi email thành công.");
         showActionToast("Đã gửi email thành công.");
       } catch (error) {
         const errorMessage =
@@ -497,14 +580,15 @@ export default function WorkspacePage() {
           ...prev,
           emailStatus: "failed",
           emailLogs: [
-            ...recipients.map((recipient) => ({
-              id: `email-failed-${recipient}-${Date.now()}`,
+            ...recipients.map((recipient, index) => ({
+              id: `email-failed-${recipient}-${Date.now()}-${index}`,
               recipient,
               sentAt: new Date().toISOString(),
               status: "failed" as const,
             })),
             ...prev.emailLogs,
           ],
+          mailTemplate: template,
         }));
         setNotice(`Gửi email thất bại: ${errorMessage}`);
         showActionToast(`Gửi email thất bại: ${errorMessage}`);
@@ -523,8 +607,26 @@ export default function WorkspacePage() {
       return;
     }
 
+    const subject = emailSubjectInput.trim();
+    const body = emailBodyInput.trim();
+
+    if (!subject) {
+      setEmailTemplateValidationError("Vui lòng nhập tiêu đề email.");
+      return;
+    }
+
+    if (!body) {
+      setEmailTemplateValidationError("Vui lòng nhập nội dung email.");
+      return;
+    }
+
     setEmailValidationError(null);
-    handleSendEmail(parsed.data);
+    setEmailTemplateValidationError(null);
+    handleSendEmail(parsed.data, {
+      subject,
+      body,
+      isHtml: emailIsHtml,
+    });
   }
 
   function handleEmailDialogOpenChange(nextOpen: boolean) {
@@ -536,6 +638,7 @@ export default function WorkspacePage() {
     setIsEmailDialogOpen(nextOpen);
     if (nextOpen) {
       setEmailValidationError(null);
+      setEmailTemplateValidationError(null);
     }
   }
 
@@ -544,6 +647,24 @@ export default function WorkspacePage() {
     if (emailValidationError) {
       setEmailValidationError(null);
     }
+  }
+
+  function handleEmailSubjectInputChange(value: string) {
+    setEmailSubjectInput(value);
+    if (emailTemplateValidationError) {
+      setEmailTemplateValidationError(null);
+    }
+  }
+
+  function handleEmailBodyInputChange(value: string) {
+    setEmailBodyInput(value);
+    if (emailTemplateValidationError) {
+      setEmailTemplateValidationError(null);
+    }
+  }
+
+  function handleEmailIsHtmlChange(nextValue: boolean) {
+    setEmailIsHtml(nextValue);
   }
 
   function handleMinutesDialogOpenChange(nextOpen: boolean) {
@@ -580,7 +701,7 @@ export default function WorkspacePage() {
         </div>
 
         <p className="mt-2 text-sm text-muted-foreground">
-          Tải file cuộc họp hoặc ghi âm trực tiếp để bắt đầu bóc băng và tổng
+          Tải file cuộc họp hoặc ghi âm trực tiếp để bắt đầu dịch băng và tổng
           hợp nội dung.
         </p>
 
@@ -692,8 +813,15 @@ export default function WorkspacePage() {
               canSendEmail={canSendEmail}
               isSendingEmail={isSendingEmail}
               reportUrl={activeMeeting.reportUrl}
+              emailSubjectInput={emailSubjectInput}
+              emailBodyInput={emailBodyInput}
+              emailIsHtml={emailIsHtml}
               emailRecipientsInput={emailRecipientsInput}
+              emailTemplateValidationError={emailTemplateValidationError}
               onEmailRecipientsInputChange={handleEmailRecipientsInputChange}
+              onEmailSubjectInputChange={handleEmailSubjectInputChange}
+              onEmailBodyInputChange={handleEmailBodyInputChange}
+              onEmailIsHtmlChange={handleEmailIsHtmlChange}
               emailValidationError={emailValidationError}
               onSubmitSendEmail={handleSubmitSendEmail}
             />
@@ -952,8 +1080,16 @@ export default function WorkspacePage() {
       </section>
 
       {actionToast ? (
-        <div className="pointer-events-none fixed right-4 bottom-4 z-50 rounded-lg border border-border/70 bg-background/95 px-3 py-2 text-xs font-medium text-foreground shadow-lg backdrop-blur">
-          {actionToast}
+        <div
+          className={`pointer-events-none fixed right-4 bottom-4 z-50 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur ${
+            actionToast.variant === "success"
+              ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
+              : actionToast.variant === "error"
+                ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
+                : "border-border/70 bg-background/95 text-foreground"
+          }`}
+        >
+          {actionToast.message}
         </div>
       ) : null}
     </div>

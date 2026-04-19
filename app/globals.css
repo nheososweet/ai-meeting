@@ -128,3 +128,11 @@
     @apply font-sans;
   }
 }
+
+#proxy-renderer,
+#msdoc-renderer,
+#react-doc-viewer {
+  flex: 1 !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}

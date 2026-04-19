@@ -48,11 +48,18 @@ export default function HistoryPage() {
     sendEmailRecordId,
     selectedSendEmailRecord,
     emailRecipientsInput,
+    emailSubjectInput,
+    emailBodyInput,
+    emailIsHtml,
     emailValidationError,
+    emailTemplateValidationError,
     isSendingEmail,
     handleOpenSendEmailDialog,
     handleSendEmailDialogOpenChange,
     handleEmailRecipientsInputChange,
+    handleEmailSubjectInputChange,
+    handleEmailBodyInputChange,
+    handleEmailIsHtmlChange,
     handleSendEmail,
   } = useHistoryEmail({
     records,
@@ -193,17 +200,32 @@ export default function HistoryPage() {
         open={sendEmailRecordId !== null}
         recordFilename={selectedSendEmailRecord?.filename}
         reportUrl={selectedSendEmailRecord?.reportUrl}
+        emailSubjectInput={emailSubjectInput}
+        emailBodyInput={emailBodyInput}
+        emailIsHtml={emailIsHtml}
         emailRecipientsInput={emailRecipientsInput}
         emailValidationError={emailValidationError}
+        emailTemplateValidationError={emailTemplateValidationError}
         isSendingEmail={isSendingEmail}
         onOpenChange={handleSendEmailDialogOpenChange}
+        onEmailSubjectInputChange={handleEmailSubjectInputChange}
+        onEmailBodyInputChange={handleEmailBodyInputChange}
+        onEmailIsHtmlChange={handleEmailIsHtmlChange}
         onEmailRecipientsInputChange={handleEmailRecipientsInputChange}
         onSendEmail={handleSendEmail}
       />
 
       {actionToast ? (
-        <div className="pointer-events-none fixed right-4 bottom-4 z-50 rounded-lg border border-border/70 bg-background/95 px-3 py-2 text-xs font-medium text-foreground shadow-lg backdrop-blur">
-          {actionToast}
+        <div
+          className={`pointer-events-none fixed right-4 bottom-4 z-50 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur ${
+            actionToast.variant === "success"
+              ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
+              : actionToast.variant === "error"
+                ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
+                : "border-border/70 bg-background/95 text-foreground"
+          }`}
+        >
+          {actionToast.message}
         </div>
       ) : null}
     </div>

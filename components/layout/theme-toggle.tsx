@@ -7,8 +7,39 @@ import { Button } from "@/components/ui/button";
 
 type ThemeMode = "light" | "dark";
 
+function disableTransitionsTemporarily(): () => void {
+  const style = document.createElement("style");
+  style.appendChild(
+    document.createTextNode("*,*::before,*::after{transition:none!important}"),
+  );
+
+  document.head.appendChild(style);
+
+  return () => {
+    // Force style recalculation so the class change is committed before restoring transitions.
+    window.getComputedStyle(document.body);
+    window.requestAnimationFrame(() => {
+      style.remove();
+    });
+  };
+}
+
 export function ThemeToggle() {
   const [theme, setTheme] = React.useState<ThemeMode>("light");
+
+  const applyTheme = React.useCallback(
+    (nextTheme: ThemeMode, { persist = true }: { persist?: boolean } = {}) => {
+      const restoreTransitions = disableTransitionsTemporarily();
+
+      document.documentElement.classList.toggle("dark", nextTheme === "dark");
+      if (persist) {
+        window.localStorage.setItem("theme", nextTheme);
+      }
+
+      restoreTransitions();
+    },
+    [],
+  );
 
   React.useEffect(() => {
     const savedTheme = window.localStorage.getItem("theme") as ThemeMode | null;
@@ -18,17 +49,16 @@ export function ThemeToggle() {
     const nextTheme = savedTheme ?? (prefersDark ? "dark" : "light");
 
     setTheme(nextTheme);
-    document.documentElement.classList.toggle("dark", nextTheme === "dark");
-  }, []);
+    applyTheme(nextTheme, { persist: false });
+  }, [applyTheme]);
 
   const toggleTheme = React.useCallback(() => {
     setTheme((currentTheme) => {
       const nextTheme: ThemeMode = currentTheme === "light" ? "dark" : "light";
-      document.documentElement.classList.toggle("dark", nextTheme === "dark");
-      window.localStorage.setItem("theme", nextTheme);
+      applyTheme(nextTheme);
       return nextTheme;
     });
-  }, []);
+  }, [applyTheme]);
 
   return (
     <Button

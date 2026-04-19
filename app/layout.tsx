@@ -4,6 +4,20 @@ import { Providers } from "./providers";
 import "@cyntler/react-doc-viewer/dist/index.css";
 import "./globals.css";
 
+const themeInitScript = `
+(() => {
+  try {
+    const savedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const shouldUseDark = savedTheme ? savedTheme === "dark" : prefersDark;
+
+    document.documentElement.classList.toggle("dark", shouldUseDark);
+  } catch {
+    // Ignore theme init errors to avoid blocking page render.
+  }
+})();
+`;
+
 const quicksand = localFont({
   src: [
     {
@@ -85,6 +99,9 @@ export default function RootLayout({
       lang="vi"
       className={`${quicksand.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>

@@ -32,7 +32,9 @@ interface UpstreamChatResponse {
 }
 
 interface ChatReplyPayload {
+  speaker_summary?: unknown;
   summary_by_speaker?: unknown;
+  mom_mark?: unknown;
   mom_markdown?: unknown;
   mail_template?: unknown;
 }
@@ -332,9 +334,13 @@ export async function generateSummaryAndMinutes(input: {
 
   const payload = parseChatReplyPayload(reply);
 
-  const summaryBySpeaker = Array.isArray(payload.summary_by_speaker)
-    ? (payload.summary_by_speaker as ChatSummaryBySpeakerItem[])
-    : [];
+  const summarySource = Array.isArray(payload.summary_by_speaker)
+    ? payload.summary_by_speaker
+    : Array.isArray(payload.speaker_summary)
+      ? payload.speaker_summary
+      : [];
+
+  const summaryBySpeaker = summarySource as ChatSummaryBySpeakerItem[];
 
   const speakerSummaries: SpeakerSummaryFromChat[] = summaryBySpeaker
     .map((item) => {
@@ -352,10 +358,14 @@ export async function generateSummaryAndMinutes(input: {
     .filter((summary) => summary.keyPoints.length > 0);
 
   const minutesMarkdown =
-    typeof payload.mom_markdown === "string" ? payload.mom_markdown.trim() : "";
+    typeof payload.mom_markdown === "string"
+      ? payload.mom_markdown.trim()
+      : typeof payload.mom_mark === "string"
+        ? payload.mom_mark.trim()
+        : "";
 
   if (!minutesMarkdown) {
-    throw new Error("Chat API không trả về mom_markdown hợp lệ.");
+    throw new Error("Chat API không trả về nội dung biên bản hợp lệ.");
   }
 
   return {

@@ -16,6 +16,11 @@ interface UpstreamUpdateReportResponse {
   report_url?: unknown;
 }
 
+interface UpstreamUpdateTranscribeResponse {
+  status?: unknown;
+  transcribe_url?: unknown;
+}
+
 interface UpstreamRecord {
   id?: unknown;
   create_time?: unknown;
@@ -75,6 +80,11 @@ export interface DiarizeTranscribeResponse {
 export interface UpdateReportResponse {
   status: "success";
   reportUrl: string;
+}
+
+export interface UpdateTranscribeResponse {
+  status: "success";
+  transcribeUrl: string;
 }
 
 export interface PipelineRecord {
@@ -300,6 +310,39 @@ export async function updateReport(input: {
   return {
     status: "success",
     reportUrl: payload.report_url,
+  };
+}
+
+export async function updateTranscribe(input: {
+  id: number;
+  textContent: string;
+}): Promise<UpdateTranscribeResponse> {
+  const formData = new URLSearchParams();
+  formData.append("id", String(input.id));
+  formData.append("text_content", input.textContent);
+
+  const response = await pipelineApi.post<UpstreamUpdateTranscribeResponse>(
+    "/update-transcribe",
+    formData.toString(),
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    },
+  );
+
+  const payload = response.data;
+
+  if (
+    payload.status !== "success" ||
+    typeof payload.transcribe_url !== "string"
+  ) {
+    throw new Error("Không thể cập nhật transcribe từ API update-transcribe.");
+  }
+
+  return {
+    status: "success",
+    transcribeUrl: payload.transcribe_url,
   };
 }
 

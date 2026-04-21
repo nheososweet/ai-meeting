@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeftIcon, Maximize2Icon } from "lucide-react";
+import { ChevronLeftIcon, Maximize2Icon, XIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +29,7 @@ import {
   statusConfig,
 } from "@/app/(main)/workspace/_lib/format-utils";
 import { PIPELINE_STEP_WEIGHT } from "@/app/(main)/workspace/_lib/pipeline-constants";
+import { SpeakersLabelingDialog } from "@/app/(main)/workspace/_components/SpeakersLabelingDialog";
 import {
   cleanTranscriptLine,
   formatTimelineSecond,
@@ -158,7 +159,7 @@ export default function WorkspacePage() {
     activeMeeting.processingStatus === "uploading" ||
     activeMeeting.processingStatus === "processing";
 
-  const { actionToast, showActionToast } = useWorkspaceToast();
+  const { actionToast, showActionToast, hideActionToast } = useWorkspaceToast();
 
   const {
     pipelineSteps,
@@ -427,6 +428,11 @@ export default function WorkspacePage() {
       return;
     }
 
+    showActionToast(
+      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt và không thao tác các nút khác để đảm bảo Pipeline hoạt động chính xác.",
+      "info",
+      15000,
+    );
     startProcessing({
       source: "upload",
       fileName: selectedFileName,
@@ -442,6 +448,11 @@ export default function WorkspacePage() {
       return;
     }
 
+    showActionToast(
+      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt và không thao tác các nút khác để đảm bảo Pipeline hoạt động chính xác.",
+      "info",
+      15000,
+    );
     startProcessing({
       source: "recording",
       fileName: activeMeeting.fileName,
@@ -806,6 +817,12 @@ export default function WorkspacePage() {
             >
               Tóm tắt theo người nói
             </Button> */}
+            <SpeakersLabelingDialog
+              activeMeeting={activeMeeting}
+              onUpdateMeeting={setActiveMeeting}
+              setNotice={setNotice}
+              showActionToast={showActionToast}
+            />
             <EmailDialog
               open={isEmailDialogOpen}
               onOpenChange={handleEmailDialogOpenChange}
@@ -1078,14 +1095,22 @@ export default function WorkspacePage() {
 
       {actionToast ? (
         <div
-          className={`pointer-events-none fixed right-4 bottom-4 z-50 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur ${actionToast.variant === "success"
-            ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
-            : actionToast.variant === "error"
-              ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
-              : "border-border/70 bg-background/95 text-foreground"
-            }`}
+          className={`fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur transition-all ${
+            actionToast.variant === "success"
+              ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
+              : actionToast.variant === "error"
+                ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
+                : "border-blue-300/70 bg-blue-50/95 text-blue-900"
+          }`}
         >
-          {actionToast.message}
+          <span>{actionToast.message}</span>
+          <button
+            onClick={hideActionToast}
+            className="group flex size-5 items-center justify-center rounded-full transition-colors hover:bg-black/10 active:bg-black/20"
+            title="Đóng thông báo"
+          >
+            <XIcon className="size-3.5 transition-transform group-hover:scale-110" />
+          </button>
         </div>
       ) : null}
     </div>

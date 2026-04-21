@@ -32,7 +32,11 @@ export function useWorkspaceToast() {
   );
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const showActionToast = (message: string, variant?: ActionToastVariant) => {
+  const showActionToast = (
+    message: string,
+    variant?: ActionToastVariant,
+    duration?: number,
+  ) => {
     setActionToast({
       message,
       variant: variant ?? detectToastVariant(message),
@@ -44,7 +48,15 @@ export function useWorkspaceToast() {
 
     toastTimerRef.current = setTimeout(() => {
       setActionToast(null);
-    }, 2200);
+    }, duration ?? 2200);
+  };
+
+  const hideActionToast = () => {
+    setActionToast(null);
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
   };
 
   useEffect(() => {
@@ -58,5 +70,6 @@ export function useWorkspaceToast() {
   return {
     actionToast,
     showActionToast,
+    hideActionToast,
   };
 }

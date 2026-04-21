@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { LoaderCircleIcon } from "lucide-react";
 
+import { EvaluationDetailDialog } from "@/app/(main)/history/_components/EvaluationDetailDialog";
 import { HistoryHeaderMetrics } from "@/app/(main)/history/_components/HistoryHeaderMetrics";
 import { HistoryRecordItem } from "@/app/(main)/history/_components/HistoryRecordItem";
 import { ReportPreviewDialog } from "@/app/(main)/history/_components/ReportPreviewDialog";
@@ -16,6 +17,7 @@ import { useHistoryEmail } from "@/app/(main)/history/_hooks/useHistoryEmail";
 import { useHistoryToast } from "@/app/(main)/history/_hooks/useHistoryToast";
 import { useHistoryTranscriptPreview } from "@/app/(main)/history/_hooks/useHistoryTranscriptPreview";
 import { useRecordsQuery } from "@/hooks/services/use-records-query";
+import { buildMockEvaluations } from "@/lib/mock/evaluations";
 import type { PipelineRecord } from "@/services/pipeline-records.service";
 
 export default function HistoryPage() {
@@ -25,6 +27,9 @@ export default function HistoryPage() {
   const [previewReportRecordId, setPreviewReportRecordId] = useState<
     number | null
   >(null);
+  const [evaluationRecordId, setEvaluationRecordId] = useState<number | null>(
+    null,
+  );
 
   const recordsQuery = useRecordsQuery();
   const records = recordsQuery.data;
@@ -76,6 +81,20 @@ export default function HistoryPage() {
     };
   }, [records]);
 
+  const mockEvaluations = useMemo(() => {
+    const ids = (records ?? []).map((r) => r.id);
+    return buildMockEvaluations(ids);
+  }, [records]);
+
+  const activeEvaluationRecord = useMemo(() => {
+    if (!evaluationRecordId) return null;
+    return records?.find((r) => r.id === evaluationRecordId) ?? null;
+  }, [evaluationRecordId, records]);
+
+  const activeEvaluation = evaluationRecordId
+    ? (mockEvaluations[evaluationRecordId] ?? null)
+    : null;
+
   const activeReportRecord = useMemo(() => {
     if (!previewReportRecordId) {
       return null;
@@ -123,7 +142,7 @@ export default function HistoryPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <section className="flex min-h-0 flex-1 flex-col rounded-lg border border-border/80 bg-card p-5 shadow-sm lg:sticky lg:top-4 lg:h-[calc(100dvh-8.5rem)]">
+      <section className="flex min-h-0 flex-col rounded-lg border border-border/80 bg-card p-4 sm:p-5 shadow-sm h-[calc(100dvh-6rem)] md:h-[calc(100dvh-8.5rem)]">
         <HistoryHeaderMetrics
           total={recordMetrics.total}
           withReport={recordMetrics.withReport}
@@ -149,6 +168,9 @@ export default function HistoryPage() {
                   createdAtLabel={historyDateTimeFormatter.format(
                     new Date(record.createTime),
                   )}
+                  evaluationScore={
+                    mockEvaluations[record.id]?.overallScore ?? null
+                  }
                   previewAudioActive={previewAudioRecordId === record.id}
                   previewTranscriptActive={
                     previewTranscriptRecordId === record.id
@@ -159,6 +181,7 @@ export default function HistoryPage() {
                   onPreviewTranscript={handlePreviewTranscript}
                   onPreviewReport={handlePreviewReport}
                   onOpenSendEmailDialog={handleOpenSendEmailDialog}
+                  onViewEvaluation={() => setEvaluationRecordId(record.id)}
                 />
               ))}
             </div>
@@ -213,6 +236,17 @@ export default function HistoryPage() {
         onEmailIsHtmlChange={handleEmailIsHtmlChange}
         onEmailRecipientsInputChange={handleEmailRecipientsInputChange}
         onSendEmail={handleSendEmail}
+      />
+
+      <EvaluationDetailDialog
+        open={evaluationRecordId !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setEvaluationRecordId(null);
+          }
+        }}
+        evaluation={activeEvaluation}
+        recordFilename={activeEvaluationRecord?.filename}
       />
 
       {actionToast ? (

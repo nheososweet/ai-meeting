@@ -5,6 +5,8 @@ import {
   MailIcon,
 } from "lucide-react";
 
+import { ScoreBadge } from "@/app/(main)/history/_components/ScoreBadge";
+
 import {
   buildDownloadUrl,
   resolveReportFilename,
@@ -15,6 +17,7 @@ import type { PipelineRecord } from "@/services/pipeline-records.service";
 type HistoryRecordItemProps = {
   record: PipelineRecord;
   createdAtLabel: string;
+  evaluationScore: number | null | undefined;
   previewAudioActive: boolean;
   previewTranscriptActive: boolean;
   previewReportActive: boolean;
@@ -23,11 +26,13 @@ type HistoryRecordItemProps = {
   onPreviewTranscript: (record: PipelineRecord) => void;
   onPreviewReport: (record: PipelineRecord) => void;
   onOpenSendEmailDialog: (recordId: number) => void;
+  onViewEvaluation: () => void;
 };
 
 export function HistoryRecordItem({
   record,
   createdAtLabel,
+  evaluationScore,
   previewAudioActive,
   previewTranscriptActive,
   previewReportActive,
@@ -36,6 +41,7 @@ export function HistoryRecordItem({
   onPreviewTranscript,
   onPreviewReport,
   onOpenSendEmailDialog,
+  onViewEvaluation,
 }: HistoryRecordItemProps) {
   return (
     <div
@@ -101,8 +107,9 @@ export function HistoryRecordItem({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <button
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
           type="button"
           onClick={() => onToggleAudioPreview(record.id)}
           className="inline-flex min-h-8 items-center gap-1 rounded-full border border-border/70 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
@@ -146,6 +153,14 @@ export function HistoryRecordItem({
             Gửi email
           </button>
         ) : null}
+        </div>
+
+        <div className="shrink-0">
+          <ScoreBadge
+            score={evaluationScore}
+            onClick={onViewEvaluation}
+          />
+        </div>
       </div>
 
       {previewAudioActive ? (

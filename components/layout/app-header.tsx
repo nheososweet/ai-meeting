@@ -11,6 +11,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { WorkspaceGuideDialog } from "@/app/(main)/workspace/_components/WorkspaceGuideDialog";
 
 function resolveHeader(pathname: string): string {
   if (pathname === "/workspace") {
@@ -23,6 +24,10 @@ function resolveHeader(pathname: string): string {
 
   if (pathname.startsWith("/history/")) {
     return "Chi tiết cuộc họp";
+  }
+
+  if (pathname === "/evaluation-criteria") {
+    return "Tiêu chí đánh giá";
   }
 
   return "Phiên dịch";
@@ -49,7 +54,8 @@ export function AppHeader() {
           </BreadcrumbList>
         </Breadcrumb>
 
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          {pathname === "/workspace" && <WorkspaceGuideDialog />}
           <ThemeToggle />
         </div>
       </div>

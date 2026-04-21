@@ -41,6 +41,15 @@ type SummaryMinutesMutation = {
   }>;
 };
 
+type UpdateReportMutation = {
+  mutateAsync: (params: {
+    id: number;
+    textContent: string;
+  }) => Promise<{
+    reportUrl: string;
+  }>;
+};
+
 type UseWorkspacePipelineParams = {
   sourceMeeting: MeetingRecord;
   setActiveMeeting: React.Dispatch<React.SetStateAction<MeetingRecord>>;
@@ -50,6 +59,7 @@ type UseWorkspacePipelineParams = {
   setProcessingProgress: React.Dispatch<React.SetStateAction<number>>;
   diarizeTranscribeMutation: DiarizeTranscribeMutation;
   summaryMinutesMutation: SummaryMinutesMutation;
+  updateReportMutation: UpdateReportMutation;
 };
 
 type StartProcessingArgs = {
@@ -87,6 +97,7 @@ export function useWorkspacePipeline({
   setProcessingProgress,
   diarizeTranscribeMutation,
   summaryMinutesMutation,
+  updateReportMutation,
 }: UseWorkspacePipelineParams) {
   const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>(
     createInitialPipelineSteps,
@@ -262,6 +273,7 @@ export function useWorkspacePipeline({
       const runSpeakerSummaryAndMinutes = (
         segments: TranscriptSegment[],
         rawTranscriptText: string,
+        recordId?: number,
       ) => {
         updatePipelineStep("speaker_summary", (step) => ({
           ...step,
@@ -286,16 +298,18 @@ export function useWorkspacePipeline({
         }, 240);
 
         void (async () => {
-          let summaries: SpeakerSummary[] = buildSpeakerSummariesFromSegments(
-            segments,
-            sourceMeeting.speakerSummaries,
-          );
-          let nextMinutes = "Không có biên bản từ API cho phiên hiện tại.";
-          let nextMailTemplate: MeetingMailTemplate | undefined;
-
-          setNotice("Đang tạo tóm tắt ý chính theo từng người...");
-
+          let minutesTimer: ReturnType<typeof setInterval> | null = null;
+          
           try {
+            let summaries: SpeakerSummary[] = buildSpeakerSummariesFromSegments(
+              segments,
+              sourceMeeting.speakerSummaries,
+            );
+            let nextMinutes = "Không có biên bản từ API cho phiên hiện tại.";
+            let nextMailTemplate: MeetingMailTemplate | undefined;
+
+            setNotice("Đang tạo tóm tắt ý chính theo từng người...");
+
             const transcriptLinesForChat = segments.length
               ? segments.map(
                   (segment) =>
@@ -319,73 +333,98 @@ export function useWorkspacePipeline({
               combinedResult.minutesMarkdown.trim() ||
               "Không có biên bản từ API cho phiên hiện tại.";
             nextMailTemplate = combinedResult.mailTemplate;
-          } catch (error) {
-            clearInterval(speakerSummaryTimer);
-            markPipelineAsError(
-              `Lỗi tạo tóm tắt theo người nói: ${error instanceof Error ? error.message : String(error)}`,
-              "speaker_summary",
-            );
-            return;
-          }
 
-          if (processingRunIdRef.current !== runId) {
-            clearInterval(speakerSummaryTimer);
-            return;
-          }
-
-          clearInterval(speakerSummaryTimer);
-          updatePipelineStep("speaker_summary", (step) => ({
-            ...step,
-            status: "completed",
-            progress: 100,
-          }));
-
-          setActiveMeeting((current) => ({
-            ...current,
-            speakerSummaries: summaries,
-          }));
-          setNotice("Đã có tóm tắt theo từng người, đang tạo biên bản...");
-
-          updatePipelineStep("minutes", (step) => ({
-            ...step,
-            status: "running",
-            progress: 15,
-          }));
-
-          let minutesProgress = 15;
-          const minutesTimer = setInterval(() => {
             if (processingRunIdRef.current !== runId) {
-              clearInterval(minutesTimer);
+              clearInterval(speakerSummaryTimer);
               return;
             }
 
-            minutesProgress = Math.min(minutesProgress + 17, 100);
+            // Step 3 completed
+            clearInterval(speakerSummaryTimer);
+            updatePipelineStep("speaker_summary", (step) => ({
+              ...step,
+              status: "completed",
+              progress: 100,
+            }));
+
+            // Step 4 starts
             updatePipelineStep("minutes", (step) => ({
               ...step,
-              status: minutesProgress >= 100 ? "completed" : "running",
-              progress: minutesProgress,
+              status: "running",
+              progress: 15,
             }));
-            setProcessingProgress((value) =>
-              Math.min(value + (minutesProgress >= 100 ? 4 : 2), 100),
-            );
 
-            if (minutesProgress < 100) {
+            setNotice("Đã có tóm tắt, đang tự động lưu biên bản...");
+
+            let minutesProgress = 15;
+            minutesTimer = setInterval(() => {
+              if (processingRunIdRef.current !== runId) {
+                if (minutesTimer) clearInterval(minutesTimer);
+                return;
+              }
+              minutesProgress = Math.min(minutesProgress + 15, 90);
+              updatePipelineStep("minutes", (step) => ({
+                ...step,
+                status: "running",
+                progress: minutesProgress,
+              }));
+              setProcessingProgress((value) => Math.min(value + 2, 98));
+            }, 200);
+
+            // 🆕 Auto-save BEFORE marking pipeline as completed
+            let finalReportUrl: string | null = null;
+            if (recordId) {
+              try {
+                const result = await updateReportMutation.mutateAsync({
+                  id: recordId,
+                  textContent: nextMinutes,
+                });
+                finalReportUrl = result.reportUrl;
+              } catch (saveError) {
+                console.error("Auto-save failed:", saveError);
+                // We show a warning but let the pipeline finish
+                setNotice("Lưu tự động thất bại. Vui lòng lưu biên bản thủ công.");
+              }
+            }
+
+            if (processingRunIdRef.current !== runId) {
+              if (minutesTimer) clearInterval(minutesTimer);
               return;
             }
 
-            clearInterval(minutesTimer);
-            setProcessingProgress(100);
+            // Finalize Step 4
+            if (minutesTimer) clearInterval(minutesTimer);
 
+            updatePipelineStep("minutes", (step) => ({
+              ...step,
+              status: "completed",
+              progress: 100,
+            }));
+
+            setProcessingProgress(100);
             setActiveMeeting((current) => ({
               ...current,
               processingStatus: "completed",
+              speakerSummaries: summaries,
               durationSecond: Math.max(durationSecond, 30),
               minutes: nextMinutes,
               mailTemplate: nextMailTemplate,
+              reportUrl: finalReportUrl || current.reportUrl,
             }));
             setMinutesDraft(nextMinutes);
-            setNotice("Xử lý hoàn tất. Biên bản đã được tạo từ API.");
-          }, 120);
+            setNotice(
+              finalReportUrl
+                ? "Phiên họp đã sẵn sàng. Biên bản đã được lưu tự động."
+                : "Phiên họp đã sẵn sàng. Lưu biên bản thủ công để gửi mail.",
+            );
+          } catch (error) {
+            clearInterval(speakerSummaryTimer);
+            if (minutesTimer) clearInterval(minutesTimer);
+            markPipelineAsError(
+              `Lỗi tạo biên bản: ${error instanceof Error ? error.message : String(error)}`,
+              "minutes",
+            );
+          }
         })();
       };
 
@@ -393,6 +432,7 @@ export function useWorkspacePipeline({
         segments: TranscriptSegment[],
         speakerCount: number,
         rawTranscriptText: string,
+        recordId?: number,
       ) => {
         runPipelineStep("diarization", 20, 250, () => {
           if (processingRunIdRef.current !== runId) {
@@ -413,7 +453,7 @@ export function useWorkspacePipeline({
             speakerCount: safeSpeakerCount,
           }));
           setNotice("Đã tách theo người nói, đang tạo biên bản...");
-          runSpeakerSummaryAndMinutes(safeSegments, rawTranscriptText);
+          runSpeakerSummaryAndMinutes(safeSegments, rawTranscriptText, recordId);
         });
       };
 
@@ -487,7 +527,12 @@ export function useWorkspacePipeline({
           setNotice(
             "Đã có nội dung chữ, đang tách hội thoại theo từng người...",
           );
-          runDiarizationStep(parsedSegments, speakerCount, mergedTranscript);
+          runDiarizationStep(
+            parsedSegments,
+            speakerCount,
+            mergedTranscript,
+            apiResult.id,
+          );
         } catch (error) {
           clearInterval(rawStepTimer);
 

@@ -1,13 +1,19 @@
+export type FilterType = "all" | "completed" | "pending";
+
 type HistoryHeaderMetricsProps = {
   total: number;
   withReport: number;
   withoutReport: number;
+  activeFilter: FilterType;
+  onFilterChange: (filter: FilterType) => void;
 };
 
 export function HistoryHeaderMetrics({
   total,
   withReport,
   withoutReport,
+  activeFilter,
+  onFilterChange,
 }: HistoryHeaderMetricsProps) {
   return (
     <div className="shrink-0 flex flex-wrap items-center justify-between gap-3">
@@ -20,15 +26,39 @@ export function HistoryHeaderMetrics({
         </p>
       </div>
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span className="rounded-md border border-border/70 bg-muted/40 px-2 py-1">
+        <button
+          type="button"
+          onClick={() => onFilterChange("all")}
+          className={`cursor-pointer rounded-md border px-2 py-1 transition-colors ${
+            activeFilter === "all"
+              ? "border-primary bg-primary/10 font-medium text-primary"
+              : "border-border/70 bg-muted/40 hover:bg-muted/80"
+          }`}
+        >
           Tổng bản ghi: {total}
-        </span>
-        <span className="rounded-md border border-border/70 bg-muted/40 px-2 py-1">
+        </button>
+        <button
+          type="button"
+          onClick={() => onFilterChange("completed")}
+          className={`cursor-pointer rounded-md border px-2 py-1 transition-colors ${
+            activeFilter === "completed"
+              ? "border-emerald-500 bg-emerald-500/10 font-medium text-emerald-600 dark:text-emerald-400"
+              : "border-border/70 bg-muted/40 hover:bg-muted/80"
+          }`}
+        >
           Đã có biên bản: {withReport}
-        </span>
-        <span className="rounded-md border border-border/70 bg-muted/40 px-2 py-1">
+        </button>
+        <button
+          type="button"
+          onClick={() => onFilterChange("pending")}
+          className={`cursor-pointer rounded-md border px-2 py-1 transition-colors ${
+            activeFilter === "pending"
+              ? "border-amber-500 bg-amber-500/10 font-medium text-amber-600 dark:text-amber-400"
+              : "border-border/70 bg-muted/40 hover:bg-muted/80"
+          }`}
+        >
           Chưa có biên bản: {withoutReport}
-        </span>
+        </button>
       </div>
     </div>
   );

@@ -32,8 +32,11 @@ export function TranscriptComparisonDialog({
     <div className="mt-4 rounded-lg border border-border/70 bg-background p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-foreground">
+          {/* <h3 className="text-sm font-semibold text-foreground">
             Đối chiếu transcript
+          </h3> */}
+          <h3 className="text-sm font-semibold text-foreground">
+            Transcript
           </h3>
         </div>
 
@@ -66,8 +69,8 @@ export function TranscriptComparisonDialog({
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="grid gap-4 px-6 pb-6 md:grid-cols-2">
-                  <div className="space-y-2">
+                <div className="grid gap-4 px-6 pb-6 md:grid-cols-1">
+                  {/* <div className="space-y-2">
                     <div className="flex items-center gap-1">
                       <Button
                         type="button"
@@ -87,7 +90,7 @@ export function TranscriptComparisonDialog({
                     <p className="max-h-[55dvh] overflow-auto whitespace-pre-wrap rounded-md border border-border/60 bg-muted/20 p-4 text-sm leading-7 text-muted-foreground">
                       {rawTranscript}
                     </p>
-                  </div>
+                  </div> */}
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-1">
@@ -127,8 +130,8 @@ export function TranscriptComparisonDialog({
         </div>
       </div>
 
-      <div className="mt-2 grid gap-3 md:grid-cols-2">
-        <div className="space-y-1">
+      <div className="mt-2 grid gap-3 md:grid-cols-1">
+        {/* <div className="space-y-1">
           <div className="flex items-center gap-1">
             <Button
               type="button"
@@ -148,7 +151,7 @@ export function TranscriptComparisonDialog({
           <p className="max-h-72 overflow-auto whitespace-pre-wrap rounded-md border border-border/60 bg-muted/20 p-3 pr-2 text-sm leading-7 text-muted-foreground">
             {rawTranscript}
           </p>
-        </div>
+        </div> */}
 
         <div className="space-y-1">
           <div className="flex items-center gap-1">

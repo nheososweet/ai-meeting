@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { LoaderCircleIcon } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { HistoryHeaderMetrics } from "@/app/(main)/history/_components/HistoryHeaderMetrics";
+import { HistoryHeaderMetrics, type FilterType } from "@/app/(main)/history/_components/HistoryHeaderMetrics";
 import { HistoryRecordItem } from "@/app/(main)/history/_components/HistoryRecordItem";
 import { ReportPreviewDialog } from "@/app/(main)/history/_components/ReportPreviewDialog";
 import { SendEmailDialog } from "@/app/(main)/history/_components/SendEmailDialog";
@@ -28,6 +29,28 @@ export default function HistoryPage() {
 
   const recordsQuery = useRecordsQuery();
   const records = recordsQuery.data;
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeFilter = (searchParams.get("filter") as FilterType) || "all";
+
+  function handleFilterChange(newFilter: FilterType) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("filter", newFilter);
+    router.replace(`${pathname}?${params.toString()}`);
+  }
+
+  const filteredRecords = useMemo(() => {
+    if (!records) return [];
+    if (activeFilter === "completed") {
+      return records.filter((r) => Boolean(r.reportUrl));
+    }
+    if (activeFilter === "pending") {
+      return records.filter((r) => !r.reportUrl);
+    }
+    return records;
+  }, [records, activeFilter]);
 
   const { actionToast, showActionToast } = useHistoryToast();
 
@@ -123,14 +146,16 @@ export default function HistoryPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <section className="flex min-h-0 flex-1 flex-col rounded-lg border border-border/80 bg-card p-5 shadow-sm lg:sticky lg:top-4 lg:h-[calc(100dvh-8.5rem)]">
+      <section className="flex min-h-0 flex-col rounded-lg border border-border/80 bg-card p-4 sm:p-5 shadow-sm h-[calc(100dvh-6rem)] md:h-[calc(100dvh-8.5rem)]">
         <HistoryHeaderMetrics
           total={recordMetrics.total}
           withReport={recordMetrics.withReport}
           withoutReport={recordMetrics.withoutReport}
+          activeFilter={activeFilter}
+          onFilterChange={handleFilterChange}
         />
 
-        <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-lg">
+        <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-md border border-border/40 bg-muted/10">
           {recordsQuery.isLoading ? (
             <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
               <LoaderCircleIcon className="size-4 animate-spin" />
@@ -140,14 +165,14 @@ export default function HistoryPage() {
             <div className="p-4 text-sm text-rose-600 dark:text-rose-400">
               Không tải được danh sách bản ghi.
             </div>
-          ) : records?.length ? (
+          ) : filteredRecords.length ? (
             <div className="space-y-3 p-3">
-              {records.map((record) => (
+              {filteredRecords.map((record) => (
                 <HistoryRecordItem
                   key={record.id}
                   record={record}
                   createdAtLabel={historyDateTimeFormatter.format(
-                    new Date(record.createTime),
+                    new Date(new Date(record.createTime).getTime() + 7 * 60 * 60 * 1000),
                   )}
                   previewAudioActive={previewAudioRecordId === record.id}
                   previewTranscriptActive={

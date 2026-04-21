@@ -54,10 +54,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   ),
-  applicationName: "Hệ thống phiên dịch âm thanh thông minh",
+  applicationName: "Hệ thống báo cáo biên bản cuộc họp",
   title: {
-    default: "Hệ thống phiên dịch âm thanh thông minh",
-    template: "%s | Hệ thống phiên dịch âm thanh thông minh",
+    default: "Hệ thống báo cáo biên bản cuộc họp",
+    template: "%s | Hệ thống báo cáo biên bản cuộc họp",
   },
   description:
     "Nền tảng phiên dịch âm thanh thông minh hỗ trợ dịch băng, quản lý biên bản và theo dõi lịch sử cuộc họp.",
@@ -69,16 +69,16 @@ export const metadata: Metadata = {
     "transcript",
   ],
   openGraph: {
-    title: "Hệ thống phiên dịch âm thanh thông minh",
+    title: "Hệ thống báo cáo biên bản cuộc họp",
     description:
       "Nền tảng phiên dịch âm thanh thông minh hỗ trợ dịch băng, quản lý biên bản và theo dõi lịch sử cuộc họp.",
     locale: "vi_VN",
     type: "website",
-    siteName: "Hệ thống phiên dịch âm thanh thông minh",
+    siteName: "Hệ thống báo cáo biên bản cuộc họp",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Hệ thống phiên dịch âm thanh thông minh",
+    title: "Hệ thống báo cáo biên bản cuộc họp",
     description:
       "Nền tảng phiên dịch âm thanh thông minh hỗ trợ dịch băng, quản lý biên bản và theo dõi lịch sử cuộc họp.",
   },

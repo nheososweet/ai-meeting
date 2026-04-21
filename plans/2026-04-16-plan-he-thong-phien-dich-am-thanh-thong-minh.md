@@ -1,4 +1,4 @@
-# Plan triển khai - Hệ thống phiên dịch âm thanh thông minh
+# Plan triển khai - Hệ thống báo cáo biên bản cuộc họp
 
 ## 1. Mình đã hiểu hệ thống như thế nào
 

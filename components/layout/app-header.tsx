@@ -14,7 +14,7 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 function resolveHeader(pathname: string): string {
   if (pathname === "/workspace") {
-    return "Phiên dịch";
+    return "Biên bản cuộc họp";
   }
 
   if (pathname === "/history") {
@@ -25,7 +25,7 @@ function resolveHeader(pathname: string): string {
     return "Chi tiết cuộc họp";
   }
 
-  return "Phiên dịch";
+  return "Biên bản cuộc họp";
 }
 
 export function AppHeader() {

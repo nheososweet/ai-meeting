@@ -1,4 +1,4 @@
-# Hệ thống phiên dịch âm thanh thông minh
+# Hệ thống báo cáo biên bản cuộc họp
 
 Đây là nền tảng web giúp chuyển đổi nội dung cuộc họp từ âm thanh sang văn bản, tách người nói, tạo biên bản, quản lý lịch sử và hỗ trợ gửi biên bản qua email.
 

@@ -347,6 +347,13 @@ export function useWorkspacePipeline({
               progress: 100,
             }));
 
+            // 🚀 Progressive Update: Show summaries immediately
+            setActiveMeeting((current) => ({
+              ...current,
+              speakerSummaries: summaries,
+              mailTemplate: nextMailTemplate,
+            }));
+
             // Step 4 starts
             updatePipelineStep("minutes", (step) => ({
               ...step,
@@ -405,10 +412,8 @@ export function useWorkspacePipeline({
             setActiveMeeting((current) => ({
               ...current,
               processingStatus: "completed",
-              speakerSummaries: summaries,
               durationSecond: Math.max(durationSecond, 30),
               minutes: nextMinutes,
-              mailTemplate: nextMailTemplate,
               reportUrl: finalReportUrl || current.reportUrl,
             }));
             setMinutesDraft(nextMinutes);

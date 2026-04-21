@@ -177,3 +177,40 @@
 .dark * {
   scrollbar-color: var(--muted) transparent;
 }
+
+/* Tiptap Editor Styles */
+.tiptap-editor .tiptap {
+  @apply outline-none min-h-[120px];
+}
+
+.tiptap-editor .tiptap p.is-editor-empty:first-child::before {
+  @apply pointer-events-none float-left h-0 text-muted-foreground content-[attr(data-placeholder)];
+}
+
+.tiptap-editor .tiptap ul {
+  @apply list-disc pl-5 my-2;
+}
+
+.tiptap-editor .tiptap ol {
+  @apply list-decimal pl-5 my-2;
+}
+
+.tiptap-editor .tiptap blockquote {
+  @apply border-l-4 border-border pl-4 italic my-2;
+}
+
+.tiptap-editor .tiptap a {
+  @apply text-primary underline underline-offset-4 font-medium transition-colors hover:text-primary/80;
+}
+
+.tiptap-editor .tiptap p {
+  @apply mb-1.5 leading-relaxed;
+}
+
+.tiptap-editor .tiptap strong {
+  @apply font-bold text-foreground;
+}
+
+.tiptap-editor .tiptap em {
+  @apply italic;
+}

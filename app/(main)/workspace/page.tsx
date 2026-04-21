@@ -703,7 +703,7 @@ export default function WorkspacePage() {
       <section className="rounded-lg border border-border/80 bg-card p-5 shadow-sm lg:sticky lg:top-4 lg:max-h-[calc(100dvh-8.5rem)] lg:overflow-y-auto">
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-lg font-semibold text-foreground">
-            Hệ thống phiên dịch âm thanh thông minh
+            Hệ thống báo cáo biên bản cuộc họp
           </h1>
           <span
             className={`rounded-md px-2 py-1 text-xs font-semibold ${status.className}`}
@@ -1095,13 +1095,12 @@ export default function WorkspacePage() {
 
       {actionToast ? (
         <div
-          className={`fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur transition-all ${
-            actionToast.variant === "success"
+          className={`fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur transition-all ${actionToast.variant === "success"
               ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
               : actionToast.variant === "error"
                 ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
                 : "border-blue-300/70 bg-blue-50/95 text-blue-900"
-          }`}
+            }`}
         >
           <span>{actionToast.message}</span>
           <button

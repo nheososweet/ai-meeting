@@ -21,7 +21,7 @@ import { Clock3Icon, MicIcon, TerminalIcon } from "lucide-react";
 const appNav = {
   main: [
     {
-      title: "Phiên dịch",
+      title: "Biên bản cuộc họp",
       href: "/workspace",
       icon: MicIcon,
     },
@@ -63,10 +63,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <TerminalIcon className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    Hệ thống phiên dịch
+                  <span className="font-medium">
+                    Hệ thống báo cáo biên bản cuộc họp
                   </span>
-                  <span className="truncate text-xs">Âm thanh thông minh</span>
                 </div>
               </div>
             </SidebarMenuButton>

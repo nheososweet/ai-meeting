@@ -497,9 +497,9 @@ export function useWorkspacePipeline({
           const refinedTranscriptLines = apiResult.refinedTranscription
             .map((line) => cleanTranscriptLine(line))
             .filter((line) => line.length > 0);
-          const parsedSegments = parseTranscriptSegments(transcriptLines);
+          const parsedSegments = parseTranscriptSegments(refinedTranscriptLines);
           const speakerCount = deriveSpeakerCount(
-            transcriptLines,
+            refinedTranscriptLines,
             parsedSegments,
           );
           const mergedTranscript = transcriptLines.join("\n");
@@ -535,7 +535,7 @@ export function useWorkspacePipeline({
           runDiarizationStep(
             parsedSegments,
             speakerCount,
-            mergedTranscript,
+            mergedRefinedTranscript || mergedTranscript,
             apiResult.id,
           );
         } catch (error) {

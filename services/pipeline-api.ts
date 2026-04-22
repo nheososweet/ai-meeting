@@ -9,7 +9,7 @@ const baseURL = (
 
 export const pipelineApi = axios.create({
   baseURL,
-  timeout: 1_200_000,
+  timeout: 1_500_000,
   headers: {
     accept: "application/json",
   },

@@ -8,6 +8,13 @@ export type ProcessingStatus =
   | "error"
 
 export type EmailStatus = "not_sent" | "sent" | "failed"
+ 
+export interface EvaluationResult {
+  error_details: Record<string, string[]>;
+  deductions_per_code: Record<string, number>;
+  deductions_per_group: Record<string, number>;
+  final_score: number;
+}
 
 export interface TranscriptSegment {
   id: string
@@ -55,4 +62,5 @@ export interface MeetingRecord {
   audioUrl?: string
   apiRecordId?: number
   reportUrl?: string
+  evaluation?: EvaluationResult
 }

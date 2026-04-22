@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeftIcon, Maximize2Icon, XIcon } from "lucide-react";
+import { ChevronLeftIcon, Maximize2Icon, ShieldCheckIcon, XIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RecordingPanel } from "@/components/workspace/recording-panel";
 import { UploadPanel } from "@/components/workspace/upload-panel";
 import { EmailDialog } from "@/app/(main)/workspace/_components/EmailDialog";
@@ -28,6 +29,7 @@ import {
   formatFileSize,
   statusConfig,
 } from "@/app/(main)/workspace/_lib/format-utils";
+import { EvaluationDetailDialog } from "@/app/(main)/workspace/_components/EvaluationDetailDialog";
 import { PIPELINE_STEP_WEIGHT } from "@/app/(main)/workspace/_lib/pipeline-constants";
 import { SpeakersLabelingDialog } from "@/app/(main)/workspace/_components/SpeakersLabelingDialog";
 import {
@@ -46,6 +48,7 @@ import { useWorkspaceUpload } from "@/app/(main)/workspace/_hooks/useWorkspaceUp
 import { useDiarizeTranscribeMutation } from "@/hooks/services/use-diarize-transcribe-mutation";
 import { useSummaryMinutesMutation } from "@/hooks/services/use-summary-minutes-mutation";
 import { useUpdateReportMutation } from "@/hooks/services/use-update-report-mutation";
+import { useEvaluateTranscriptMutation } from "@/hooks/services/use-evaluate-transcript-mutation";
 import { meetingRecords } from "@/lib/mock/meetings";
 import { sendMail } from "@/services/pipeline-records.service";
 import type {
@@ -126,6 +129,7 @@ export default function WorkspacePage() {
   const diarizeTranscribeMutation = useDiarizeTranscribeMutation();
   const summaryMinutesMutation = useSummaryMinutesMutation();
   const updateReportMutation = useUpdateReportMutation();
+  const evaluateTranscriptMutation = useEvaluateTranscriptMutation();
   const [inputMode, setInputMode] = useState<AudioInputSource>("upload");
   const [activeMeeting, setActiveMeeting] =
     useState<MeetingRecord>(initialMeeting);
@@ -155,6 +159,7 @@ export default function WorkspacePage() {
   >(null);
   const [isSavingMinutes, setIsSavingMinutes] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isEvaluationDialogOpen, setIsEvaluationDialogOpen] = useState(false);
   const busyProcessing =
     activeMeeting.processingStatus === "uploading" ||
     activeMeeting.processingStatus === "processing";
@@ -178,6 +183,7 @@ export default function WorkspacePage() {
     diarizeTranscribeMutation,
     summaryMinutesMutation,
     updateReportMutation,
+    evaluateTranscriptMutation,
   });
 
   const {
@@ -799,6 +805,32 @@ export default function WorkspacePage() {
             Kết quả xử lý
           </h2>
           <div className="flex flex-wrap gap-2">
+            {activeMeeting.evaluation && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={`h-8 gap-1.5 rounded-full px-3 font-bold transition-colors ${
+                        activeMeeting.evaluation.final_score >= 8
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/30 dark:bg-emerald-900/20 dark:text-emerald-400"
+                          : activeMeeting.evaluation.final_score >= 5
+                            ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-900/30 dark:bg-amber-900/20 dark:text-amber-400"
+                            : "border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400"
+                      }`}
+                      onClick={() => setIsEvaluationDialogOpen(true)}
+                    >
+                      <ShieldCheckIcon className="size-3.5" />
+                      <span>Chất lượng: {activeMeeting.evaluation.final_score}/10</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    Xem chi tiết đánh giá và tiêu chí chấm điểm
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             {/* <Button
               size="sm"
               variant="outline"
@@ -1091,6 +1123,13 @@ export default function WorkspacePage() {
             ) : null}
           </div>
         ) : null}
+
+        <EvaluationDetailDialog
+          isOpen={isEvaluationDialogOpen}
+          onOpenChange={setIsEvaluationDialogOpen}
+          segments={refinedSegments.length > 0 ? refinedSegments : activeMeeting.segments}
+          evaluation={activeMeeting.evaluation}
+        />
       </section>
 
       {actionToast ? (

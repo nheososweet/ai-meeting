@@ -1,3 +1,4 @@
+import axios from "axios";
 import { pipelineApi } from "@/services/pipeline-api";
 
 interface UpstreamDiarizeTranscribeResponse {
@@ -65,6 +66,20 @@ interface UpstreamSendMailResultItem {
 interface ChatSummaryBySpeakerItem {
   speaker?: unknown;
   points?: unknown;
+}
+
+interface UpstreamEvaluateResponse {
+  error_details: Record<string, string[]>;
+  deductions_per_code: Record<string, number>;
+  deductions_per_group: Record<string, number>;
+  final_score: number;
+}
+
+export interface EvaluationResponse {
+  errorDetails: Record<string, string[]>;
+  deductionsPerCode: Record<string, number>;
+  deductionsPerGroup: Record<string, number>;
+  finalScore: number;
 }
 
 export interface DiarizeTranscribeResponse {
@@ -458,6 +473,38 @@ export async function sendMail(input: {
   });
 
   return parseSendMailResponse(response.data);
+}
+
+export async function evaluateTranscript(input: {
+  id: number;
+  transcript: string;
+}): Promise<EvaluationResponse> {
+  if (!input.transcript.trim()) {
+    throw new Error("Thiếu nội dung transcript để chấm điểm.");
+  }
+
+  const response = await axios.post<UpstreamEvaluateResponse>(
+    "https://api-stel.svisor.vn/evaluate",
+    {
+      id: input.id,
+      transcript: input.transcript,
+    },
+    {
+      headers: {
+        accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  const payload = response.data;
+
+  return {
+    errorDetails: payload.error_details,
+    deductionsPerCode: payload.deductions_per_code,
+    deductionsPerGroup: payload.deductions_per_group,
+    finalScore: payload.final_score,
+  };
 }
 
 export async function getRecords(): Promise<PipelineRecord[]> {

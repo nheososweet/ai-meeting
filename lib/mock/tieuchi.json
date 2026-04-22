@@ -1,0 +1,115 @@
+{
+    "total_max_score": 10,
+    "sections": [
+        {
+            "id": "1",
+            "name": "Kỹ năng diễn đạt và sử dụng ngôn từ khi giao tiếp",
+            "max_score": 1.5,
+            "criteria": [
+                {
+                    "id": "1.1",
+                    "description": "Ngọng N/L/E",
+                    "deduction": 0.5
+                },
+                {
+                    "id": "1.2",
+                    "description": "Sử dụng từ ngữ không chuyên nghiệp, từ mộc, xưng hô không phù hợp",
+                    "deduction": 0.5
+                },
+                {
+                    "id": "1.3",
+                    "description": "Nói trống không, thiếu chủ ngữ/vị ngữ",
+                    "deduction": 1.0
+                },
+                {
+                    "id": "1.4",
+                    "description": "Diễn đạt không rõ ràng, dài dòng, dùng thuật ngữ khó hiểu",
+                    "deduction": 1.0
+                },
+                {
+                    "id": "1.5",
+                    "description": "Sử dụng câu từ chối hoặc thiếu trách nhiệm (không hỗ trợ được, không biết,...)",
+                    "deduction": 1.5
+                }
+            ]
+        },
+        {
+            "id": "2",
+            "name": "Kỹ năng đồng cảm, chia sẻ",
+            "max_score": 1.5,
+            "criteria": [
+                {
+                    "id": "2.1",
+                    "description": "Không cảm ơn khách hàng khi góp ý",
+                    "deduction": 0.5
+                },
+                {
+                    "id": "2.2",
+                    "description": "Không trấn an khi khách hàng nhắc lại nhiều lần",
+                    "deduction": 1.0
+                },
+                {
+                    "id": "2.3",
+                    "description": "Không thể hiện đồng cảm khi khách gặp vấn đề",
+                    "deduction": 1.0
+                },
+                {
+                    "id": "2.4",
+                    "description": "Không xin lỗi khi khách hàng không hài lòng",
+                    "deduction": 1.5
+                }
+            ]
+        },
+        {
+            "id": "3",
+            "name": "Kỹ năng nghiệp vụ và giải quyết vấn đề",
+            "max_score": 4.0,
+            "criteria": [
+                {
+                    "id": "3.1",
+                    "description": "Không đưa ra hướng giải quyết hoặc phương án thay thế",
+                    "deduction": 1.0
+                }
+            ]
+        },
+        {
+            "id": "4",
+            "name": "Kỹ năng lắng nghe và tương tác",
+            "max_score": 1.5,
+            "criteria": [
+                {
+                    "id": "4.1",
+                    "description": "Ngắt lời khách hàng không phù hợp",
+                    "deduction": 0.5
+                },
+                {
+                    "id": "4.2",
+                    "description": "Yêu cầu khách lặp lại thông tin đã cung cấp",
+                    "deduction": 0.5
+                },
+                {
+                    "id": "4.3",
+                    "description": "Dead air quá lâu mà không thông báo",
+                    "deduction": 0.5
+                }
+            ]
+        },
+        {
+            "id": "5",
+            "name": "Tuân thủ quy trình và kiểm soát cuộc gọi",
+            "max_score": 1.5,
+            "criteria": [
+                {
+                    "id": "5.1",
+                    "description": "Không tóm tắt/xác nhận nội dung trước khi kết thúc",
+                    "deduction": 0.5
+                },
+                {
+                    "id": "5.2",
+                    "description": "Giữ máy không xin phép hoặc quá thời gian quy định",
+                    "deduction": 1.0
+                }
+            ]
+        }
+    ]
+}

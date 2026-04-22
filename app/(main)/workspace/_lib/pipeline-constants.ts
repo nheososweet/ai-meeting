@@ -22,6 +22,7 @@ export type PipelineStepStatus = "pending" | "running" | "completed" | "error";
 export type PipelineStepId =
   | "raw_transcript"
   | "diarization"
+  | "evaluation"
   | "speaker_summary"
   | "minutes";
 
@@ -47,22 +48,28 @@ export const PIPELINE_STEP_BLUEPRINT: Array<
     description: "Nhận diện ai đang nói và tách thành từng đoạn hội thoại.",
   },
   {
+    id: "evaluation",
+    title: "3) Chấm điểm transcript",
+    description: "Đánh giá chất lượng hội thoại dựa trên các tiêu chí nghiệp vụ.",
+  },
+  {
     id: "speaker_summary",
-    title: "3) Tóm tắt theo từng người",
+    title: "4) Tóm tắt theo từng người",
     description: "Rút gọn các ý chính mà mỗi người đã trao đổi.",
   },
   {
     id: "minutes",
-    title: "4) Tạo biên bản cuộc họp",
+    title: "5) Tạo biên bản cuộc họp",
     description: "Tổng hợp nội dung thành biên bản dễ theo dõi.",
   },
 ];
 
 export const PIPELINE_STEP_WEIGHT: Record<PipelineStepId, number> = {
-  raw_transcript: 35,
-  diarization: 20,
-  speaker_summary: 25,
-  minutes: 20,
+  raw_transcript: 30,
+  diarization: 15,
+  evaluation: 20,
+  speaker_summary: 20,
+  minutes: 15,
 };
 
 export function createInitialPipelineSteps(): PipelineStep[] {

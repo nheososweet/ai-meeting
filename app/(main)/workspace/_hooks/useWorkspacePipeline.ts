@@ -50,6 +50,18 @@ type UpdateReportMutation = {
   }>;
 };
 
+type EvaluateTranscriptMutation = {
+  mutateAsync: (params: {
+    id: number;
+    transcript: string;
+  }) => Promise<{
+    errorDetails: Record<string, string[]>;
+    deductionsPerCode: Record<string, number>;
+    deductionsPerGroup: Record<string, number>;
+    finalScore: number;
+  }>;
+};
+
 type UseWorkspacePipelineParams = {
   sourceMeeting: MeetingRecord;
   setActiveMeeting: React.Dispatch<React.SetStateAction<MeetingRecord>>;
@@ -60,6 +72,7 @@ type UseWorkspacePipelineParams = {
   diarizeTranscribeMutation: DiarizeTranscribeMutation;
   summaryMinutesMutation: SummaryMinutesMutation;
   updateReportMutation: UpdateReportMutation;
+  evaluateTranscriptMutation: EvaluateTranscriptMutation;
 };
 
 type StartProcessingArgs = {
@@ -98,6 +111,7 @@ export function useWorkspacePipeline({
   diarizeTranscribeMutation,
   summaryMinutesMutation,
   updateReportMutation,
+  evaluateTranscriptMutation,
 }: UseWorkspacePipelineParams) {
   const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>(
     createInitialPipelineSteps,
@@ -306,7 +320,6 @@ export function useWorkspacePipeline({
               sourceMeeting.speakerSummaries,
             );
             let nextMinutes = "Không có biên bản từ API cho phiên hiện tại.";
-            let nextMailTemplate: MeetingMailTemplate | undefined;
 
             setNotice("Đang tạo tóm tắt ý chính theo từng người...");
 
@@ -332,7 +345,7 @@ export function useWorkspacePipeline({
             nextMinutes =
               combinedResult.minutesMarkdown.trim() ||
               "Không có biên bản từ API cho phiên hiện tại.";
-            nextMailTemplate = combinedResult.mailTemplate;
+            const nextMailTemplate = combinedResult.mailTemplate;
 
             if (processingRunIdRef.current !== runId) {
               clearInterval(speakerSummaryTimer);
@@ -433,6 +446,67 @@ export function useWorkspacePipeline({
         })();
       };
 
+      const runEvaluationStep = (transcriptText: string, recordId: number) => {
+        updatePipelineStep("evaluation", (step) => ({
+          ...step,
+          status: "running",
+          progress: 0,
+        }));
+
+        let evaluationProgress = 0;
+        const evaluationTimer = setInterval(() => {
+          if (processingRunIdRef.current !== runId) {
+            clearInterval(evaluationTimer);
+            return;
+          }
+          evaluationProgress = Math.min(evaluationProgress + 12, 96);
+          updatePipelineStep("evaluation", (step) => ({
+            ...step,
+            status: "running",
+            progress: evaluationProgress,
+          }));
+        }, 300);
+
+        void (async () => {
+          try {
+            const result = await evaluateTranscriptMutation.mutateAsync({
+              id: recordId,
+              transcript: transcriptText,
+            });
+
+            if (processingRunIdRef.current !== runId) {
+              clearInterval(evaluationTimer);
+              return;
+            }
+
+            clearInterval(evaluationTimer);
+            updatePipelineStep("evaluation", (step) => ({
+              ...step,
+              status: "completed",
+              progress: 100,
+            }));
+
+            setActiveMeeting((current) => ({
+              ...current,
+              evaluation: {
+                error_details: result.errorDetails,
+                deductions_per_code: result.deductionsPerCode,
+                deductions_per_group: result.deductionsPerGroup,
+                final_score: result.finalScore,
+              },
+            }));
+          } catch (error) {
+            clearInterval(evaluationTimer);
+            updatePipelineStep("evaluation", (step) => ({
+              ...step,
+              status: "error",
+            }));
+            console.error("Evaluation failed:", error);
+            // We don't mark the whole pipeline as error for evaluation failure
+          }
+        })();
+      };
+
       const runDiarizationStep = (
         segments: TranscriptSegment[],
         speakerCount: number,
@@ -457,8 +531,13 @@ export function useWorkspacePipeline({
             segments: safeSegments,
             speakerCount: safeSpeakerCount,
           }));
-          setNotice("Đã tách theo người nói, đang tạo biên bản...");
+          setNotice("Đang tóm tắt và chấm điểm transcript...");
+          
           runSpeakerSummaryAndMinutes(safeSegments, rawTranscriptText, recordId);
+          
+          if (recordId) {
+            runEvaluationStep(rawTranscriptText, recordId);
+          }
         });
       };
 

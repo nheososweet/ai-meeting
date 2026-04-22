@@ -16,7 +16,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Clock3Icon, MicIcon, TerminalIcon } from "lucide-react";
+import { ClipboardCheckIcon, Clock3Icon, MicIcon, TerminalIcon } from "lucide-react";
 
 const appNav = {
   main: [
@@ -29,6 +29,11 @@ const appNav = {
       title: "Lịch sử cuộc họp",
       href: "/history",
       icon: Clock3Icon,
+    },
+    {
+      title: "Tiêu chí đánh giá",
+      href: "/evaluation-criteria",
+      icon: ClipboardCheckIcon,
     },
   ],
   support: [

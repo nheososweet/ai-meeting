@@ -9,6 +9,7 @@ import { HistoryRecordItem } from "@/app/(main)/history/_components/HistoryRecor
 import { ReportPreviewDialog } from "@/app/(main)/history/_components/ReportPreviewDialog";
 import { SendEmailDialog } from "@/app/(main)/history/_components/SendEmailDialog";
 import { TranscriptPreviewDialog } from "@/app/(main)/history/_components/TranscriptPreviewDialog";
+import { HistoryEvaluationDetailDialog } from "@/app/(main)/history/_components/HistoryEvaluationDetailDialog";
 import {
   historyDateTimeFormatter,
   resolveReportFilename,
@@ -26,6 +27,9 @@ export default function HistoryPage() {
   const [previewReportRecordId, setPreviewReportRecordId] = useState<
     number | null
   >(null);
+  const [evaluationRecordId, setEvaluationRecordId] = useState<number | null>(
+    null,
+  );
 
   const recordsQuery = useRecordsQuery();
   const records = recordsQuery.data;
@@ -59,6 +63,7 @@ export default function HistoryPage() {
     loadingTranscriptRecordId,
     previewTranscriptRecordId,
     activeTranscriptRecord,
+    ensureTranscriptFetched,
     handlePreviewTranscript,
     handleCopyTranscriptPreview,
     closeTranscriptPreview,
@@ -143,6 +148,25 @@ export default function HistoryPage() {
       setPreviewReportRecordId(null);
     }
   }
+ 
+  const activeEvaluationRecord = useMemo(() => {
+    return records?.find((r) => r.id === evaluationRecordId) ?? null;
+  }, [evaluationRecordId, records]);
+
+  const activeEvaluationDetailScore = useMemo(() => {
+    if (!activeEvaluationRecord?.detailScore || !activeEvaluationRecord.score) {
+      return undefined;
+    }
+    return {
+      ...activeEvaluationRecord.detailScore,
+      final_score: parseFloat(activeEvaluationRecord.score),
+    };
+  }, [activeEvaluationRecord]);
+
+  async function handleOpenEvaluation(record: PipelineRecord) {
+    setEvaluationRecordId(record.id);
+    await ensureTranscriptFetched(record);
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -184,6 +208,7 @@ export default function HistoryPage() {
                   onPreviewTranscript={handlePreviewTranscript}
                   onPreviewReport={handlePreviewReport}
                   onOpenSendEmailDialog={handleOpenSendEmailDialog}
+                  onOpenEvaluation={handleOpenEvaluation}
                 />
               ))}
             </div>
@@ -238,6 +263,16 @@ export default function HistoryPage() {
         onEmailIsHtmlChange={handleEmailIsHtmlChange}
         onEmailRecipientsInputChange={handleEmailRecipientsInputChange}
         onSendEmail={handleSendEmail}
+      />
+ 
+      <HistoryEvaluationDetailDialog
+        isOpen={evaluationRecordId !== null}
+        onOpenChange={(open) => !open && setEvaluationRecordId(null)}
+        transcriptContent={
+          evaluationRecordId ? (previewTranscriptByRecord[evaluationRecordId] ?? "") : ""
+        }
+        evaluation={activeEvaluationDetailScore}
+        filename={activeEvaluationRecord?.filename}
       />
 
       {actionToast ? (

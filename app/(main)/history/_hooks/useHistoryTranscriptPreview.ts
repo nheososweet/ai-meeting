@@ -70,16 +70,9 @@ export function useHistoryTranscriptPreview({
     void copyTextWithToast(content, "Đã copy transcript.");
   }
 
-  async function handlePreviewTranscript(record: PipelineRecord) {
-    if (previewTranscriptRecordId === record.id) {
-      setPreviewTranscriptRecordId(null);
-      return;
-    }
-
-    setPreviewTranscriptRecordId(record.id);
-
+  async function ensureTranscriptFetched(record: PipelineRecord) {
     if (previewTranscriptByRecord[record.id]) {
-      return;
+      return previewTranscriptByRecord[record.id];
     }
 
     setLoadingTranscriptRecordId(record.id);
@@ -90,18 +83,32 @@ export function useHistoryTranscriptPreview({
         timeout: 60_000,
       });
 
+      const content = response.data ?? "";
       setPreviewTranscriptByRecord((prev) => ({
         ...prev,
-        [record.id]: response.data ?? "",
+        [record.id]: content,
       }));
+      return content;
     } catch {
+      const errorContent = "Không đọc được nội dung transcript từ link hiện tại.";
       setPreviewTranscriptByRecord((prev) => ({
         ...prev,
-        [record.id]: "Không đọc được nội dung transcript từ link hiện tại.",
+        [record.id]: errorContent,
       }));
+      return errorContent;
     } finally {
       setLoadingTranscriptRecordId(null);
     }
+  }
+
+  async function handlePreviewTranscript(record: PipelineRecord) {
+    if (previewTranscriptRecordId === record.id) {
+      setPreviewTranscriptRecordId(null);
+      return;
+    }
+
+    setPreviewTranscriptRecordId(record.id);
+    await ensureTranscriptFetched(record);
   }
 
   function closeTranscriptPreview() {
@@ -113,6 +120,7 @@ export function useHistoryTranscriptPreview({
     loadingTranscriptRecordId,
     previewTranscriptRecordId,
     activeTranscriptRecord,
+    ensureTranscriptFetched,
     handlePreviewTranscript,
     handleCopyTranscriptPreview,
     closeTranscriptPreview,

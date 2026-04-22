@@ -30,6 +30,8 @@ interface UpstreamRecord {
   report?: unknown;
   filename?: unknown;
   mail_template?: unknown;
+  score?: unknown;
+  detail_score?: any;
 }
 
 interface UpstreamChatResponse {
@@ -110,6 +112,12 @@ export interface PipelineRecord {
   reportUrl: string | null;
   filename: string;
   mailTemplate?: MailTemplatePayload;
+  score?: string;
+  detailScore?: {
+    error_details: Record<string, string[]>;
+    deductions_per_code: Record<string, number>;
+    deductions_per_group: Record<string, number>;
+  };
 }
 
 export interface SpeakerSummaryFromChat {
@@ -483,17 +491,11 @@ export async function evaluateTranscript(input: {
     throw new Error("Thiếu nội dung transcript để chấm điểm.");
   }
 
-  const response = await axios.post<UpstreamEvaluateResponse>(
-    "https://api-stel.svisor.vn/evaluate",
+  const response = await pipelineApi.post<UpstreamEvaluateResponse>(
+    "/evaluate",
     {
       id: input.id,
       transcript: input.transcript,
-    },
-    {
-      headers: {
-        accept: "application/json",
-        "Content-Type": "application/json",
-      },
     }
   );
 
@@ -537,6 +539,8 @@ export async function getRecords(): Promise<PipelineRecord[]> {
             : null,
         filename: record.filename,
         mailTemplate: parseMailTemplatePayload(record.mail_template),
+        score: typeof record.score === "string" ? record.score : undefined,
+        detailScore: record.detail_score,
       };
     })
     .filter((record): record is PipelineRecord => Boolean(record));

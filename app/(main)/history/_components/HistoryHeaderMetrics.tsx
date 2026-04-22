@@ -31,7 +31,7 @@ export function HistoryHeaderMetrics({
           onClick={() => onFilterChange("all")}
           className={`cursor-pointer rounded-md border px-2 py-1 transition-colors ${
             activeFilter === "all"
-              ? "border-primary bg-primary/10 font-medium text-primary"
+              ? "border-slate-500 bg-slate-500/10 font-medium text-slate-700 dark:text-slate-300"
               : "border-border/70 bg-muted/40 hover:bg-muted/80"
           }`}
         >
@@ -42,7 +42,7 @@ export function HistoryHeaderMetrics({
           onClick={() => onFilterChange("completed")}
           className={`cursor-pointer rounded-md border px-2 py-1 transition-colors ${
             activeFilter === "completed"
-              ? "border-emerald-500 bg-emerald-500/10 font-medium text-emerald-600 dark:text-emerald-400"
+              ? "border-primary bg-primary/10 font-medium text-primary"
               : "border-border/70 bg-muted/40 hover:bg-muted/80"
           }`}
         >

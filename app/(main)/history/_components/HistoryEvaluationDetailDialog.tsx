@@ -15,17 +15,24 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatTimelineSecond } from "@/app/(main)/workspace/_lib/transcript-utils";
+import { formatTimelineSecond, parseTranscriptSegments } from "@/app/(main)/workspace/_lib/transcript-utils";
 import tieuchiData from "@/lib/mock/tieuchi.json";
-import type { EvaluationResult, TranscriptSegment } from "@/lib/types/meeting";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
-interface EvaluationDetailDialogProps {
+interface EvaluationResult {
+  error_details: Record<string, string[]>;
+  deductions_per_code: Record<string, number>;
+  deductions_per_group: Record<string, number>;
+  final_score: number;
+}
+
+interface HistoryEvaluationDetailDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  segments: TranscriptSegment[];
+  transcriptContent: string;
   evaluation?: EvaluationResult;
+  filename?: string;
 }
 
 function parseTimeRange(range: string) {
@@ -37,12 +44,18 @@ function parseTimeRange(range: string) {
   };
 }
 
-export function EvaluationDetailDialog({
+export function HistoryEvaluationDetailDialog({
   isOpen,
   onOpenChange,
-  segments,
+  transcriptContent,
   evaluation,
-}: EvaluationDetailDialogProps) {
+  filename,
+}: HistoryEvaluationDetailDialogProps) {
+  const segments = useMemo(() => {
+    const lines = transcriptContent.split("\n").filter(line => line.trim().length > 0);
+    return parseTranscriptSegments(lines);
+  }, [transcriptContent]);
+
   const criteriaMap = useMemo(() => {
     const map: Record<string, { description: string; deduction: number }> = {};
     tieuchiData.sections.forEach((section) => {
@@ -108,7 +121,7 @@ export function EvaluationDetailDialog({
                   Báo cáo đánh giá chất lượng hội thoại
                 </DialogTitle>
                 <DialogDescription className="mt-1 text-xs">
-                  Phân tích chi tiết dựa trên bộ tiêu chí nghiệp vụ CSKH.
+                  {filename || "Bản ghi lịch sử"} • Phân tích chi tiết dựa trên bộ tiêu chí nghiệp vụ.
                 </DialogDescription>
               </div>
               {evaluation && (

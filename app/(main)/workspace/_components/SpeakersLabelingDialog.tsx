@@ -96,10 +96,12 @@ export function SpeakersLabelingDialog({
         let result = text;
         Object.entries(cleanMap).forEach(([oldName, newName]) => {
           if (oldName === newName) return;
-          // Escape regex special chars in oldName just in case
+          // Escape regex special chars in oldName
           const escapedOld = oldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          
           // Pattern matches from start of line: "SpeakerName (" or "SpeakerName:"
-          const pattern = new RegExp(`^${escapedOld}(?=\\s*\\()`, "gm");
+          // We use ^ to ensure it's the beginning of a line (speaker tag)
+          const pattern = new RegExp(`^${escapedOld}(?=\\s*[\\(:])`, "gm");
           result = result.replace(pattern, newName);
         });
         return result;

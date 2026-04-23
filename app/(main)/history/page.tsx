@@ -154,13 +154,7 @@ export default function HistoryPage() {
   }, [evaluationRecordId, records]);
 
   const activeEvaluationDetailScore = useMemo(() => {
-    if (!activeEvaluationRecord?.detailScore || !activeEvaluationRecord.score) {
-      return undefined;
-    }
-    return {
-      ...activeEvaluationRecord.detailScore,
-      final_score: parseFloat(activeEvaluationRecord.score),
-    };
+    return activeEvaluationRecord?.evaluation;
   }, [activeEvaluationRecord]);
 
   async function handleOpenEvaluation(record: PipelineRecord) {

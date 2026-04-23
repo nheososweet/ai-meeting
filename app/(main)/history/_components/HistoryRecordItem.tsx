@@ -109,6 +109,37 @@ export function HistoryRecordItem({
                 </Badge>
               )}
             </div>
+
+            {/* Tags Recognition */}
+            {record.evaluation?.tags && record.evaluation.tags.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {record.evaluation.tags.slice(0, 3).map((tag, idx) => (
+                  <Badge
+                    key={idx}
+                    variant="outline"
+                    className="h-5 cursor-pointer border-blue-200 bg-blue-50/50 text-[10px] font-medium text-blue-700 hover:bg-blue-100 dark:border-blue-900/30 dark:bg-blue-900/20 dark:text-blue-300"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenEvaluation(record);
+                    }}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+                {record.evaluation.tags.length > 3 && (
+                  <Badge
+                    variant="outline"
+                    className="h-5 cursor-pointer border-border/60 bg-muted/50 text-[10px] font-bold text-muted-foreground hover:bg-muted"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenEvaluation(record);
+                    }}
+                  >
+                    +{record.evaluation.tags.length - 3}
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

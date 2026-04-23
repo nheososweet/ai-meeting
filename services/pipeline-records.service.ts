@@ -1,5 +1,6 @@
 import axios from "axios";
 import { pipelineApi } from "@/services/pipeline-api";
+import type { EvaluationResult } from "@/lib/types/meeting";
 
 interface UpstreamDiarizeTranscribeResponse {
   id?: unknown;
@@ -32,6 +33,8 @@ interface UpstreamRecord {
   mail_template?: unknown;
   score?: unknown;
   detail_score?: any;
+  criteria?: any;
+  tags?: any;
 }
 
 interface UpstreamChatResponse {
@@ -117,11 +120,7 @@ export interface PipelineRecord {
   filename: string;
   mailTemplate?: MailTemplatePayload;
   score?: string;
-  detailScore?: {
-    error_details: Record<string, string[]>;
-    deductions_per_code: Record<string, number>;
-    deductions_per_group: Record<string, number>;
-  };
+  evaluation?: EvaluationResult;
 }
 
 export interface SpeakerSummaryFromChat {
@@ -564,7 +563,16 @@ export async function getRecords(): Promise<PipelineRecord[]> {
         filename: record.filename,
         mailTemplate: parseMailTemplatePayload(record.mail_template),
         score: typeof record.score === "string" ? record.score : undefined,
-        detailScore: record.detail_score,
+        evaluation: record.detail_score
+          ? {
+            error_details: record.detail_score.error_details || {},
+            deductions_per_code: record.detail_score.deductions_per_code || {},
+            deductions_per_group: record.detail_score.deductions_per_group || {},
+            final_score: typeof record.score === "string" ? parseFloat(record.score) : 0,
+            formatted_criteria: record.criteria,
+            tags: Array.isArray(record.tags) ? record.tags : [],
+          }
+          : undefined,
       };
     })
     .filter((record): record is PipelineRecord => Boolean(record));

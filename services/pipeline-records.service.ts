@@ -137,6 +137,24 @@ export interface SummaryAndMinutesResponse {
   mailTemplate?: MailTemplatePayload;
 }
 
+export interface EvaluationCriteriaItem {
+  id: string;
+  deduction: number;
+  description: string;
+}
+
+export interface EvaluationCriteriaSection {
+  id: string;
+  name: string;
+  criteria: EvaluationCriteriaItem[];
+  max_score: number;
+}
+
+export interface EvaluationCriteriaResponse {
+  sections: EvaluationCriteriaSection[];
+  total_max_score: number;
+}
+
 export interface SendMailResponse {
   total: number;
   sent: number;
@@ -219,27 +237,27 @@ function parseSendMailResponse(data: unknown): SendMailResponse {
 
   const results = Array.isArray(payload.results)
     ? payload.results
-        .map((item) => {
-          const parsedItem = item as UpstreamSendMailResultItem;
-          const email =
-            typeof parsedItem.email === "string" ? parsedItem.email.trim() : "";
-          const status =
-            typeof parsedItem.status === "string"
-              ? parsedItem.status.trim()
-              : "unknown";
+      .map((item) => {
+        const parsedItem = item as UpstreamSendMailResultItem;
+        const email =
+          typeof parsedItem.email === "string" ? parsedItem.email.trim() : "";
+        const status =
+          typeof parsedItem.status === "string"
+            ? parsedItem.status.trim()
+            : "unknown";
 
-          if (!email) {
-            return null;
-          }
+        if (!email) {
+          return null;
+        }
 
-          return {
-            email,
-            status: status || "unknown",
-          };
-        })
-        .filter((item): item is { email: string; status: string } =>
-          Boolean(item),
-        )
+        return {
+          email,
+          status: status || "unknown",
+        };
+      })
+      .filter((item): item is { email: string; status: string } =>
+        Boolean(item),
+      )
     : [];
 
   return {
@@ -492,7 +510,7 @@ export async function evaluateTranscript(input: {
   }
 
   const response = await pipelineApi.post<UpstreamEvaluateResponse>(
-    "/evaluate",
+    "/evaluate2",
     {
       id: input.id,
       transcript: input.transcript,
@@ -544,4 +562,14 @@ export async function getRecords(): Promise<PipelineRecord[]> {
       };
     })
     .filter((record): record is PipelineRecord => Boolean(record));
+}
+
+export async function getCriteria(): Promise<EvaluationCriteriaResponse> {
+  const response = await pipelineApi.get<EvaluationCriteriaResponse>("/get-criteria");
+  return response.data;
+}
+
+export async function updateCriteria(payload: EvaluationCriteriaResponse): Promise<{ message: string }> {
+  const response = await pipelineApi.post<{ message: string }>("/update-criteria", payload);
+  return response.data;
 }

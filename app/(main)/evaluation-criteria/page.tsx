@@ -1,60 +1,100 @@
 "use client";
 
-import { ClipboardCheckIcon, DownloadCloudIcon, ExternalLinkIcon, FileWarningIcon } from "lucide-react";
-import { CriteriaDocViewer } from "@/app/(main)/evaluation-criteria/_components/CriteriaDocViewer";
-
-const CRITERIA_DOC_URL =
-    process.env.NEXT_PUBLIC_CRITERIA_DOC_URL ??
-    "https://thanh-face-bucket.s3.us-east-1.amazonaws.com/meeting/south_telecom+(2).docx";
+import { useState } from "react";
+import { 
+    ClipboardCheckIcon, 
+    Loader2Icon, 
+    AlertCircleIcon, 
+    PencilLineIcon 
+} from "lucide-react";
+import { useCriteriaQuery } from "@/hooks/services/use-criteria-query";
+import { useUpdateCriteriaMutation } from "@/hooks/services/use-update-criteria-mutation";
+import { CriteriaList } from "@/app/(main)/evaluation-criteria/_components/CriteriaList";
+import { CriteriaEditor } from "@/app/(main)/evaluation-criteria/_components/CriteriaEditor";
+import { Button } from "@/components/ui/button";
+import { useWorkspaceToast } from "@/app/(main)/workspace/_hooks/useWorkspaceToast";
+import type { EvaluationCriteriaResponse } from "@/services/pipeline-records.service";
 
 export default function EvaluationCriteriaPage() {
-    const hasDocUrl = Boolean(CRITERIA_DOC_URL);
+    const { data, isLoading, error, refetch } = useCriteriaQuery();
+    const updateCriteriaMutation = useUpdateCriteriaMutation();
+    const { showActionToast } = useWorkspaceToast();
+    
+    const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+    const handleSaveCriteria = async (newData: EvaluationCriteriaResponse) => {
+        try {
+            await updateCriteriaMutation.mutateAsync(newData);
+            showActionToast("Cập nhật tiêu chí thành công.");
+            setIsEditorOpen(false);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Lỗi không xác định";
+            showActionToast(`Lỗi khi cập nhật: ${message}`, "error");
+            throw err;
+        }
+    };
 
     return (
         <div className="flex min-h-0 flex-1 flex-col">
-            <section className="flex min-h-0 flex-1 flex-col rounded-lg border border-border/80 bg-card p-5 shadow-sm lg:sticky lg:top-4 lg:h-[calc(100dvh-8.5rem)]">
-                {/* Header */}
-                <div className="shrink-0 flex flex-wrap items-center justify-between gap-3">
+            <section className="flex min-h-0 flex-col rounded-lg border border-border/80 bg-card p-5 shadow-sm h-[calc(100dvh-6rem)] md:h-[calc(100dvh-8.5rem)]">
+                {/* Header - Fixed height */}
+                <div className="shrink-0 flex flex-wrap items-center justify-between gap-3 border-b pb-5">
                     <div>
-                        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-                            <ClipboardCheckIcon className="size-5 text-primary" />
-                            Tiêu chí đánh giá
+                        <h1 className="flex items-center gap-2 text-xl font-bold text-foreground">
+                            <ClipboardCheckIcon className="size-6 text-primary" />
+                            Tiêu chí đánh giá chất lượng
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Xem tài liệu tiêu chí đánh giá chất lượng cuộc họp và phiên dịch.
+                            Danh sách các tiêu chuẩn và quy tắc chấm điểm cho cuộc hội thoại.
                         </p>
                     </div>
-                    {hasDocUrl ? (
-                        <a
-                            href={CRITERIA_DOC_URL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-                        >
-                            <DownloadCloudIcon className="size-3.5" />
-                            Tải xuống
-                        </a>
-                    ) : null}
+
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary"
+                        onClick={() => setIsEditorOpen(true)}
+                        disabled={isLoading || !!error}
+                    >
+                        <PencilLineIcon className="size-4" />
+                        Chỉnh sửa tiêu chí
+                    </Button>
                 </div>
 
-                {/* Body — DocViewer or empty state */}
-                <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg">
-                    {hasDocUrl ? (
-                        <CriteriaDocViewer url={CRITERIA_DOC_URL} />
-                    ) : (
+                {/* Body - Scrollable area */}
+                <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden">
+                    {isLoading ? (
                         <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
-                            <FileWarningIcon className="size-10 opacity-40" />
-                            <p className="text-sm">Chưa có tài liệu tiêu chí đánh giá.</p>
-                            <p className="text-xs opacity-70">
-                                Vui lòng cấu hình URL tài liệu qua biến môi trường{" "}
-                                <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">
-                                    NEXT_PUBLIC_CRITERIA_DOC_URL
-                                </code>
-                            </p>
+                            <Loader2Icon className="size-10 animate-spin opacity-20" />
+                            <p className="text-sm animate-pulse">Đang tải dữ liệu tiêu chí...</p>
                         </div>
-                    )}
+                    ) : error ? (
+                        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+                            <div className="rounded-full bg-rose-50 p-4 dark:bg-rose-950/20">
+                                <AlertCircleIcon className="size-10 text-rose-500" />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="font-semibold text-foreground">Không thể tải dữ liệu</p>
+                                <p className="text-sm text-muted-foreground max-w-xs">
+                                    Đã có lỗi xảy ra khi kết nối tới máy chủ. Vui lòng thử lại sau.
+                                </p>
+                            </div>
+                            <Button variant="outline" size="sm" onClick={() => refetch()}>
+                                Thử lại
+                            </Button>
+                        </div>
+                    ) : data ? (
+                        <CriteriaList data={data} />
+                    ) : null}
                 </div>
             </section>
+
+            <CriteriaEditor 
+                open={isEditorOpen}
+                onOpenChange={setIsEditorOpen}
+                initialData={data ?? null}
+                onSave={handleSaveCriteria}
+            />
         </div>
     );
-}
+}

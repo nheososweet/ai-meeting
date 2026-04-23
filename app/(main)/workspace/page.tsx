@@ -49,6 +49,7 @@ import { useDiarizeTranscribeMutation } from "@/hooks/services/use-diarize-trans
 import { useSummaryMinutesMutation } from "@/hooks/services/use-summary-minutes-mutation";
 import { useUpdateReportMutation } from "@/hooks/services/use-update-report-mutation";
 import { useEvaluateTranscriptMutation } from "@/hooks/services/use-evaluate-transcript-mutation";
+import { useUpdateTranscribeMutation } from "@/hooks/services/use-update-transcribe-mutation";
 import { meetingRecords } from "@/lib/mock/meetings";
 import { sendMail } from "@/services/pipeline-records.service";
 import type {
@@ -130,6 +131,7 @@ export default function WorkspacePage() {
   const summaryMinutesMutation = useSummaryMinutesMutation();
   const updateReportMutation = useUpdateReportMutation();
   const evaluateTranscriptMutation = useEvaluateTranscriptMutation();
+  const updateTranscribeMutation = useUpdateTranscribeMutation();
   const [inputMode, setInputMode] = useState<AudioInputSource>("upload");
   const [activeMeeting, setActiveMeeting] =
     useState<MeetingRecord>(initialMeeting);
@@ -160,6 +162,9 @@ export default function WorkspacePage() {
   const [isSavingMinutes, setIsSavingMinutes] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isEvaluationDialogOpen, setIsEvaluationDialogOpen] = useState(false);
+  const [isTranscriptDialogOpen, setIsTranscriptDialogOpen] = useState(false);
+  const [transcriptDraft, setTranscriptDraft] = useState("");
+  const [isSavingTranscript, setIsSavingTranscript] = useState(false);
   const busyProcessing =
     activeMeeting.processingStatus === "uploading" ||
     activeMeeting.processingStatus === "processing";
@@ -704,6 +709,69 @@ export default function WorkspacePage() {
     }
   }
 
+  function handleOpenTranscriptEditor() {
+    setTranscriptDraft(activeMeeting.refinedTranscript || "");
+    setIsTranscriptDialogOpen(true);
+  }
+
+  function handleTranscriptDraftChange(value: string) {
+    setTranscriptDraft(value);
+  }
+
+  function handleSaveTranscriptDraft() {
+    if (isSavingTranscript) {
+      return;
+    }
+
+    const apiRecordId = activeMeeting.apiRecordId;
+    if (!apiRecordId) {
+      showActionToast("Không có ID phiên họp để lưu transcript.", "error");
+      return;
+    }
+
+    setIsSavingTranscript(true);
+    setNotice("Đang cập nhật transcript và tính lại điểm...");
+
+    void (async () => {
+      try {
+        // 1. Update transcript content
+        await updateTranscribeMutation.mutateAsync({
+          id: apiRecordId,
+          textContent: transcriptDraft,
+        });
+
+        // 2. Recalculate score
+        const evaluationResult = await evaluateTranscriptMutation.mutateAsync({
+          id: apiRecordId,
+          transcript: transcriptDraft,
+        });
+
+        // 3. Update local state
+        setActiveMeeting((prev) => ({
+          ...prev,
+          refinedTranscript: transcriptDraft,
+          evaluation: {
+            error_details: evaluationResult.errorDetails,
+            deductions_per_code: evaluationResult.deductionsPerCode,
+            deductions_per_group: evaluationResult.deductionsPerGroup,
+            final_score: evaluationResult.finalScore,
+          },
+        }));
+
+        setIsTranscriptDialogOpen(false);
+        setNotice("Đã cập nhật transcript và tính lại điểm thành công.");
+        showActionToast("Cập nhật transcript thành công.");
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Lỗi không xác định";
+        setNotice(`Lỗi khi cập nhật transcript: ${message}`);
+        showActionToast(`Lỗi khi cập nhật transcript: ${message}`, "error");
+      } finally {
+        setIsSavingTranscript(false);
+      }
+    })();
+  }
+
   return (
     <div className="grid flex-1 gap-4 lg:h-[calc(100dvh-7.5rem)] lg:grid-cols-[1fr_1.8fr] lg:items-start">
       <section className="rounded-lg border border-border/80 bg-card p-5 shadow-sm lg:sticky lg:top-4 lg:max-h-[calc(100dvh-8.5rem)] lg:overflow-y-auto">
@@ -880,26 +948,19 @@ export default function WorkspacePage() {
           {notice}
         </p>
 
-        {shouldShowMinutes ? (
-          <MinutesEditorDialog
-            open={isMinutesDialogOpen}
-            onOpenChange={handleMinutesDialogOpenChange}
-            onOpenEditor={handleOpenMinutesEditor}
-            minutesMarkdown={activeMeeting.minutes}
-            minutesDraft={minutesDraft}
-            onMinutesDraftChange={handleMinutesDraftChange}
-            minutesValidationError={minutesValidationError}
-            isSavingMinutes={isSavingMinutes}
-            onSaveMinutesDraft={handleSaveMinutesDraft}
-            reportUrl={activeMeeting.reportUrl}
-          />
-        ) : null}
 
         {shouldShowRawTranscript ? (
           <TranscriptComparisonDialog
+            open={isTranscriptDialogOpen}
+            onOpenChange={setIsTranscriptDialogOpen}
+            onOpenEditor={handleOpenTranscriptEditor}
             rawTranscript={activeMeeting.rawTranscript}
             refinedTranscript={activeMeeting.refinedTranscript}
+            transcriptDraft={transcriptDraft}
+            onTranscriptDraftChange={handleTranscriptDraftChange}
             shouldShowRefinedTranscript={shouldShowRefinedTranscript}
+            isSavingTranscript={isSavingTranscript}
+            onSaveTranscriptDraft={handleSaveTranscriptDraft}
             onCopyRawTranscript={handleCopyRawTranscript}
             onCopyRefinedTranscript={handleCopyRefinedTranscript}
           />
@@ -1122,6 +1183,21 @@ export default function WorkspacePage() {
               </article>
             ) : null}
           </div>
+        ) : null}
+
+        {shouldShowMinutes ? (
+          <MinutesEditorDialog
+            open={isMinutesDialogOpen}
+            onOpenChange={handleMinutesDialogOpenChange}
+            onOpenEditor={handleOpenMinutesEditor}
+            minutesMarkdown={activeMeeting.minutes}
+            minutesDraft={minutesDraft}
+            onMinutesDraftChange={handleMinutesDraftChange}
+            minutesValidationError={minutesValidationError}
+            isSavingMinutes={isSavingMinutes}
+            onSaveMinutesDraft={handleSaveMinutesDraft}
+            reportUrl={activeMeeting.reportUrl}
+          />
         ) : null}
 
         <EvaluationDetailDialog

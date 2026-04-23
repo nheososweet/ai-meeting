@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUpdateTranscribeMutation } from "@/hooks/services/use-update-transcribe-mutation";
+import { useEvaluateTranscriptMutation } from "@/hooks/services/use-evaluate-transcript-mutation";
 import type { MeetingRecord } from "@/lib/types/meeting";
 
 type SpeakersLabelingDialogProps = {
@@ -34,6 +35,9 @@ export function SpeakersLabelingDialog({
   const [open, setOpen] = useState(false);
   const [speakerMap, setSpeakerMap] = useState<Record<string, string>>({});
   const updateTranscribeMutation = useUpdateTranscribeMutation();
+  const evaluateTranscriptMutation = useEvaluateTranscriptMutation();
+
+  const isPending = updateTranscribeMutation.isPending || evaluateTranscriptMutation.isPending;
 
   // Extract unique speakers from segments
   const uniqueSpeakers = useMemo(() => {
@@ -112,7 +116,13 @@ export function SpeakersLabelingDialog({
         textContent: newRefinedTranscript,
       });
 
-      // 6. Update local state
+      // 6. Recalculate score
+      const evaluationResult = await evaluateTranscriptMutation.mutateAsync({
+        id: activeMeeting.apiRecordId,
+        transcript: newRefinedTranscript,
+      });
+
+      // 7. Update local state
       onUpdateMeeting({
         ...activeMeeting,
         segments: newSegments,
@@ -120,9 +130,15 @@ export function SpeakersLabelingDialog({
         rawTranscript: newRawTranscript,
         refinedTranscript: newRefinedTranscript,
         speakerCount: new Set(newSegments.map((s) => s.speaker)).size,
+        evaluation: {
+          error_details: evaluationResult.errorDetails,
+          deductions_per_code: evaluationResult.deductionsPerCode,
+          deductions_per_group: evaluationResult.deductionsPerGroup,
+          final_score: evaluationResult.finalScore,
+        },
       });
 
-      setNotice("Gán nhãn người tham gia thành công.");
+      setNotice("Gán nhãn người tham gia và tính lại điểm thành công.");
       showActionToast("Gán nhãn người tham gia thành công.");
       setOpen(false);
     } catch (error) {
@@ -145,14 +161,14 @@ export function SpeakersLabelingDialog({
       </DialogTrigger>
       <DialogContent
         className="max-w-md"
-        showCloseButton={!updateTranscribeMutation.isPending}
+        showCloseButton={!isPending}
         onPointerDownOutside={(e) => {
-          if (updateTranscribeMutation.isPending) {
+          if (isPending) {
             e.preventDefault();
           }
         }}
         onEscapeKeyDown={(e) => {
-          if (updateTranscribeMutation.isPending) {
+          if (isPending) {
             e.preventDefault();
           }
         }}
@@ -202,16 +218,16 @@ export function SpeakersLabelingDialog({
           <Button
             variant="ghost"
             onClick={() => setOpen(false)}
-            disabled={updateTranscribeMutation.isPending}
+            disabled={isPending}
           >
             Hủy
           </Button>
           <Button
             onClick={handleSave}
-            disabled={updateTranscribeMutation.isPending || uniqueSpeakers.length === 0}
+            disabled={isPending || uniqueSpeakers.length === 0}
             className="gap-2 bg-blue-600 hover:bg-blue-700"
           >
-            {updateTranscribeMutation.isPending ? (
+            {isPending ? (
               <Loader2Icon className="size-4 animate-spin" />
             ) : (
               <SaveIcon className="size-4" />

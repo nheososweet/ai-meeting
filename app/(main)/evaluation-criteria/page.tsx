@@ -5,7 +5,7 @@ import { CriteriaDocViewer } from "@/app/(main)/evaluation-criteria/_components/
 
 const CRITERIA_DOC_URL =
     process.env.NEXT_PUBLIC_CRITERIA_DOC_URL ??
-    "https://thanh-face-bucket.s3.us-east-1.amazonaws.com/meeting/south_telecom.docx";
+    "https://thanh-face-bucket.s3.us-east-1.amazonaws.com/meeting/south_telecom+(2).docx";
 
 export default function EvaluationCriteriaPage() {
     const hasDocUrl = Boolean(CRITERIA_DOC_URL);

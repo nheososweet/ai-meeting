@@ -9,11 +9,31 @@ export type ProcessingStatus =
 
 export type EmailStatus = "not_sent" | "sent" | "failed"
  
+export interface EvaluationCriteriaItem {
+  id: string;
+  deduction: number;
+  description: string;
+}
+
+export interface EvaluationCriteriaSection {
+  id: string;
+  name: string;
+  criteria: EvaluationCriteriaItem[];
+  max_score: number;
+}
+
+export interface EvaluationCriteriaResponse {
+  sections: EvaluationCriteriaSection[];
+  total_max_score: number;
+}
+
 export interface EvaluationResult {
   error_details: Record<string, string[]>;
   deductions_per_code: Record<string, number>;
   deductions_per_group: Record<string, number>;
   final_score: number;
+  formatted_criteria?: EvaluationCriteriaResponse;
+  tags?: string[];
 }
 
 export interface TranscriptSegment {

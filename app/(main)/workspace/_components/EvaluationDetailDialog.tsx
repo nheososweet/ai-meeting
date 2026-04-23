@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { ChevronLeftIcon, ShieldAlertIcon } from "lucide-react";
+import { ChevronLeftIcon, ShieldAlertIcon, TagIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,8 +16,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatTimelineSecond } from "@/app/(main)/workspace/_lib/transcript-utils";
-import tieuchiData from "@/lib/mock/tieuchi.json";
-import type { EvaluationResult, TranscriptSegment } from "@/lib/types/meeting";
+import type { EvaluationResult, TranscriptSegment, EvaluationCriteriaResponse } from "@/lib/types/meeting";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
@@ -43,15 +42,22 @@ export function EvaluationDetailDialog({
   segments,
   evaluation,
 }: EvaluationDetailDialogProps) {
+  // Use formatted_criteria from API
+  const criteriaData = useMemo(() => {
+    return evaluation?.formatted_criteria || null;
+  }, [evaluation?.formatted_criteria]);
+
   const criteriaMap = useMemo(() => {
     const map: Record<string, { description: string; deduction: number }> = {};
-    tieuchiData.sections.forEach((section) => {
+    if (!criteriaData) return map;
+
+    criteriaData.sections.forEach((section) => {
       section.criteria.forEach((c) => {
         map[c.id] = { description: c.description, deduction: c.deduction };
       });
     });
     return map;
-  }, []);
+  }, [criteriaData]);
 
   const segmentErrors = useMemo(() => {
     if (!evaluation) return {};
@@ -83,7 +89,7 @@ export function EvaluationDetailDialog({
 
   const globalErrors = useMemo(() => {
     if (!evaluation) return [];
-    
+
     return Object.entries(evaluation.deductions_per_code)
       .filter(([id, deduction]) => deduction > 0 && (!evaluation.error_details[id] || evaluation.error_details[id].length === 0))
       .map(([id]) => id);
@@ -98,7 +104,7 @@ export function EvaluationDetailDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="mb-4 flex h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] flex-col justify-between gap-0 rounded-xl p-0 sm:max-w-none"
+        className="mb-4 flex h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] flex-col justify-between gap-0 overflow-hidden rounded-xl p-0 sm:max-w-none"
       >
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <DialogHeader className="space-y-0 border-b bg-muted/20 px-6 py-4 text-left">
@@ -121,7 +127,7 @@ export function EvaluationDetailDialog({
                   <div className="text-right">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Điểm cuối cùng</p>
                     <p className={`text-2xl font-black ${evaluation.final_score >= 8 ? 'text-emerald-600' : evaluation.final_score >= 5 ? 'text-amber-600' : 'text-red-600'}`}>
-                      {evaluation.final_score.toFixed(1)}/10
+                      {evaluation.final_score.toFixed(1)}/{criteriaData?.total_max_score || 10}
                     </p>
                   </div>
                 </div>
@@ -132,18 +138,26 @@ export function EvaluationDetailDialog({
           <Tabs defaultValue="transcript" className="flex min-h-0 flex-1 flex-col">
             <div className="border-b bg-background px-6">
               <TabsList className="h-12 w-full justify-start gap-6 bg-transparent p-0">
-                <TabsTrigger 
-                  value="transcript" 
+                <TabsTrigger
+                  value="transcript"
                   className="relative h-12 rounded-none border-b-2 border-transparent bg-transparent px-2 pb-3 pt-4 text-sm font-semibold data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
                 >
                   Transcript & Lỗi chi tiết
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="rubric" 
+                <TabsTrigger
+                  value="rubric"
                   className="relative h-12 rounded-none border-b-2 border-transparent bg-transparent px-2 pb-3 pt-4 text-sm font-semibold data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
                 >
                   Bộ tiêu chí & Thang điểm
                 </TabsTrigger>
+                {evaluation?.tags && evaluation.tags.length > 0 && (
+                  <TabsTrigger
+                    value="tags"
+                    className="relative h-12 rounded-none border-b-2 border-transparent bg-transparent px-2 pb-3 pt-4 text-sm font-semibold data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+                  >
+                    Tags nhận diện
+                  </TabsTrigger>
+                )}
               </TabsList>
             </div>
 
@@ -183,11 +197,10 @@ export function EvaluationDetailDialog({
                         return (
                           <div
                             key={seg.id}
-                            className={`group relative flex flex-col gap-1 rounded-xl border p-4 transition-all duration-200 ${
-                              isError
+                            className={`group relative flex flex-col gap-1 rounded-xl border p-4 transition-all duration-200 ${isError
                                 ? "border-red-200 bg-red-50/40 shadow-sm dark:border-red-900/30 dark:bg-red-900/10"
                                 : "border-border/40 bg-background hover:border-border/80"
-                            }`}
+                              }`}
                           >
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-2">
@@ -237,43 +250,72 @@ export function EvaluationDetailDialog({
             <TabsContent value="rubric" className="m-0 min-h-0 flex-1 overflow-hidden">
               <ScrollArea className="h-full">
                 <div className="p-6">
-                  <div className="grid gap-6 md:grid-cols-1">
-                    {tieuchiData.sections.map((section) => (
-                      <div key={section.id} className="rounded-xl border border-border/60 bg-muted/5 p-5">
-                        <div className="mb-4 flex items-center justify-between border-b pb-3">
-                          <h4 className="font-bold text-foreground">
-                            {section.id}. {section.name}
-                          </h4>
-                          <Badge variant="secondary" className="font-bold">Tối đa: {section.max_score}đ</Badge>
-                        </div>
-                        <div className="grid gap-3">
-                          {section.criteria.map((c) => {
-                            const isViolated = evaluation?.deductions_per_code[c.id] && evaluation.deductions_per_code[c.id] > 0;
-                            return (
-                              <div 
-                                key={c.id} 
-                                className={`flex items-start justify-between gap-4 rounded-lg border p-3 text-sm transition-colors ${
-                                  isViolated 
-                                    ? "border-red-200 bg-red-50/50 dark:border-red-900/30 dark:bg-red-900/20" 
-                                    : "border-border/40 bg-background/50"
-                                }`}
-                              >
-                                <div className="flex gap-3">
-                                  <span className="font-mono font-bold text-muted-foreground">{c.id}</span>
-                                  <p className={isViolated ? "font-medium text-red-900 dark:text-red-100" : "text-muted-foreground"}>
-                                    {c.description}
-                                  </p>
+                  {!criteriaData ? (
+                    <div className="flex h-40 items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground">
+                      Đang tải bộ tiêu chí từ API...
+                    </div>
+                  ) : (
+                    <div className="grid gap-6 md:grid-cols-1">
+                      {criteriaData.sections.map((section) => (
+                        <div key={section.id} className="rounded-xl border border-border/60 bg-muted/5 p-5">
+                          <div className="mb-4 flex items-center justify-between border-b pb-3">
+                            <h4 className="font-bold text-foreground">
+                              {section.id}. {section.name}
+                            </h4>
+                            <Badge variant="secondary" className="font-bold">Tối đa: {section.max_score}đ</Badge>
+                          </div>
+                          <div className="grid gap-3">
+                            {section.criteria.map((c) => {
+                              const isViolated = evaluation?.deductions_per_code[c.id] && evaluation.deductions_per_code[c.id] > 0;
+                              return (
+                                <div
+                                  key={c.id}
+                                  className={`flex items-start justify-between gap-4 rounded-lg border p-3 text-sm transition-colors ${isViolated
+                                      ? "border-red-200 bg-red-50/50 dark:border-red-900/30 dark:bg-red-900/20"
+                                      : "border-border/40 bg-background/50"
+                                    }`}
+                                >
+                                  <div className="flex gap-3">
+                                    <span className="font-mono font-bold text-muted-foreground">{c.id}</span>
+                                    <p className={isViolated ? "font-medium text-red-900 dark:text-red-100" : "text-muted-foreground"}>
+                                      {c.description}
+                                    </p>
+                                  </div>
+                                  <div className="text-right whitespace-nowrap">
+                                    <span className={`text-xs font-bold ${isViolated ? 'text-red-600' : 'text-muted-foreground/60'}`}>
+                                      -{c.deduction}đ
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="text-right whitespace-nowrap">
-                                  <span className={`text-xs font-bold ${isViolated ? 'text-red-600' : 'text-muted-foreground/60'}`}>
-                                    -{c.deduction}đ
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="tags" className="m-0 min-h-0 flex-1 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-8 max-w-4xl mx-auto">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="rounded-lg bg-primary/10 p-2">
+                      <TagIcon className="size-5 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-bold">Tags nhận diện</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {evaluation?.tags?.map((tag, idx) => (
+                      <Badge
+                        key={idx}
+                        variant="secondary"
+                        className="px-4 py-2 text-sm bg-muted/50 border border-border/50 hover:bg-muted transition-colors rounded-lg font-medium"
+                      >
+                        {tag}
+                      </Badge>
                     ))}
                   </div>
                 </div>

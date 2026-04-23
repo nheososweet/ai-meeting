@@ -75,6 +75,8 @@ interface UpstreamEvaluateResponse {
   deductions_per_code: Record<string, number>;
   deductions_per_group: Record<string, number>;
   final_score: number;
+  formatted_criteria?: EvaluationCriteriaResponse;
+  tags?: string[];
 }
 
 export interface EvaluationResponse {
@@ -82,6 +84,8 @@ export interface EvaluationResponse {
   deductionsPerCode: Record<string, number>;
   deductionsPerGroup: Record<string, number>;
   finalScore: number;
+  formattedCriteria?: EvaluationCriteriaResponse;
+  tags?: string[];
 }
 
 export interface DiarizeTranscribeResponse {
@@ -524,6 +528,8 @@ export async function evaluateTranscript(input: {
     deductionsPerCode: payload.deductions_per_code,
     deductionsPerGroup: payload.deductions_per_group,
     finalScore: payload.final_score,
+    formattedCriteria: payload.formatted_criteria,
+    tags: payload.tags,
   };
 }
 

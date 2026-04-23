@@ -59,6 +59,8 @@ type EvaluateTranscriptMutation = {
     deductionsPerCode: Record<string, number>;
     deductionsPerGroup: Record<string, number>;
     finalScore: number;
+    formattedCriteria?: any;
+    tags?: string[];
   }>;
 };
 
@@ -493,6 +495,8 @@ export function useWorkspacePipeline({
                 deductions_per_code: result.deductionsPerCode,
                 deductions_per_group: result.deductionsPerGroup,
                 final_score: result.finalScore,
+                formatted_criteria: result.formattedCriteria,
+                tags: result.tags,
               },
             }));
           } catch (error) {

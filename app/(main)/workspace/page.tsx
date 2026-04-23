@@ -755,6 +755,8 @@ export default function WorkspacePage() {
             deductions_per_code: evaluationResult.deductionsPerCode,
             deductions_per_group: evaluationResult.deductionsPerGroup,
             final_score: evaluationResult.finalScore,
+            formatted_criteria: evaluationResult.formattedCriteria,
+            tags: evaluationResult.tags,
           },
         }));
 

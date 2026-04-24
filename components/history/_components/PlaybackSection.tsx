@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { formatTimelineSecond } from "@/app/(main)/workspace/_lib/transcript-utils";
 import type { MeetingRecord, TranscriptSegment } from "@/lib/types/meeting";
 
 type PlaybackSectionProps = {
@@ -129,7 +130,8 @@ export function PlaybackSection({
           {selectedSegment ? (
             <p className="rounded-md border border-border/70 px-2 py-1 text-xs text-muted-foreground">
               Đang focus: {selectedSegment.speaker} (
-              {selectedSegment.startSecond}s - {selectedSegment.endSecond}s)
+              {formatTimelineSecond(selectedSegment.startSecond)} -{" "}
+              {formatTimelineSecond(selectedSegment.endSecond)})
             </p>
           ) : null}
         </div>

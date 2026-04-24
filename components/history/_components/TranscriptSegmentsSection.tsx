@@ -1,4 +1,8 @@
 import { Separator } from "@/components/ui/separator";
+import {
+  formatTimelineSecond,
+  reformatTranscriptTimestamps,
+} from "@/app/(main)/workspace/_lib/transcript-utils";
 import type { MeetingRecord } from "@/lib/types/meeting";
 
 type TranscriptSegmentsSectionProps = {
@@ -16,7 +20,7 @@ export function TranscriptSegmentsSection({
         Raw transcript
       </h2>
       <p className="mt-2 text-sm leading-7 text-muted-foreground">
-        {meeting.rawTranscript}
+        {reformatTranscriptTimestamps(meeting.rawTranscript)}
       </p>
 
       <Separator className="my-4" />
@@ -40,7 +44,8 @@ export function TranscriptSegmentsSection({
                   {segment.speaker}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {segment.startSecond}s - {segment.endSecond}s
+                  {formatTimelineSecond(segment.startSecond)} -{" "}
+                  {formatTimelineSecond(segment.endSecond)}
                 </p>
                 <p className="mt-1 text-muted-foreground">{segment.text}</p>
               </button>

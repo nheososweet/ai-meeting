@@ -13,6 +13,7 @@ import {
   historyDateTimeFormatter,
   resolveReportFilename,
 } from "@/app/(main)/history/_lib/file-utils";
+import { reformatTranscriptTimestamps } from "@/app/(main)/workspace/_lib/transcript-utils";
 import { useHistoryEmail } from "@/app/(main)/history/_hooks/useHistoryEmail";
 import { useHistoryToast } from "@/app/(main)/history/_hooks/useHistoryToast";
 import { useHistoryTranscriptPreview } from "@/app/(main)/history/_hooks/useHistoryTranscriptPreview";
@@ -117,9 +118,12 @@ export default function HistoryPage() {
         )
       : undefined;
 
-  const activeTranscriptContent = previewTranscriptRecordId
-    ? (previewTranscriptByRecord[previewTranscriptRecordId] ?? "")
-    : "";
+  const activeTranscriptContent = useMemo(() => {
+    const raw = previewTranscriptRecordId
+      ? (previewTranscriptByRecord[previewTranscriptRecordId] ?? "")
+      : "";
+    return reformatTranscriptTimestamps(raw);
+  }, [previewTranscriptRecordId, previewTranscriptByRecord]);
 
   function handleToggleAudioPreview(recordId: number) {
     setPreviewAudioRecordId((prev) => (prev === recordId ? null : recordId));

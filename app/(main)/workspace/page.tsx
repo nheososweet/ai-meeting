@@ -34,6 +34,7 @@ import {
   cleanTranscriptLine,
   formatTimelineSecond,
   parseTranscriptSegments,
+  reformatTranscriptTimestamps,
 } from "@/app/(main)/workspace/_lib/transcript-utils";
 import {
   minutesDraftSchema,
@@ -865,8 +866,10 @@ export default function WorkspacePage() {
 
         {shouldShowRawTranscript ? (
           <TranscriptComparisonDialog
-            rawTranscript={activeMeeting.rawTranscript}
-            refinedTranscript={activeMeeting.refinedTranscript}
+            rawTranscript={reformatTranscriptTimestamps(activeMeeting.rawTranscript)}
+            refinedTranscript={reformatTranscriptTimestamps(
+              activeMeeting.refinedTranscript ?? "",
+            )}
             shouldShowRefinedTranscript={shouldShowRefinedTranscript}
             onCopyRawTranscript={handleCopyRawTranscript}
             onCopyRefinedTranscript={handleCopyRefinedTranscript}

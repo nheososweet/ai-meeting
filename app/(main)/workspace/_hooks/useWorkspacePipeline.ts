@@ -226,6 +226,8 @@ export function useWorkspacePipeline({
       refinedTranscript: "Bản làm sạch đang được chuẩn bị...",
       speakerCount: 0,
       mailTemplate: undefined,
+      crmStatus: "idle",
+      evaluation: undefined,
     }));
     setNotice("Bắt đầu chạy từng bước xử lý...");
 

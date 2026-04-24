@@ -143,6 +143,8 @@ export function useWorkspaceUpload({
       speakerSummaries: [],
       minutes: initialMeeting.minutes,
       speakerCount: 0,
+      crmStatus: "idle",
+      evaluation: undefined,
     }));
   }
 
@@ -215,6 +217,8 @@ export function useWorkspaceUpload({
       minutes: initialMeeting.minutes,
       speakerCount: 0,
       durationSecond: 0,
+      crmStatus: "idle",
+      evaluation: undefined,
     }));
   }
 

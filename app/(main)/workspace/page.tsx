@@ -126,6 +126,8 @@ const initialMeeting: MeetingRecord = {
   durationSecond: 0,
   speakerCount: 0,
   mailTemplate: buildDefaultMailTemplate(""),
+  crmStatus: "idle",
+  evaluation: undefined,
 };
 
 export default function WorkspacePage() {
@@ -408,6 +410,8 @@ export default function WorkspacePage() {
         speakerCount: 0,
         durationSecond: 0,
         mailTemplate: buildDefaultMailTemplate(""),
+        crmStatus: "idle",
+        evaluation: undefined,
       }));
       setInputMode("upload");
       return;
@@ -428,6 +432,8 @@ export default function WorkspacePage() {
       speakerCount: 0,
       durationSecond: 0,
       mailTemplate: buildDefaultMailTemplate(""),
+      crmStatus: "idle",
+      evaluation: undefined,
     }));
     setInputMode("recording");
   }

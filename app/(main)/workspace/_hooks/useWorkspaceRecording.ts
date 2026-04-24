@@ -144,6 +144,8 @@ export function useWorkspaceRecording({
         speakerSummaries: [],
         rawTranscript: initialMeeting.rawTranscript,
         refinedTranscript: initialMeeting.refinedTranscript,
+        crmStatus: "idle",
+        evaluation: undefined,
       }));
       onSetNotice("Đã dừng thu âm. Bạn có thể nghe lại hoặc xử lý bản thu vừa tạo.");
       return;
@@ -238,6 +240,8 @@ export function useWorkspaceRecording({
       speakerSummaries: [],
       rawTranscript: initialMeeting.rawTranscript,
       refinedTranscript: initialMeeting.refinedTranscript,
+      crmStatus: "idle",
+      evaluation: undefined,
     }));
     onSetNotice("Đang thu âm trực tiếp, nhấn dừng để xử lý bản thu.");
   }
@@ -263,6 +267,8 @@ export function useWorkspaceRecording({
       rawTranscript: initialMeeting.rawTranscript,
       refinedTranscript: initialMeeting.refinedTranscript,
       minutes: initialMeeting.minutes,
+      crmStatus: "idle",
+      evaluation: undefined,
     }));
   }
 

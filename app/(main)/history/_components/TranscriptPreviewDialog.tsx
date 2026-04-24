@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getSpeakerColor } from "@/app/(main)/workspace/_lib/transcript-utils";
 
 type TranscriptPreviewDialogProps = {
   open: boolean;
@@ -30,6 +31,35 @@ export function TranscriptPreviewDialog({
   onOpenChange,
   onCopyTranscript,
 }: TranscriptPreviewDialogProps) {
+  function renderStyledTranscript(text: string) {
+    if (!text) return null;
+
+    return text.split("\n").map((line, idx) => {
+      // Regex to match "Speaker Name (00:00 - 00:14): Text"
+      const match = line.match(/^(.+?\s*\(.+?\)):(.*)$/);
+      if (match) {
+        const header = match[1];
+        const content = match[2];
+        const speakerNameMatch = header.match(/^(.+?)\s*\(/);
+        const speakerName = speakerNameMatch ? speakerNameMatch[1].trim() : "";
+
+        return (
+          <div key={idx} className="mb-2 last:mb-0">
+            <span className={`font-bold ${getSpeakerColor(speakerName)}`}>
+              {header}:
+            </span>
+            <span className="ml-1.5">{content}</span>
+          </div>
+        );
+      }
+      return (
+        <div key={idx} className="mb-1 italic opacity-70">
+          {line}
+        </div>
+      );
+    });
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -53,9 +83,10 @@ export function TranscriptPreviewDialog({
               Đang tải nội dung transcript...
             </div>
           ) : (
-            <pre className="whitespace-pre-wrap wrap-break-word text-sm leading-7 text-muted-foreground">
-              {transcriptContent || "Chưa có nội dung transcript."}
-            </pre>
+            <div className="wrap-break-word text-sm leading-7 text-muted-foreground">
+              {renderStyledTranscript(transcriptContent) ||
+                "Chưa có nội dung transcript."}
+            </div>
           )}
         </div>
 

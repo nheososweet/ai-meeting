@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getSpeakerColor } from "@/app/(main)/workspace/_lib/transcript-utils";
 
 type TranscriptComparisonDialogProps = {
   rawTranscript: string;
@@ -28,6 +29,35 @@ export function TranscriptComparisonDialog({
   onCopyRawTranscript,
   onCopyRefinedTranscript,
 }: TranscriptComparisonDialogProps) {
+  function renderStyledTranscript(text: string) {
+    if (!text) return null;
+
+    return text.split("\n").map((line, idx) => {
+      // Regex to match "Speaker Name (00:00 - 00:14): Text"
+      const match = line.match(/^(.+?\s*\(.+?\)):(.*)$/);
+      if (match) {
+        const header = match[1];
+        const content = match[2];
+        const speakerNameMatch = header.match(/^(.+?)\s*\(/);
+        const speakerName = speakerNameMatch ? speakerNameMatch[1].trim() : "";
+
+        return (
+          <div key={idx} className="mb-2 last:mb-0">
+            <span className={`font-bold ${getSpeakerColor(speakerName)}`}>
+              {header}:
+            </span>
+            <span className="ml-1.5">{content}</span>
+          </div>
+        );
+      }
+      return (
+        <div key={idx} className="mb-1 italic opacity-70">
+          {line}
+        </div>
+      );
+    });
+  }
+
   return (
     <div className="mt-4 rounded-lg border border-border/70 bg-background p-4">
       <div className="flex items-start justify-between gap-3">
@@ -110,9 +140,11 @@ export function TranscriptComparisonDialog({
                         Bản đã làm sạch
                       </p>
                     </div>
-                    <p className="max-h-[55dvh] overflow-auto whitespace-pre-wrap rounded-md border border-border/60 bg-muted/20 p-4 text-sm leading-7 text-muted-foreground">
-                      {refinedTranscript ?? "Chưa có bản làm sạch từ hệ thống."}
-                    </p>
+                    <div className="max-h-[55dvh] overflow-auto rounded-md border border-border/60 bg-muted/20 p-4 text-sm leading-7 text-muted-foreground">
+                      {renderStyledTranscript(
+                        refinedTranscript ?? "Chưa có bản làm sạch từ hệ thống.",
+                      )}
+                    </div>
                   </div>
                 </div>
               </ScrollArea>
@@ -171,9 +203,11 @@ export function TranscriptComparisonDialog({
               Bản đã làm sạch
             </p>
           </div>
-          <p className="max-h-72 overflow-auto whitespace-pre-wrap rounded-md border border-border/60 bg-muted/20 p-3 pr-2 text-sm leading-7 text-muted-foreground">
-            {refinedTranscript ?? "Chưa có bản làm sạch từ hệ thống."}
-          </p>
+          <div className="max-h-72 overflow-auto rounded-md border border-border/60 bg-muted/20 p-3 pr-2 text-sm leading-7 text-muted-foreground">
+            {renderStyledTranscript(
+              refinedTranscript ?? "Chưa có bản làm sạch từ hệ thống.",
+            )}
+          </div>
         </div>
       </div>
     </div>

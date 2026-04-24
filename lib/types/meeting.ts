@@ -83,4 +83,5 @@ export interface MeetingRecord {
   apiRecordId?: number
   reportUrl?: string
   evaluation?: EvaluationResult
+  crmStatus?: "idle" | "syncing" | "synced" | "error"
 }

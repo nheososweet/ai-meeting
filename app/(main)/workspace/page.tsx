@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeftIcon, Maximize2Icon, ShieldCheckIcon, XIcon } from "lucide-react";
+import { ChevronLeftIcon, CloudCheckIcon, Maximize2Icon, ShieldCheckIcon, XIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogClose,
@@ -58,6 +59,7 @@ import type {
   MeetingRecord,
   TranscriptSegment,
 } from "@/lib/types/meeting";
+import { useProcessSaveCRMMutation } from "@/hooks/services/use-process-save-crm-mutation";
 
 const sourceMeeting = meetingRecords[0];
 const DEFAULT_EMAIL_SUBJECT_PREFIX = "Thông báo Biên bản Họp";
@@ -131,6 +133,7 @@ export default function WorkspacePage() {
   const summaryMinutesMutation = useSummaryMinutesMutation();
   const updateReportMutation = useUpdateReportMutation();
   const evaluateTranscriptMutation = useEvaluateTranscriptMutation();
+  const processCRMMutation = useProcessSaveCRMMutation();
   const updateTranscribeMutation = useUpdateTranscribeMutation();
   const [inputMode, setInputMode] = useState<AudioInputSource>("upload");
   const [activeMeeting, setActiveMeeting] =
@@ -189,6 +192,7 @@ export default function WorkspacePage() {
     summaryMinutesMutation,
     updateReportMutation,
     evaluateTranscriptMutation,
+    processCRMMutation,
   });
 
   const {
@@ -781,11 +785,22 @@ export default function WorkspacePage() {
           <h1 className="text-lg font-semibold text-foreground">
             Hệ thống báo cáo biên bản cuộc họp
           </h1>
-          <span
-            className={`rounded-md px-2 py-1 text-xs font-semibold ${status.className}`}
-          >
-            {status.label}
-          </span>
+          <div className="flex items-center gap-2">
+            {activeMeeting.crmStatus === "synced" && (
+              <Badge
+                variant="outline"
+                className="h-5 gap-1 border-emerald-200 bg-emerald-50 px-1.5 text-[10px] font-bold text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-900/20 dark:text-emerald-400"
+              >
+                <CloudCheckIcon className="size-3" />
+                CRM
+              </Badge>
+            )}
+            <span
+              className={`rounded-md px-2 py-1 text-xs font-semibold ${status.className}`}
+            >
+              {status.label}
+            </span>
+          </div>
         </div>
 
         <p className="mt-2 text-sm text-muted-foreground">
@@ -882,13 +897,12 @@ export default function WorkspacePage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className={`h-8 gap-1.5 rounded-full px-3 font-bold transition-colors ${
-                        activeMeeting.evaluation.final_score >= 8
+                      className={`h-8 gap-1.5 rounded-full px-3 font-bold transition-colors ${activeMeeting.evaluation.final_score >= 8
                           ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/30 dark:bg-emerald-900/20 dark:text-emerald-400"
                           : activeMeeting.evaluation.final_score >= 5
                             ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-900/30 dark:bg-amber-900/20 dark:text-amber-400"
                             : "border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400"
-                      }`}
+                        }`}
                       onClick={() => setIsEvaluationDialogOpen(true)}
                     >
                       <ShieldCheckIcon className="size-3.5" />
@@ -1213,10 +1227,10 @@ export default function WorkspacePage() {
       {actionToast ? (
         <div
           className={`fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur transition-all ${actionToast.variant === "success"
-              ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
-              : actionToast.variant === "error"
-                ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
-                : "border-blue-300/70 bg-blue-50/95 text-blue-900"
+            ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
+            : actionToast.variant === "error"
+              ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
+              : "border-blue-300/70 bg-blue-50/95 text-blue-900"
             }`}
         >
           <span>{actionToast.message}</span>

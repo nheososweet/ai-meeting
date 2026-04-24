@@ -64,6 +64,13 @@ type EvaluateTranscriptMutation = {
   }>;
 };
 
+type ProcessCRMMutation = {
+  mutateAsync: (params: {
+    id: number;
+    transcript: string;
+  }) => Promise<any>;
+};
+
 type UseWorkspacePipelineParams = {
   sourceMeeting: MeetingRecord;
   setActiveMeeting: React.Dispatch<React.SetStateAction<MeetingRecord>>;
@@ -75,6 +82,7 @@ type UseWorkspacePipelineParams = {
   summaryMinutesMutation: SummaryMinutesMutation;
   updateReportMutation: UpdateReportMutation;
   evaluateTranscriptMutation: EvaluateTranscriptMutation;
+  processCRMMutation: ProcessCRMMutation;
 };
 
 type StartProcessingArgs = {
@@ -114,6 +122,7 @@ export function useWorkspacePipeline({
   summaryMinutesMutation,
   updateReportMutation,
   evaluateTranscriptMutation,
+  processCRMMutation,
 }: UseWorkspacePipelineParams) {
   const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>(
     createInitialPipelineSteps,
@@ -286,6 +295,32 @@ export function useWorkspacePipeline({
         }, intervalMs);
       };
 
+      const runCRMSync = (transcriptText: string, recordId: number) => {
+        setActiveMeeting((prev) => ({ ...prev, crmStatus: "syncing" }));
+
+        void (async () => {
+          try {
+            await processCRMMutation.mutateAsync({
+              id: recordId,
+              transcript: transcriptText,
+            });
+
+            if (processingRunIdRef.current !== runId) {
+              return;
+            }
+
+            setActiveMeeting((prev) => ({ ...prev, crmStatus: "synced" }));
+            setNotice("Phiên họp đã sẵn sàng & Đã đồng bộ CRM thành công.");
+          } catch (error) {
+            console.error("CRM Sync failed:", error);
+            if (processingRunIdRef.current !== runId) {
+              return;
+            }
+            setActiveMeeting((prev) => ({ ...prev, crmStatus: "error" }));
+          }
+        })();
+      };
+
       const runSpeakerSummaryAndMinutes = (
         segments: TranscriptSegment[],
         rawTranscriptText: string,
@@ -431,6 +466,11 @@ export function useWorkspacePipeline({
               minutes: nextMinutes,
               reportUrl: finalReportUrl || current.reportUrl,
             }));
+
+            // 🚀 Call CRM Sync khi toàn bộ pipeline đã hoàn tất
+            if (recordId) {
+              runCRMSync(rawTranscriptText, recordId);
+            }
             setMinutesDraft(nextMinutes);
             setNotice(
               finalReportUrl

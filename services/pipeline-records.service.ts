@@ -101,6 +101,15 @@ export interface DiarizeTranscribeResponse {
   transcribeUrl?: string;
 }
 
+export interface CRMResponse {
+  message: string;
+  extracted_info?: {
+    id: number;
+    transcript: string;
+  };
+  crm_result?: any;
+}
+
 export interface UpdateReportResponse {
   status: "success";
   reportUrl: string;
@@ -269,6 +278,17 @@ function parseSendMailResponse(data: unknown): SendMailResponse {
     failed,
     results,
   };
+}
+
+export async function processAndSaveCRM(params: {
+  id: number;
+  transcript: string;
+}): Promise<CRMResponse> {
+  const { data } = await pipelineApi.post<CRMResponse>(
+    "/process-and-save-crm",
+    params,
+  );
+  return data;
 }
 
 export async function diarizeAndTranscribe(input: {

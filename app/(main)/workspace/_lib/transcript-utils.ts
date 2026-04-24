@@ -1,8 +1,8 @@
 import type { SpeakerSummary, TranscriptSegment } from "@/lib/types/meeting";
 
 const DIARIZATION_LINE_PATTERN =
-  /^Người\s*(\d+)\s*\(([\d.]+)s\s*-\s*([\d.]+)s\):\s*(.+)$/i;
-const SPEAKER_TAG_PATTERN = /Người\s*\d+/i;
+  /^(.+?)\s*\(([\d.]+)s\s*-\s*([\d.]+)s\):\s*(.+)$/i;
+const SPEAKER_TAG_PATTERN = /^(.+?)\s*\(/i;
 
 export function cleanTranscriptLine(line: string): string {
   return line.trim().replace(/^"+|"+$/g, "");
@@ -33,12 +33,13 @@ export function parseTranscriptSegments(lines: string[]): TranscriptSegment[] {
         return null;
       }
 
-      const speakerIndex = parsed[1];
+      const speakerName = parsed[1]?.trim();
       const startSecond = Number.parseFloat(parsed[2]);
       const endSecond = Number.parseFloat(parsed[3]);
       const text = parsed[4]?.trim();
 
       if (
+        !speakerName ||
         !Number.isFinite(startSecond) ||
         !Number.isFinite(endSecond) ||
         !text
@@ -48,7 +49,7 @@ export function parseTranscriptSegments(lines: string[]): TranscriptSegment[] {
 
       return {
         id: `seg-api-${index + 1}`,
-        speaker: `Người ${speakerIndex}`,
+        speaker: speakerName,
         startSecond,
         endSecond,
         text,

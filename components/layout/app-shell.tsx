@@ -10,35 +10,52 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <TooltipProvider>
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset className="relative overflow-hidden">
-          {/* Background Patterns - Bronze Drum */}
-          <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div
-              className="absolute -top-[200px] -left-[200px] size-[1000px] opacity-[0.15] transition-opacity"
-              style={{
-                backgroundImage: `url(/vpcp-ui/element/image.png)`,
-                backgroundSize: "contain",
-                backgroundRepeat: "no-repeat",
-                mixBlendMode: "multiply",
-                maskImage: "radial-gradient(circle at center, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)",
-                WebkitMaskImage: "radial-gradient(circle at center, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)",
-              }}
-            />
-            <div
-              className="absolute -right-[200px] -bottom-[200px] size-[1000px] opacity-[0.15] transition-opacity"
-              style={{
-                backgroundImage: `url(/vpcp-ui/element/image.png)`,
-                backgroundSize: "contain",
-                backgroundRepeat: "no-repeat",
-                mixBlendMode: "multiply",
-                maskImage: "radial-gradient(circle at center, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)",
-                WebkitMaskImage: "radial-gradient(circle at center, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)",
-              }}
-            />
-          </div>
+      {/* Background Patterns - Bronze Drum (Fixed at root) */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-background">
 
+        {/* LEFT */}
+        {/* <div
+          className="absolute -top-[21%] -left-[22%] h-full w-[60%] opacity-60"
+          style={{
+            backgroundImage: `url(/vpcp-ui/element/image.png)`,
+            backgroundSize: "contain",
+            backgroundPosition: "left top",
+            backgroundRepeat: "no-repeat",
+            WebkitMaskImage: "radial-gradient(ellipse at top left, black 40%, transparent 80%)",
+            maskImage: "radial-gradient(ellipse at top left, black 40%, transparent 80%)",
+          }}
+        /> */}
+        {/* LEFT */}
+        <div
+          className="absolute -top-[21%] -left-[22%] h-full w-[60%] opacity-100"
+          style={{
+            backgroundImage: `url(/vpcp-ui/element/image.png)`,
+            backgroundSize: "contain",
+            backgroundPosition: "left top",
+            backgroundRepeat: "no-repeat",
+            WebkitMaskImage: "radial-gradient(ellipse 120% 90% at top left, black 40%, transparent 80%)",
+            maskImage: "radial-gradient(ellipse 120% 90% at top left, black 40%, transparent 80%)",
+          }}
+        />
+        {/* RIGHT */}
+        <div
+          className="absolute -bottom-[20%] -right-[30%] h-full w-full opacity-60"
+          style={{
+            backgroundImage: `url(/vpcp-ui/element/image.png)`,
+            backgroundSize: "contain",
+            backgroundPosition: "right bottom",
+            backgroundRepeat: "no-repeat",
+            WebkitMaskImage: "radial-gradient(ellipse at bottom right, black 40%, transparent 80%)",
+            maskImage: "radial-gradient(ellipse at bottom right, black 40%, transparent 80%)",
+          }}
+        />
+      </div>
+
+      <SidebarProvider className="relative z-10 !bg-transparent">
+        {/* Override background of inner sidebar */}
+        <AppSidebar className="!bg-transparent [&>[data-sidebar=sidebar]]:bg-transparent" />
+
+        <SidebarInset className="relative overflow-hidden bg-transparent md:peer-data-[variant=inset]:bg-transparent/50">
           <AppHeader />
           <div className="relative z-10 flex min-h-0 flex-1 flex-col p-4 md:p-6">
             {children}

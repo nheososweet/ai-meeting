@@ -19,9 +19,11 @@ export function TranscriptSegmentsSection({
       <h2 className="text-base font-semibold text-foreground">
         Raw transcript
       </h2>
-      <p className="mt-2 text-sm leading-7 text-muted-foreground">
-        {reformatTranscriptTimestamps(meeting.rawTranscript)}
-      </p>
+      <div className="mt-3 rounded-md border border-border/60 bg-secondary/50 p-3 shadow-inner">
+        <p className="text-sm leading-7 text-muted-foreground">
+          {reformatTranscriptTimestamps(meeting.rawTranscript)}
+        </p>
+      </div>
 
       <Separator className="my-4" />
 

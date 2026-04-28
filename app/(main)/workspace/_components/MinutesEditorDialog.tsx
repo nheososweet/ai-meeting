@@ -44,7 +44,7 @@ export function MinutesEditorDialog({
   reportUrl,
 }: MinutesEditorDialogProps) {
   return (
-    <div className="mt-4 rounded-lg border border-border/70 bg-background p-4">
+    <div className="mt-4 rounded-lg border border-border/70 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <h3 className="text-sm font-semibold text-foreground">
@@ -116,7 +116,7 @@ export function MinutesEditorDialog({
                   }}
                   disabled={isSavingMinutes}
                   rows={26}
-                  className="min-h-[calc(100dvh-13rem)] w-full resize-none overflow-auto rounded-lg border border-input bg-transparent px-3 py-2 text-sm leading-6 outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="min-h-[calc(100dvh-13rem)] w-full resize-none overflow-auto rounded-lg border border-input bg-white px-3 py-2 text-sm leading-6 outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 shadow-sm"
                 />
                 {minutesValidationError ? (
                   <p className="text-xs text-rose-600 dark:text-rose-300">
@@ -152,10 +152,12 @@ export function MinutesEditorDialog({
         </Dialog>
       </div>
 
-      <div className="prose prose-sm mt-3 max-w-none text-foreground prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-td:text-muted-foreground prose-th:text-foreground dark:prose-invert">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {minutesMarkdown}
-        </ReactMarkdown>
+      <div className="mt-3 rounded-md border border-border/60 bg-secondary/50 p-3 shadow-inner">
+        <div className="prose prose-sm max-w-none text-foreground prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-td:text-muted-foreground prose-th:text-foreground dark:prose-invert">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {minutesMarkdown}
+          </ReactMarkdown>
+        </div>
       </div>
     </div>
   );

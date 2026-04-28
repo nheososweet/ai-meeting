@@ -13,7 +13,7 @@ export function SessionInfoCard({
   recordingElapsedMs,
 }: SessionInfoCardProps) {
   return (
-    <div className="space-y-3 rounded-lg border border-border/70 bg-muted/40 p-4">
+    <div className="space-y-3 rounded-lg border border-border/70 bg-secondary/50 p-4">
       <h2 className="text-sm font-semibold text-foreground">
         Thông tin phiên hiện tại
       </h2>

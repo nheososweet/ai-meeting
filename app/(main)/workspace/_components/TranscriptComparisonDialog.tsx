@@ -59,7 +59,7 @@ export function TranscriptComparisonDialog({
   }
 
   return (
-    <div className="mt-4 rounded-lg border border-border/70 bg-background p-4">
+    <div className="mt-4 rounded-lg border border-border/70 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           {/* <h3 className="text-sm font-semibold text-foreground">
@@ -140,7 +140,7 @@ export function TranscriptComparisonDialog({
                         Bản đã làm sạch
                       </p>
                     </div>
-                    <div className="max-h-[55dvh] overflow-auto rounded-md border border-border/60 bg-muted/20 p-4 text-sm leading-7 text-muted-foreground">
+                    <div className="max-h-[55dvh] overflow-auto rounded-md border border-border/60 bg-secondary/50 p-4 text-sm leading-7 text-muted-foreground">
                       {renderStyledTranscript(
                         refinedTranscript ?? "Chưa có bản làm sạch từ hệ thống.",
                       )}
@@ -203,7 +203,7 @@ export function TranscriptComparisonDialog({
               Bản đã làm sạch
             </p>
           </div>
-          <div className="max-h-72 overflow-auto rounded-md border border-border/60 bg-muted/20 p-3 pr-2 text-sm leading-7 text-muted-foreground">
+          <div className="max-h-72 overflow-auto rounded-md border border-border/60 bg-secondary/50 p-3 pr-2 text-sm leading-7 text-muted-foreground">
             {renderStyledTranscript(
               refinedTranscript ?? "Chưa có bản làm sạch từ hệ thống.",
             )}

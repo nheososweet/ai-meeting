@@ -25,7 +25,7 @@ export function PipelineProgressCard({
 }: PipelineProgressCardProps) {
   return (
     <>
-      <div className="mt-4 rounded-lg border border-border/70 bg-background p-3">
+      <div className="mt-4 rounded-lg border border-border/70 bg-secondary/50 p-3">
         <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
           <span>Tiến độ pipeline</span>
           <span>{stageProgress}%</span>
@@ -38,7 +38,7 @@ export function PipelineProgressCard({
         </div>
       </div>
 
-      <div className="mt-3 rounded-lg border border-border/70 bg-background p-3">
+      <div className="mt-3 rounded-lg border border-border/70 bg-secondary/50 p-3">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Pipeline chi tiết

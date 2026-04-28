@@ -722,10 +722,11 @@ export default function WorkspacePage() {
           <button
             type="button"
             onClick={() => handleSwitchMode("upload")}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${inputMode === "upload"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-              }`}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              inputMode === "upload"
+                ? "bg-white text-primary shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
             disabled={busyProcessing}
           >
             Tải tệp
@@ -733,10 +734,11 @@ export default function WorkspacePage() {
           <button
             type="button"
             onClick={() => handleSwitchMode("recording")}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${inputMode === "recording"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-              }`}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              inputMode === "recording"
+                ? "bg-white text-primary shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
             disabled={busyProcessing}
           >
             Thu âm trực tiếp
@@ -845,7 +847,7 @@ export default function WorkspacePage() {
           </div>
         </div>
 
-        <p className="mt-3 rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        <p className="mt-3 rounded-md border border-border/70 bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
           {notice}
         </p>
 
@@ -879,7 +881,7 @@ export default function WorkspacePage() {
         {shouldShowDiarization || shouldShowSpeakerSummary ? (
           <div className="mt-4 space-y-4">
             {shouldShowDiarization ? (
-              <article className="rounded-lg border border-border/70 bg-linear-to-b from-background to-muted/20 p-4">
+              <article className="rounded-lg border border-border/70 bg-white p-4 shadow-sm">
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold text-foreground">
                     Transcript theo người nói
@@ -1069,7 +1071,7 @@ export default function WorkspacePage() {
             ) : null}
 
             {shouldShowSpeakerSummary ? (
-              <article className="rounded-lg border border-border/70 bg-background p-4">
+              <article className="rounded-lg border border-border/70 bg-white p-4 shadow-sm">
                 <h3 className="text-sm font-semibold text-foreground">
                   Tóm tắt theo người nói
                 </h3>
@@ -1077,7 +1079,7 @@ export default function WorkspacePage() {
                   {activeMeeting.speakerSummaries.map((summary) => (
                     <li
                       key={summary.speaker}
-                      className="rounded-md border border-border/60 p-3 text-sm"
+                      className="rounded-md border border-border/60 bg-secondary/30 p-3 text-sm"
                     >
                       <p className="font-semibold text-foreground">
                         {summary.speaker}

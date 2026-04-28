@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import Script from "next/script";
 import { Providers } from "./providers";
 import "@cyntler/react-doc-viewer/dist/index.css";
 import "./globals.css";
@@ -18,35 +19,40 @@ const themeInitScript = `
 })();
 `;
 
-const quicksand = localFont({
+const openSans = localFont({
   src: [
     {
-      path: "../public/fonts/Quicksand-Light.ttf",
+      path: "../public/fonts/open-sans/OpenSans-Light.ttf",
       weight: "300",
       style: "normal",
     },
     {
-      path: "../public/fonts/Quicksand-Regular.ttf",
+      path: "../public/fonts/open-sans/OpenSans-Regular.ttf",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../public/fonts/Quicksand-Medium.ttf",
+      path: "../public/fonts/open-sans/OpenSans-Medium.ttf",
       weight: "500",
       style: "normal",
     },
     {
-      path: "../public/fonts/Quicksand-SemiBold.ttf",
+      path: "../public/fonts/open-sans/OpenSans-SemiBold.ttf",
       weight: "600",
       style: "normal",
     },
     {
-      path: "../public/fonts/Quicksand-Bold.ttf",
+      path: "../public/fonts/open-sans/OpenSans-Bold.ttf",
       weight: "700",
       style: "normal",
     },
+    {
+      path: "../public/fonts/open-sans/OpenSans-ExtraBold.ttf",
+      weight: "800",
+      style: "normal",
+    },
   ],
-  variable: "--font-quicksand",
+  variable: "--font-open-sans",
   display: "swap",
 });
 
@@ -97,10 +103,10 @@ export default function RootLayout({
     <html
       suppressHydrationWarning
       lang="vi"
-      className={`${quicksand.variable} h-full antialiased`}
+      className={`${openSans.variable} h-full antialiased`}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <Script id="theme-init" strategy="beforeInteractive">{themeInitScript}</Script>
       </head>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>

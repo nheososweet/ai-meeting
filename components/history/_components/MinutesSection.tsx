@@ -27,9 +27,11 @@ export function MinutesSection({
         </Button>
       </div>
 
-      <p className="mt-2 whitespace-pre-line text-sm leading-7 text-muted-foreground">
-        {reformatTranscriptTimestamps(minutesText)}
-      </p>
+      <div className="mt-3 rounded-md border border-border/60 bg-secondary/50 p-3 shadow-inner">
+        <p className="whitespace-pre-line text-sm leading-7 text-muted-foreground">
+          {reformatTranscriptTimestamps(minutesText)}
+        </p>
+      </div>
 
       <Separator className="my-4" />
 

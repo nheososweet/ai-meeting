@@ -31,8 +31,8 @@ export function HistoryHeaderMetrics({
           onClick={() => onFilterChange("all")}
           className={`cursor-pointer rounded-md border px-2 py-1 transition-colors ${
             activeFilter === "all"
-              ? "border-primary bg-primary/10 font-medium text-primary"
-              : "border-border/70 bg-muted/40 hover:bg-muted/80"
+              ? "border-primary bg-primary/10 font-medium text-primary shadow-sm"
+              : "border-border/70 bg-secondary/50 hover:bg-white"
           }`}
         >
           Tổng bản ghi: {total}

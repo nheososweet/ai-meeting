@@ -54,7 +54,7 @@ function UploadPanelView({
         className={`rounded-2xl border border-dashed p-4 transition-colors ${
           isDraggingUpload
             ? "border-primary bg-primary/5"
-            : "border-border/70 bg-muted/20"
+            : "border-border/70 bg-secondary/50"
         } ${busyProcessing ? "opacity-70" : ""}`}
         onDragEnter={onDragEnter}
         onDragOver={onDragOver}
@@ -93,7 +93,7 @@ function UploadPanelView({
       ) : null}
 
       {selectedFileName ? (
-        <div className="space-y-2 rounded-lg border border-border/70 bg-muted/40 p-3">
+        <div className="space-y-2 rounded-lg border border-border/70 bg-secondary/50 p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-medium text-foreground">
               Tệp đã chọn: {selectedFileName}

@@ -39,7 +39,7 @@ export function HistoryRecordItem({
 }: HistoryRecordItemProps) {
   return (
     <div
-      className={`grid gap-3 rounded-md border border-border/70 border-l-4 bg-background p-4 transition-colors hover:bg-muted/20 ${
+      className={`grid gap-3 rounded-md border border-border/70 border-l-4 bg-card p-4 shadow-sm transition-colors hover:bg-secondary/50 ${
         record.reportUrl
           ? "border-l-emerald-500/70"
           : "border-l-muted-foreground/30"

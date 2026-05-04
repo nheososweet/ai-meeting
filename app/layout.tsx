@@ -5,14 +5,25 @@ import { Providers } from "./providers";
 import "@cyntler/react-doc-viewer/dist/index.css";
 import "./globals.css";
 
+
+// const themeInitScript = `
+// (() => {
+//   try {
+//     const savedTheme = localStorage.getItem("theme");
+//     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+//     const shouldUseDark = savedTheme ? savedTheme === "dark" : prefersDark;
+
+//     document.documentElement.classList.toggle("dark", shouldUseDark);
+//   } catch {
+//     // Ignore theme init errors to avoid blocking page render.
+//   }
+// })();
+// `;
+
 const themeInitScript = `
 (() => {
   try {
-    const savedTheme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const shouldUseDark = savedTheme ? savedTheme === "dark" : prefersDark;
-
-    document.documentElement.classList.toggle("dark", shouldUseDark);
+    document.documentElement.classList.remove("dark");
   } catch {
     // Ignore theme init errors to avoid blocking page render.
   }

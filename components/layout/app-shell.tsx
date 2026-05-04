@@ -51,13 +51,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
       </div>
 
-      <SidebarProvider className="relative z-10 !bg-transparent">
+      <SidebarProvider className="relative z-10 h-dvh overflow-hidden !bg-transparent">
         {/* Override background of inner sidebar */}
         <AppSidebar className="!bg-transparent [&>[data-sidebar=sidebar]]:bg-transparent" />
 
-        <SidebarInset className="relative overflow-hidden bg-transparent md:peer-data-[variant=inset]:bg-transparent/50">
+        <SidebarInset className="relative flex h-full flex-col overflow-hidden bg-transparent md:peer-data-[variant=inset]:bg-transparent/50">
           <AppHeader />
-          <div className="relative z-10 flex min-h-0 flex-1 flex-col p-4 md:p-6">
+          <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto p-2 md:p-4">
             {children}
           </div>
         </SidebarInset>

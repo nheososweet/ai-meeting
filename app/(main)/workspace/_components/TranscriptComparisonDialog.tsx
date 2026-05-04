@@ -203,7 +203,7 @@ export function TranscriptComparisonDialog({
               Bản đã làm sạch
             </p>
           </div>
-          <div className="max-h-72 overflow-auto rounded-md border border-border/60 bg-secondary/50 p-3 pr-2 text-sm leading-7 text-muted-foreground">
+          <div className="rounded-md border border-border/60 bg-secondary/50 p-3 pr-2 text-sm leading-7 text-muted-foreground">
             {renderStyledTranscript(
               refinedTranscript ?? "Chưa có bản làm sạch từ hệ thống.",
             )}

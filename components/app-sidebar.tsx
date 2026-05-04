@@ -13,7 +13,9 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { ChevronRightIcon, Clock3Icon, MicIcon } from "lucide-react";
+import { Clock3Icon, FolderKanbanIcon, LayoutDashboardIcon, MicIcon, ShieldIcon } from "lucide-react";
+import { useAuth } from "@/lib/auth/auth-context";
+import { IAM_SIDEBAR_PERMISSIONS, WBS_SIDEBAR_PERMISSIONS } from "@/lib/auth/permissions";
 
 const appNav = {
   main: [
@@ -23,11 +25,26 @@ const appNav = {
       icon: MicIcon,
     },
     {
+      title: "Trình biên tập (Mới)",
+      href: "/meeting",
+      icon: LayoutDashboardIcon,
+    },
+    {
       title: "Lịch sử cuộc họp",
       href: "/history",
       icon: Clock3Icon,
     },
   ],
+  iam: {
+    title: "Quản trị hệ thống",
+    href: "/iam",
+    icon: ShieldIcon,
+  },
+  wbs: {
+    title: "Quản lý Bảng dịch",
+    href: "/wbs",
+    icon: FolderKanbanIcon,
+  },
   support: [
     // {
     //   title: "Mẫu biên bản",
@@ -48,6 +65,13 @@ const appNav = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const { hasAnyPermission } = useAuth();
+
+  const canSeeIam = hasAnyPermission(IAM_SIDEBAR_PERMISSIONS);
+  const isIamActive = pathname.startsWith("/iam");
+
+  const canSeeWbs = hasAnyPermission(WBS_SIDEBAR_PERMISSIONS);
+  const isWbsActive = pathname.startsWith("/wbs");
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -79,13 +103,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     key={item.title}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-3.5 border-b border-sidebar-border transition-colors",
+                      "group flex items-center gap-3 px-3 py-3.5 border-b border-sidebar-border transition-colors",
                       isActive
                         ? "text-primary"
-                        : "text-sidebar-foreground hover:text-primary/80"
+                        : "text-sidebar-foreground hover:text-primary"
                     )}
                   >
-                    <item.icon className="size-5 shrink-0" />
+                    <div
+                      className={cn(
+                        "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "bg-primary/10 text-primary group-hover:bg-primary/20"
+                      )}
+                    >
+                      <item.icon className="size-[18px]" />
+                    </div>
                     <span className="text-[13px] font-bold uppercase tracking-wide flex-1">
                       {item.title}
                     </span>
@@ -95,6 +128,60 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </Link>
                 );
               })}
+
+              {/* WBS Navigation — Sidebar Guard */}
+              {canSeeWbs && (
+                <Link
+                  href={appNav.wbs.href}
+                  className={cn(
+                    "group flex items-center gap-3 px-3 py-3.5 border-b border-sidebar-border transition-colors",
+                    isWbsActive
+                      ? "text-primary"
+                      : "text-sidebar-foreground hover:text-primary"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
+                      isWbsActive
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-primary/10 text-primary group-hover:bg-primary/20"
+                    )}
+                  >
+                    <appNav.wbs.icon className="size-[18px]" />
+                  </div>
+                  <span className="text-[13px] font-bold uppercase tracking-wide flex-1">
+                    {appNav.wbs.title}
+                  </span>
+                </Link>
+              )}
+
+              {/* IAM Navigation — Sidebar Guard */}
+              {canSeeIam && (
+                <Link
+                  href={appNav.iam.href}
+                  className={cn(
+                    "group flex items-center gap-3 px-3 py-3.5 border-b border-sidebar-border transition-colors",
+                    isIamActive
+                      ? "text-primary"
+                      : "text-sidebar-foreground hover:text-primary"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
+                      isIamActive
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-primary/10 text-primary group-hover:bg-primary/20"
+                    )}
+                  >
+                    <appNav.iam.icon className="size-[18px]" />
+                  </div>
+                  <span className="text-[13px] font-bold uppercase tracking-wide flex-1">
+                    {appNav.iam.title}
+                  </span>
+                </Link>
+              )}
             </nav>
           </SidebarGroupContent>
         </SidebarGroup>

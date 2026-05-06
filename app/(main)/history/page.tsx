@@ -9,6 +9,7 @@ import { HistoryRecordItem } from "@/app/(main)/history/_components/HistoryRecor
 import { ReportPreviewDialog } from "@/app/(main)/history/_components/ReportPreviewDialog";
 import { SendEmailDialog } from "@/app/(main)/history/_components/SendEmailDialog";
 import { TranscriptPreviewDialog } from "@/app/(main)/history/_components/TranscriptPreviewDialog";
+import { HistorySpeakersLabelingDialog } from "@/app/(main)/history/_components/HistorySpeakersLabelingDialog";
 import {
   historyDateTimeFormatter,
   resolveReportFilename,
@@ -19,6 +20,16 @@ import { useHistoryToast } from "@/app/(main)/history/_hooks/useHistoryToast";
 import { useHistoryTranscriptPreview } from "@/app/(main)/history/_hooks/useHistoryTranscriptPreview";
 import { useRecordsQuery } from "@/hooks/services/use-records-query";
 import type { PipelineRecord } from "@/services/pipeline-records.service";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
 
 export default function HistoryPage() {
   const [previewAudioRecordId, setPreviewAudioRecordId] = useState<
@@ -27,9 +38,14 @@ export default function HistoryPage() {
   const [previewReportRecordId, setPreviewReportRecordId] = useState<
     number | null
   >(null);
+  const [isLabelingDialogOpen, setIsLabelingDialogOpen] = useState(false);
 
-  const recordsQuery = useRecordsQuery();
-  const records = recordsQuery.data;
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+
+  const recordsQuery = useRecordsQuery({ page, size: pageSize });
+  const records = recordsQuery.data?.data;
+  const meta = recordsQuery.data?.meta;
 
   const router = useRouter();
   const pathname = usePathname();
@@ -63,6 +79,7 @@ export default function HistoryPage() {
     handlePreviewTranscript,
     handleCopyTranscriptPreview,
     closeTranscriptPreview,
+    setPreviewTranscriptByRecord,
   } = useHistoryTranscriptPreview({
     records,
     showActionToast,
@@ -127,6 +144,15 @@ export default function HistoryPage() {
 
   function handleToggleAudioPreview(recordId: number) {
     setPreviewAudioRecordId((prev) => (prev === recordId ? null : recordId));
+  }
+
+  function handleLabelingSuccess(newRawTranscript: string) {
+    if (previewTranscriptRecordId) {
+      setPreviewTranscriptByRecord((prev) => ({
+        ...prev,
+        [previewTranscriptRecordId]: newRawTranscript,
+      }));
+    }
   }
 
   function handlePreviewReport(record: PipelineRecord) {
@@ -197,6 +223,62 @@ export default function HistoryPage() {
             </div>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {meta && meta.total_pages > 1 && (
+          <div className="mt-4 flex items-center justify-between py-2 border-t border-border/40">
+            <div className="text-xs text-muted-foreground">
+              Hiển thị <span className="font-medium text-foreground">{(meta.page - 1) * meta.page_size + 1}</span> - <span className="font-medium text-foreground">{Math.min(meta.page * meta.page_size, meta.total_items)}</span> trong <span className="font-medium text-foreground">{meta.total_items}</span> bản ghi
+            </div>
+            
+            <Pagination className="w-auto mx-0">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (meta.has_prev) setPage(p => p - 1)
+                    }}
+                    className={cn("cursor-pointer", !meta.has_prev && "pointer-events-none opacity-50")}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: meta.total_pages }, (_, i) => i + 1).map((p) => {
+                  if (p === 1 || p === meta.total_pages || (p >= meta.page - 1 && p <= meta.page + 1)) {
+                    return (
+                      <PaginationItem key={p}>
+                        <PaginationLink 
+                          isActive={p === meta.page}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setPage(p)
+                          }}
+                          className="cursor-pointer"
+                        >
+                          {p}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  }
+                  if (p === meta.page - 2 || p === meta.page + 2) {
+                    return <PaginationItem key={p}><PaginationEllipsis /></PaginationItem>
+                  }
+                  return null
+                })}
+
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (meta.has_next) setPage(p => p + 1)
+                    }}
+                    className={cn("cursor-pointer", !meta.has_next && "pointer-events-none opacity-50")}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </section>
 
       <TranscriptPreviewDialog
@@ -214,6 +296,20 @@ export default function HistoryPage() {
           }
         }}
         onCopyTranscript={handleCopyTranscriptPreview}
+        onOpenLabeling={() => setIsLabelingDialogOpen(true)}
+      />
+
+      <HistorySpeakersLabelingDialog
+        open={isLabelingDialogOpen}
+        onOpenChange={setIsLabelingDialogOpen}
+        recordId={previewTranscriptRecordId ?? 0}
+        rawTranscript={
+          previewTranscriptRecordId
+            ? (previewTranscriptByRecord[previewTranscriptRecordId] ?? "")
+            : ""
+        }
+        onSuccess={handleLabelingSuccess}
+        showActionToast={(msg) => showActionToast(msg)}
       />
 
       <ReportPreviewDialog

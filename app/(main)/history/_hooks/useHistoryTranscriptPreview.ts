@@ -82,6 +82,11 @@ export function useHistoryTranscriptPreview({
       return;
     }
 
+    if (!record.transcribeUrl) {
+      showActionToast("Bản ghi này chưa có nội dung transcript.");
+      return;
+    }
+
     setLoadingTranscriptRecordId(record.id);
 
     try {
@@ -116,5 +121,6 @@ export function useHistoryTranscriptPreview({
     handlePreviewTranscript,
     handleCopyTranscriptPreview,
     closeTranscriptPreview,
+    setPreviewTranscriptByRecord,
   };
 }

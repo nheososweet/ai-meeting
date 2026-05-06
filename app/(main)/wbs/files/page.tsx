@@ -18,15 +18,15 @@ import { ConfirmDialog } from "@/components/iam/shared/confirm-dialog"
 import { FileUploadZone } from "@/components/wbs/files/file-upload-zone"
 import { FolderPermissions } from "@/components/wbs/files/folder-permissions"
 import { useAuth } from "@/lib/auth/auth-context"
-import { WBS_PERMISSIONS } from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/types/iam"
 import { mockFiles, mockProjects } from "@/lib/mock/wbs"
 import { mockUsers } from "@/lib/mock/iam"
 import type { WbsFile } from "@/lib/types/wbs"
 
 export default function FilesPage() {
   const { hasPermission } = useAuth()
-  const canUpload = hasPermission(WBS_PERMISSIONS.FILES_UPLOAD)
-  const canDelete = hasPermission(WBS_PERMISSIONS.FILES_DELETE)
+  const canUpload = hasPermission(PERMISSIONS.ASSIGN_FILES)
+  const canDelete = hasPermission(PERMISSIONS.ASSIGN_FILES)
 
   const [files, setFiles] = useState<WbsFile[]>(mockFiles)
   const [search, setSearch] = useState("")

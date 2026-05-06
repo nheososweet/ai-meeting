@@ -33,14 +33,14 @@ import { WorkflowStepper } from "@/components/wbs/shared/workflow-stepper"
 import { AssignDialog } from "@/components/wbs/assignments/assign-dialog"
 import { ActivityLogDialog } from "@/components/wbs/assignments/activity-log-dialog"
 import { useAuth } from "@/lib/auth/auth-context"
-import { WBS_PERMISSIONS } from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/types/iam"
 import { mockAssignments, mockProjects } from "@/lib/mock/wbs"
 import { mockUsers, mockGroups } from "@/lib/mock/iam"
 import type { WbsAssignment, JobStatus } from "@/lib/types/wbs"
 
 export default function AssignmentsPage() {
   const { hasPermission } = useAuth()
-  const canManage = hasPermission(WBS_PERMISSIONS.ASSIGNMENTS_MANAGE)
+  const canManage = hasPermission(PERMISSIONS.ASSIGN_FILES)
 
   const [assignments, setAssignments] = useState<WbsAssignment[]>(mockAssignments)
   const [search, setSearch] = useState("")

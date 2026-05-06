@@ -32,7 +32,7 @@ import { EmptyState } from "@/components/iam/shared/empty-state"
 import { ConfirmDialog } from "@/components/iam/shared/confirm-dialog"
 import { ProjectFormDialog } from "@/components/wbs/projects/project-form-dialog"
 import { useAuth } from "@/lib/auth/auth-context"
-import { WBS_PERMISSIONS } from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/types/iam"
 import { mockProjects } from "@/lib/mock/wbs"
 import type { WbsProject, ProjectStatus, ProjectType } from "@/lib/types/wbs"
 import { cn } from "@/lib/utils"
@@ -41,7 +41,7 @@ const PAGE_SIZE = 10
 
 export default function ProjectsPage() {
   const { hasPermission } = useAuth()
-  const canManage = hasPermission(WBS_PERMISSIONS.PROJECTS_MANAGE)
+  const canManage = hasPermission(PERMISSIONS.ASSIGN_FILES)
 
   const [projects, setProjects] = useState<WbsProject[]>(mockProjects)
   const [search, setSearch] = useState("")

@@ -10,21 +10,21 @@ import { Button } from "@/components/ui/button"
 import type { ReactNode } from "react"
 
 const iamTabs = [
-  { label: "Tài khoản", href: "/iam/users", permCode: "iam.users.view" },
-  { label: "Vai trò & Phân quyền", href: "/iam/roles", permCode: "iam.roles.view" },
-  { label: "Nhóm tài khoản", href: "/iam/groups", permCode: "iam.groups.view" },
+  { label: "Tài khoản", href: "/iam/users", permCode: "manage_users" },
+  { label: "Tổ chức / Công ty", href: "/iam/companies", permCode: "manage_companies" },
+  { label: "Phòng ban / Nhóm", href: "/iam/groups", permCode: "manage_groups" },
 ]
 
 export default function IamLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const { hasPermission, hasAnyPermission } = useAuth()
+  const { hasPermission, hasRole, hasScope } = useAuth()
+  const isAdmin = hasRole("admin")
+  const isGlobal = hasScope("global")
 
   // Route Guard: check if user can access any IAM route
-  const requiredPerm = Object.entries(IAM_ROUTE_PERMISSIONS).find(([route]) =>
-    pathname.startsWith(route),
-  )?.[1]
-
-  const canAccessRoute = requiredPerm ? hasPermission(requiredPerm) : hasAnyPermission(Object.values(IAM_ROUTE_PERMISSIONS))
+  const isCompanyRoute = pathname.startsWith("/iam/companies")
+  
+  const canAccessRoute = isAdmin && (!isCompanyRoute || isGlobal)
 
   if (!canAccessRoute) {
     return (
@@ -43,8 +43,13 @@ export default function IamLayout({ children }: { children: ReactNode }) {
     )
   }
 
-  // Filter tabs by permission
-  const visibleTabs = iamTabs.filter((tab) => hasPermission(tab.permCode))
+  // Filter tabs by permission/role/scope
+  const visibleTabs = iamTabs.filter((tab) => {
+    if (tab.href === "/iam/companies") {
+      return isAdmin && isGlobal
+    }
+    return isAdmin && hasPermission(tab.permCode)
+  })
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-4">

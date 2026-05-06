@@ -1,12 +1,39 @@
 "use client";
 
-import { Search, User } from "lucide-react";
+import { Search, LogOutIcon, ShieldIcon, ChevronsUpDownIcon } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/auth/auth-context";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+function getInitials(name: string): string {
+  if (!name) return "KH";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+function getRoleLabel(role: string): string {
+  switch (role) {
+    case "admin": return "Quản trị viên";
+    case "member": return "Thành viên";
+    default: return role;
+  }
+}
 
 export function AppHeader() {
+  const { currentUser, logout } = useAuth();
+
   return (
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center border-b border-border/30 bg-transparent">
       <div className="flex w-full items-center gap-2 px-4 md:px-6">
@@ -28,16 +55,65 @@ export function AppHeader() {
           </div>
         </div>
 
-        {/* Right: User & Theme */}
+        {/* Right: User Menu */}
         <div className="ml-auto flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="size-8 rounded-sm bg-muted border border-border flex items-center justify-center text-muted-foreground">
-              <User size={18} />
+          {currentUser ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 outline-none rounded-md px-2 py-1.5 hover:bg-muted/50 transition-colors">
+                <Avatar className="size-8 rounded-md overflow-hidden">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold rounded-md">
+                    {getInitials(currentUser.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden sm:flex flex-col text-left">
+                  <span className="text-sm font-semibold text-foreground leading-none">
+                    {currentUser.name}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground mt-1 leading-none capitalize">
+                    {getRoleLabel(currentUser.role)}
+                  </span>
+                </div>
+                <ChevronsUpDownIcon className="size-4 text-muted-foreground ml-1" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 rounded-lg">
+                <DropdownMenuLabel className="p-0 font-normal">
+                  <div className="flex items-center gap-2 px-2 py-2 text-left text-sm">
+                    <Avatar className="h-8 w-8 rounded-md overflow-hidden">
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold rounded-md">
+                        {getInitials(currentUser.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold">{currentUser.name}</span>
+                      <span className="truncate text-xs text-muted-foreground">{currentUser.email}</span>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem className="gap-2 cursor-pointer">
+                    <ShieldIcon className="size-4 text-muted-foreground" />
+                    <span className="flex-1">{getRoleLabel(currentUser.role)}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded text-muted-foreground capitalize">
+                      {currentUser.scope}
+                    </span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="gap-2 text-destructive cursor-pointer" onClick={() => logout()}>
+                  <LogOutIcon className="size-4" />
+                  Đăng xuất
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="flex items-center gap-2 opacity-50">
+              <div className="size-8 rounded-sm bg-muted border border-border flex items-center justify-center text-muted-foreground">
+                <span className="text-xs">...</span>
+              </div>
+              <span className="text-sm font-semibold text-foreground hidden sm:inline">Đang tải...</span>
             </div>
-            <span className="text-sm font-semibold text-foreground hidden sm:inline">Khách</span>
-          </div>
-
-          {/* <ThemeToggle /> */}
+          )}
         </div>
       </div>
     </header>

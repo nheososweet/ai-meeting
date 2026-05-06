@@ -1,4 +1,4 @@
-import { CopyIcon, LoaderCircleIcon } from "lucide-react";
+import { CopyIcon, LoaderCircleIcon, UsersIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ type TranscriptPreviewDialogProps = {
   isLoading: boolean;
   onOpenChange: (nextOpen: boolean) => void;
   onCopyTranscript: () => void;
+  onOpenLabeling?: () => void;
 };
 
 export function TranscriptPreviewDialog({
@@ -30,6 +31,7 @@ export function TranscriptPreviewDialog({
   isLoading,
   onOpenChange,
   onCopyTranscript,
+  onOpenLabeling,
 }: TranscriptPreviewDialogProps) {
   function renderStyledTranscript(text: string) {
     if (!text) return null;
@@ -101,6 +103,18 @@ export function TranscriptPreviewDialog({
             <CopyIcon className="size-4" />
             Copy transcript
           </Button>
+          {onOpenLabeling && (
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-1.5 border-dashed border-blue-200 bg-blue-50/30 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-900/30 dark:bg-blue-950/20 dark:text-blue-400"
+              onClick={onOpenLabeling}
+              disabled={!transcriptRecordId || isLoading}
+            >
+              <UsersIcon className="size-4" />
+              Gán nhãn người
+            </Button>
+          )}
           <DialogClose asChild>
             <Button type="button" variant="outline">
               Đóng

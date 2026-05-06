@@ -16,11 +16,11 @@ import { mockFolderPermissions, mockProjects } from "@/lib/mock/wbs"
 import { mockUsers, mockGroups } from "@/lib/mock/iam"
 import type { FolderPermission, FolderPermissionType } from "@/lib/types/wbs"
 import { useAuth } from "@/lib/auth/auth-context"
-import { WBS_PERMISSIONS } from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/types/iam"
 
 export function FolderPermissions() {
   const { hasPermission } = useAuth()
-  const canManage = hasPermission(WBS_PERMISSIONS.STORAGE_MANAGE)
+  const canManage = hasPermission(PERMISSIONS.ASSIGN_FILES)
   
   const [permissions, setPermissions] = useState<FolderPermission[]>(mockFolderPermissions)
 

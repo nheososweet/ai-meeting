@@ -23,16 +23,19 @@ const appNav = {
       title: "TRÌNH BIÊN TẬP CUỘC HỌP",
       href: "/workspace",
       icon: MicIcon,
+      requiredPerms: ["transcribe"],
     },
     {
       title: "Trình biên tập (Mới)",
       href: "/meeting",
       icon: LayoutDashboardIcon,
+      requiredPerms: ["transcribe"],
     },
     {
       title: "Lịch sử cuộc họp",
       href: "/history",
       icon: Clock3Icon,
+      requiredPerms: ["view_records"],
     },
   ],
   iam: {
@@ -40,9 +43,9 @@ const appNav = {
     href: "/iam",
     icon: ShieldIcon,
   },
-  wbs: {
-    title: "Quản lý Bảng dịch",
-    href: "/wbs",
+  meetingRecords: {
+    title: "Bản ghi cuộc họp",
+    href: "/meeting-records",
     icon: FolderKanbanIcon,
   },
   support: [
@@ -65,13 +68,17 @@ const appNav = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
-  const { hasAnyPermission } = useAuth();
+  const { hasAnyPermission, hasRole } = useAuth();
 
-  const canSeeIam = hasAnyPermission(IAM_SIDEBAR_PERMISSIONS);
+  const canSeeIam = hasRole("admin");
   const isIamActive = pathname.startsWith("/iam");
 
-  const canSeeWbs = hasAnyPermission(WBS_SIDEBAR_PERMISSIONS);
-  const isWbsActive = pathname.startsWith("/wbs");
+  const canSeeMeetingRecords = hasAnyPermission(WBS_SIDEBAR_PERMISSIONS);
+  const isMeetingRecordsActive = pathname.startsWith("/meeting-records");
+
+  const visibleMain = appNav.main.filter((item: any) => 
+    !item.requiredPerms || hasAnyPermission(item.requiredPerms)
+  );
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -92,7 +99,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup className="p-0">
           <SidebarGroupContent>
             <nav className="flex flex-col">
-              {appNav.main.map((item) => {
+              {visibleMain.map((item) => {
                 const isActive =
                   item.href === "/history"
                     ? pathname.startsWith("/history")
@@ -129,13 +136,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 );
               })}
 
-              {/* WBS Navigation — Sidebar Guard */}
-              {canSeeWbs && (
+              {/* Meeting Records Navigation — Sidebar Guard */}
+              {canSeeMeetingRecords && (
                 <Link
-                  href={appNav.wbs.href}
+                  href={appNav.meetingRecords.href}
                   className={cn(
                     "group flex items-center gap-3 px-3 py-3.5 border-b border-sidebar-border transition-colors",
-                    isWbsActive
+                    isMeetingRecordsActive
                       ? "text-primary"
                       : "text-sidebar-foreground hover:text-primary"
                   )}
@@ -143,15 +150,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <div
                     className={cn(
                       "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
-                      isWbsActive
+                      isMeetingRecordsActive
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : "bg-primary/10 text-primary group-hover:bg-primary/20"
                     )}
                   >
-                    <appNav.wbs.icon className="size-[18px]" />
+                    <appNav.meetingRecords.icon className="size-[18px]" />
                   </div>
                   <span className="text-[13px] font-bold uppercase tracking-wide flex-1">
-                    {appNav.wbs.title}
+                    {appNav.meetingRecords.title}
                   </span>
                 </Link>
               )}

@@ -1,17 +1,67 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, Suspense } from "react";
 import Image from "next/image";
-import { User, Lock, Eye, EyeOff, LayoutGrid } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { setTokenInStorage, setCachedAuthUser } from "@/lib/auth/storage";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { authService } from "@/services/auth.service";
+import { mapAuthUser } from "@/lib/auth/auth-context";
 
-export default function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState("cddh");
-  const [password, setPassword] = useState("12345678");
-  const [captcha, setCaptcha] = useState("");
+function LoginContent() {
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [errorMsg, setErrorMsg] = React.useState("");
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/workspace";
+  const queryClient = useQueryClient();
+
+  const loginMutation = useMutation({
+    mutationFn: async () => {
+      // 1. Gọi API login
+      const loginData = await authService.login(email, password);
+      // 2. Lưu token ngay lập tức để Axios interceptor có thể dùng
+      setTokenInStorage(loginData.access_token);
+      // 3. Gọi API getMe để xác thực token và lấy thông tin user
+      const userData = await authService.getMe();
+      return userData;
+    },
+    onSuccess: (userData) => {
+      // Lưu thẳng data user vào Global Cache của React Query
+      // Để khi sang trang /workspace, AuthContext dùng được ngay mà không cần call lại /me
+      const mappedUser = mapAuthUser(userData);
+      queryClient.setQueryData(["auth", "me"], mappedUser);
+      // Lưu vào localStorage cho lần refresh sau
+      setCachedAuthUser(mappedUser);
+
+      // Đã lấy được user info thành công -> chuyển hướng
+      router.push(callbackUrl);
+    },
+    onError: (error: any) => {
+      // Bắt lỗi từ axios interceptor
+      if (error.response?.status === 401 || error.response?.status === 422) {
+        setErrorMsg("Email hoặc mật khẩu không đúng.");
+      } else {
+        setErrorMsg(error.response?.data?.detail || error.message || "Đã có lỗi xảy ra. Vui lòng thử lại.");
+      }
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    if (!email || !password) {
+      setErrorMsg("Vui lòng nhập đầy đủ email và mật khẩu");
+      return;
+    }
+    loginMutation.mutate();
+  };
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden font-sans">
@@ -46,68 +96,56 @@ export default function LoginPage() {
             </h1>
           </div>
 
+          {/* Server Error Message */}
+          {errorMsg && (
+            <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 font-medium">
+              {errorMsg}
+            </div>
+          )}
+
           {/* Form */}
-          <form className="space-y-7" onSubmit={(e) => e.preventDefault()}>
-            {/* Username */}
-            <div className="relative group">
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
-                <User size={20} />
+          <form className="space-y-7" onSubmit={handleSubmit}>
+            {/* Email */}
+            <div className="space-y-1">
+              <div className="relative group">
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
+                  <Mail size={20} />
+                </div>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Email đăng nhập"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  required
+                  className="pl-8 h-12 border-x-0 border-t-0 border-b border-gray-200 rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary transition-all font-medium text-gray-800 placeholder:text-gray-400"
+                />
               </div>
-              <Input
-                type="text"
-                placeholder="Tên đăng nhập"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="pl-8 h-12 border-x-0 border-t-0 border-b border-gray-200 rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary transition-all font-medium text-gray-800 placeholder:text-gray-400"
-              />
             </div>
 
             {/* Password */}
-            <div className="relative group">
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
-                <Lock size={20} />
-              </div>
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="Mật khẩu"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-8 pr-10 h-12 border-x-0 border-t-0 border-b border-gray-200 rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary transition-all font-medium text-gray-800 placeholder:text-gray-400"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-
-            {/* Captcha */}
-            <div className="space-y-3">
-              <div className="flex gap-4 items-end">
-                <div className="relative flex-1 group">
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
-                    <LayoutGrid size={20} />
-                  </div>
-                  <Input
-                    type="text"
-                    placeholder="Nhập mã kiểm tra"
-                    value={captcha}
-                    onChange={(e) => setCaptcha(e.target.value)}
-                    className="pl-8 h-12 border-x-0 border-t-0 border-b border-gray-200 rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary transition-all font-medium text-gray-800 placeholder:text-gray-400"
-                  />
+            <div className="space-y-1">
+              <div className="relative group">
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
+                  <Lock size={20} />
                 </div>
-                <div className="bg-[#F2F2F2] h-12 px-6 flex items-center justify-center rounded-md border border-gray-200 select-none shadow-inner">
-                  <span className="font-mono text-xl tracking-[0.3em] font-black text-gray-700 italic drop-shadow-sm">MVWHJH</span>
-                </div>
-              </div>
-              <div className="text-right">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Mật khẩu"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                  className="pl-8 pr-10 h-12 border-x-0 border-t-0 border-b border-gray-200 rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary transition-all font-medium text-gray-800 placeholder:text-gray-400"
+                />
                 <button
                   type="button"
-                  className="text-sm font-bold text-primary hover:text-primary/80 transition-colors"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  Đổi mã kiểm tra
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
@@ -115,9 +153,17 @@ export default function LoginPage() {
             {/* Login Button */}
             <Button
               type="submit"
-              className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-lg rounded-lg shadow-lg shadow-accent/30 transition-all active:scale-[0.98]"
+              disabled={loginMutation.isPending}
+              className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-lg rounded-lg shadow-lg shadow-accent/30 transition-all active:scale-[0.98] disabled:opacity-70"
             >
-              Đăng nhập
+              {loginMutation.isPending ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="size-5 animate-spin" />
+                  Đang đăng nhập...
+                </span>
+              ) : (
+                "Đăng nhập"
+              )}
             </Button>
 
             {/* Forgot Password */}
@@ -129,14 +175,6 @@ export default function LoginPage() {
                 Quên mật khẩu
               </button>
             </div>
-
-            {/* VNConnect Button */}
-            {/* <Button
-              variant="outline"
-              className="w-full h-12 border-2 border-accent text-accent hover:bg-accent/10 font-bold text-lg rounded-lg transition-all active:scale-[0.98]"
-            >
-              Đăng nhập với VNConnect
-            </Button> */}
           </form>
         </div>
       </div>
@@ -147,4 +185,12 @@ export default function LoginPage() {
       </div>
     </div>
   );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin" /></div>}>
+      <LoginContent />
+    </Suspense>
+  )
 }

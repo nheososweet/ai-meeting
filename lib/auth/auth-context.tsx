@@ -1,44 +1,54 @@
 "use client"
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react"
-import type { AuthContextValue, AuthUser } from "@/lib/types/iam"
-import { mockUsers, mockRoles, mockGroups, mockPermissions, resolveEffectivePermissions } from "@/lib/mock/iam"
-
 // ══════════════════════════════════════════════════════════
-// Build AuthUser from a mock user ID
+// Auth Context — Real API Integration
 // ══════════════════════════════════════════════════════════
 
-function buildAuthUser(userId: string): AuthUser {
-  const user = mockUsers.find((u) => u.id === userId)
-  if (!user) {
-    // Fallback: return a minimal viewer
-    return {
-      id: "user-unknown",
-      name: "Unknown",
-      email: "unknown@vpcp.gov.vn",
-      roles: [],
-      effectivePermissions: [],
-    }
-  }
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  type ReactNode,
+} from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import type {
+  AuthContextValue,
+  AuthUser,
+  AuthMeResponse,
+  UserRole,
+  UserScope,
+} from "@/lib/types/iam"
+import {
+  getTokenFromStorage,
+  clearTokenFromStorage,
+  getCachedAuthUser,
+  setCachedAuthUser,
+} from "@/lib/auth/storage"
+import { authService } from "@/services/auth.service"
 
-  const userRoles = mockRoles.filter((r) => user.roleIds.includes(r.id))
-  const effectivePermissions = resolveEffectivePermissions(user, mockRoles, mockGroups, mockPermissions)
+// ── Map API response → AuthUser ─────────────────────────
 
+export function mapAuthUser(data: AuthMeResponse): AuthUser {
   return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    roles: userRoles,
-    effectivePermissions,
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    role: data.role,
+    scope: data.scope,
+    companyId: data.company_id,
+    groupId: data.group_id,
+    permissions: data.permissions,
+    isActive: data.is_active,
   }
 }
 
-// Role preset → user ID mapping (for dev switcher)
-const ROLE_USER_MAP: Record<string, string> = {
-  Admin: "user-1",       // Nguyễn Văn An — role-admin
-  Supervisor: "user-4",  // Phạm Minh Đức — role-supervisor
-  Editor: "user-2",      // Trần Thị Bích — role-editor
-  Viewer: "user-3",      // Lê Hoàng Cường — role-viewer
+// ── Fetch user via Axios (direct backend) ─────────────────
+
+async function fetchMe(): Promise<AuthUser> {
+  const data = await authService.getMe()
+  return mapAuthUser(data)
 }
 
 // ══════════════════════════════════════════════════════════
@@ -48,34 +58,107 @@ const ROLE_USER_MAP: Record<string, string> = {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Default: login as Admin for development
-  const [currentUserId, setCurrentUserId] = useState("user-1")
+  const queryClient = useQueryClient()
 
-  const currentUser = useMemo(() => buildAuthUser(currentUserId), [currentUserId])
+  // Check if we have a token in localStorage before querying
+  const hasToken =
+    typeof window !== "undefined" && !!getTokenFromStorage()
+
+  // Read cached user from localStorage for instant hydration on refresh
+  const cachedUser = hasToken ? getCachedAuthUser() : null
+
+  const {
+    data: currentUser = null,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: fetchMe,
+    retry: false,
+    staleTime: 5 * 60 * 1000, // Cache 5 minutes
+    enabled: hasToken, // Only fetch if token exists
+    initialData: cachedUser ?? undefined,
+    // No initialDataUpdatedAt → data is immediately stale → background refetch
+  })
+
+  // Sync user data back to localStorage whenever it changes
+  useEffect(() => {
+    if (currentUser) {
+      setCachedAuthUser(currentUser)
+    }
+  }, [currentUser])
+
+  // If query fails with auth error, clear token and redirect
+  useEffect(() => {
+    if (error && hasToken) {
+      clearTokenFromStorage()
+      // Don't redirect if already on login page
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login"
+      }
+    }
+  }, [error, hasToken])
+
+  const isAuthenticated = !!currentUser
 
   const hasPermission = useCallback(
-    (code: string) => currentUser.effectivePermissions.includes(code),
-    [currentUser.effectivePermissions],
+    (code: string) => currentUser?.permissions.includes(code) ?? false,
+    [currentUser?.permissions],
   )
 
   const hasAnyPermission = useCallback(
-    (codes: string[]) => codes.some((c) => currentUser.effectivePermissions.includes(c)),
-    [currentUser.effectivePermissions],
+    (codes: string[]) =>
+      codes.some((c) => currentUser?.permissions.includes(c) ?? false),
+    [currentUser?.permissions],
   )
 
   const hasRole = useCallback(
-    (roleName: string) => currentUser.roles.some((r) => r.name === roleName),
-    [currentUser.roles],
+    (role: UserRole) => currentUser?.role === role,
+    [currentUser?.role],
   )
 
-  const switchMockRole = useCallback((preset: string) => {
-    const userId = ROLE_USER_MAP[preset]
-    if (userId) setCurrentUserId(userId)
-  }, [])
+  const hasScope = useCallback(
+    (scope: UserScope) => currentUser?.scope === scope,
+    [currentUser?.scope],
+  )
+
+  const logout = useCallback(async () => {
+    try {
+      // Call API to invalidate token on the backend
+      await authService.logout()
+    } catch (err) {
+      console.warn("Logout API failed, proceeding with local cleanup", err)
+    } finally {
+      // Clear token + cached user from localStorage + cookie
+      clearTokenFromStorage()
+      // Clear React Query cache
+      queryClient.clear()
+      // Redirect to login
+      window.location.href = "/login"
+    }
+  }, [queryClient])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ currentUser, hasPermission, hasAnyPermission, hasRole, switchMockRole }),
-    [currentUser, hasPermission, hasAnyPermission, hasRole, switchMockRole],
+    () => ({
+      currentUser,
+      isLoading,
+      isAuthenticated,
+      hasPermission,
+      hasAnyPermission,
+      hasRole,
+      hasScope,
+      logout,
+    }),
+    [
+      currentUser,
+      isLoading,
+      isAuthenticated,
+      hasPermission,
+      hasAnyPermission,
+      hasRole,
+      hasScope,
+      logout,
+    ],
   )
 
   return <AuthContext value={value}>{children}</AuthContext>

@@ -78,8 +78,8 @@
 
   /* Border: Đậm hơn một chút để phân tách các khối */
   --border: #E5D1C7;
-  /* Input: Luôn màu trắng để dễ nhập liệu */
-  --input: #FFFFFF;
+  /* Input border color */
+  --input: #E5D1C7;
   --ring: #CE7A58;
 
   --chart-1: oklch(0.72 0.12 220);

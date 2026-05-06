@@ -1,4 +1,5 @@
 import { pipelineApi } from "@/services/pipeline-api";
+import { type PaginatedResponse } from "@/lib/types/iam";
 
 interface UpstreamDiarizeTranscribeResponse {
   id?: unknown;
@@ -22,13 +23,23 @@ interface UpstreamUpdateTranscribeResponse {
 }
 
 interface UpstreamRecord {
-  id?: unknown;
-  create_time?: unknown;
-  audio_url?: unknown;
-  transcribe_url?: unknown;
-  report?: unknown;
-  filename?: unknown;
-  mail_template?: unknown;
+  id: number;
+  create_time: string;
+  uploader_id: number;
+  group_id: number | null;
+  s3_key: string;
+  audio_url: string;
+  transcribe_url: string | null;
+  report: string | null;
+  filename: string;
+  title: string;
+  status: string;
+  processed_at: string | null;
+  assigned_to_user_ids: number[];
+  assigned_to_group_ids: number[];
+  assigned_to_company_ids: number[];
+  company_id: number | null;
+  mail_template?: unknown; // Keep if it might be returned sometimes
 }
 
 interface UpstreamChatResponse {
@@ -91,9 +102,14 @@ export interface PipelineRecord {
   id: number;
   createTime: string;
   audioUrl: string;
-  transcribeUrl: string;
+  transcribeUrl: string | null;
   reportUrl: string | null;
   filename: string;
+  title: string;
+  status: string;
+  uploaderId: number;
+  companyId: number | null;
+  groupId: number | null;
   mailTemplate?: MailTemplatePayload;
 }
 
@@ -460,37 +476,46 @@ export async function sendMail(input: {
   return parseSendMailResponse(response.data);
 }
 
-export async function getRecords(): Promise<PipelineRecord[]> {
-  const response = await pipelineApi.get<unknown>("/records");
+export async function getRecords(params?: {
+  page?: number;
+  size?: number;
+}): Promise<PaginatedResponse<PipelineRecord>> {
+  const response = await pipelineApi.get<PaginatedResponse<UpstreamRecord>>(
+    "/records",
+    { params },
+  );
 
-  if (!Array.isArray(response.data)) {
+  const payload = response.data;
+
+  if (!payload || !Array.isArray(payload.data)) {
     throw new Error("API records trả về dữ liệu không hợp lệ.");
   }
 
-  return (response.data as UpstreamRecord[])
+  const records = payload.data
     .map((record): PipelineRecord | null => {
-      if (
-        typeof record.id !== "number" ||
-        typeof record.create_time !== "string" ||
-        typeof record.audio_url !== "string" ||
-        typeof record.transcribe_url !== "string" ||
-        typeof record.filename !== "string"
-      ) {
+      if (!record || typeof record.id !== "number") {
         return null;
       }
 
       return {
         id: record.id,
         createTime: record.create_time,
-        audioUrl: record.audio_url,
-        transcribeUrl: record.transcribe_url,
-        reportUrl:
-          typeof record.report === "string" && record.report.trim()
-            ? record.report
-            : null,
-        filename: record.filename,
+        audioUrl: record.audio_url || "",
+        transcribeUrl: record.transcribe_url || null,
+        reportUrl: record.report || null,
+        filename: record.filename || "Untitled",
+        title: record.title || "",
+        status: record.status || "unknown",
+        uploaderId: record.uploader_id,
+        companyId: record.company_id,
+        groupId: record.group_id,
         mailTemplate: parseMailTemplatePayload(record.mail_template),
       };
     })
     .filter((record): record is PipelineRecord => Boolean(record));
+
+  return {
+    data: records,
+    meta: payload.meta,
+  };
 }

@@ -77,6 +77,7 @@ import type {
   MeetingRecord,
   TranscriptSegment,
 } from "@/lib/types/meeting";
+import { PermissionGuard } from "@/components/iam/shared/permission-guard";
 
 const sourceMeeting = meetingRecords[0];
 const DEFAULT_EMAIL_SUBJECT_PREFIX = "Thông báo Biên bản Họp";
@@ -756,7 +757,8 @@ export default function MeetingPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
+    <PermissionGuard permission="transcribe">
+      <div className="flex flex-1 flex-col gap-4">
       {/* ═══════════ COLLAPSIBLE — Phần nhập liệu & Pipeline ═══════════ */}
       <Collapsible open={isInputOpen} onOpenChange={setIsInputOpen}>
         <section className="rounded-lg border border-border/80 bg-card shadow-sm">
@@ -1324,5 +1326,6 @@ export default function MeetingPage() {
         </div>
       ) : null}
     </div>
+    </PermissionGuard>
   );
 }

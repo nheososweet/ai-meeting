@@ -10,6 +10,7 @@ import { setTokenInStorage, setCachedAuthUser } from "@/lib/auth/storage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService } from "@/services/auth.service";
 import { mapAuthUser } from "@/lib/auth/auth-context";
+import { parseApiError } from "@/lib/api-error";
 
 function LoginContent() {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -44,12 +45,8 @@ function LoginContent() {
       router.push(callbackUrl);
     },
     onError: (error: any) => {
-      // Bắt lỗi từ axios interceptor
-      if (error.response?.status === 401 || error.response?.status === 422) {
-        setErrorMsg("Email hoặc mật khẩu không đúng.");
-      } else {
-        setErrorMsg(error.response?.data?.detail || error.message || "Đã có lỗi xảy ra. Vui lòng thử lại.");
-      }
+      const msg = parseApiError(error);
+      setErrorMsg(msg);
     },
   });
 

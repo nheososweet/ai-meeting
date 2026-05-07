@@ -31,6 +31,11 @@ interface IAMComboboxProps {
   valueKey?: string
   disabled?: boolean
   className?: string
+  /** 
+   * Label to display if the value is set but the item is not yet loaded in the lazy list.
+   * Useful for Edit forms where we have the name but it's on a further page.
+   */
+  selectedLabel?: string
 }
 
 export function IAMCombobox({
@@ -44,6 +49,7 @@ export function IAMCombobox({
   valueKey = "id",
   disabled = false,
   className,
+  selectedLabel: externalSelectedLabel,
 }: IAMComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const [search, setSearch] = React.useState("")
@@ -74,11 +80,19 @@ export function IAMCombobox({
   }, [data])
 
   // Find the label for the current value
-  const selectedLabel = React.useMemo(() => {
+  const displayLabel = React.useMemo(() => {
     if (!value || value === "") return ""
+    
+    // 1. Try to find in the current loaded list
     const selectedItem = items.find((item: any) => String(item[valueKey]) === String(value))
-    return selectedItem ? selectedItem[labelKey] : ""
-  }, [value, items, labelKey, valueKey])
+    if (selectedItem) return selectedItem[labelKey]
+    
+    // 2. Fallback to external label if provided
+    if (externalSelectedLabel) return externalSelectedLabel
+    
+    // 3. Last resort: just show nothing (or could show ID)
+    return ""
+  }, [value, items, labelKey, valueKey, externalSelectedLabel])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -90,7 +104,7 @@ export function IAMCombobox({
           disabled={disabled}
           className={cn("w-full justify-between font-normal", !value && "text-muted-foreground", className)}
         >
-          {selectedLabel || placeholder}
+          {displayLabel || placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

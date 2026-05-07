@@ -35,10 +35,12 @@ export function mapAuthUser(data: AuthMeResponse): AuthUser {
     id: data.id,
     name: data.name,
     email: data.email,
-    role: data.role,
+    role: data.role.name,
     scope: data.scope,
     companyId: data.company_id,
     groupId: data.group_id,
+    company: data.company,
+    group: data.group,
     permissions: data.permissions,
     isActive: data.is_active,
   }
@@ -70,12 +72,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const {
     data: currentUser = null,
     isLoading,
+    isFetching,
     error,
   } = useQuery({
     queryKey: ["auth", "me"],
     queryFn: fetchMe,
     retry: false,
-    staleTime: 5 * 60 * 1000, // Cache 5 minutes
+    staleTime: 0, // Always consider stale to trigger background sync on mount (F5)
+    refetchOnWindowFocus: true, // Sync data when user returns to the tab
     enabled: hasToken, // Only fetch if token exists
     initialData: cachedUser ?? undefined,
     // No initialDataUpdatedAt → data is immediately stale → background refetch
@@ -142,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       currentUser,
       isLoading,
+      isFetching,
       isAuthenticated,
       hasPermission,
       hasAnyPermission,
@@ -152,6 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [
       currentUser,
       isLoading,
+      isFetching,
       isAuthenticated,
       hasPermission,
       hasAnyPermission,

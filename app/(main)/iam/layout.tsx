@@ -1,94 +1,93 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
+import { useEffect, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth/auth-context"
-import { IAM_ROUTE_PERMISSIONS } from "@/lib/auth/permissions"
-import { ShieldAlertIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import type { ReactNode } from "react"
+import { PermissionGuard } from "@/components/iam/shared/permission-guard"
 
 const iamTabs = [
   { label: "Tài khoản", href: "/iam/users", permCode: "manage_users" },
+  { label: "Vai trò", href: "/iam/roles", permCode: "manage_role" },
   { label: "Tổ chức / Công ty", href: "/iam/companies", permCode: "manage_companies" },
   { label: "Phòng ban / Nhóm", href: "/iam/groups", permCode: "manage_groups" },
 ]
 
 export default function IamLayout({ children }: { children: ReactNode }) {
+  const router = useRouter()
   const pathname = usePathname()
-  const { hasPermission, hasRole, hasScope } = useAuth()
-  const isAdmin = hasRole("admin")
+  const { hasPermission, hasScope, isLoading } = useAuth()
   const isGlobal = hasScope("global")
 
-  // Route Guard: check if user can access any IAM route
-  const isCompanyRoute = pathname.startsWith("/iam/companies")
-  
-  const canAccessRoute = isAdmin && (!isCompanyRoute || isGlobal)
-
-  if (!canAccessRoute) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-border/80 bg-card p-12 text-center shadow-sm">
-        <div className="flex size-16 items-center justify-center rounded-full bg-destructive/10">
-          <ShieldAlertIcon className="size-8 text-destructive" />
-        </div>
-        <h1 className="text-xl font-bold text-foreground">Không có quyền truy cập</h1>
-        <p className="max-w-md text-sm text-muted-foreground">
-          Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị viên để được cấp quyền phù hợp.
-        </p>
-        <Button variant="outline" asChild>
-          <Link href="/meeting">← Quay lại trang chủ</Link>
-        </Button>
-      </div>
-    )
-  }
-
-  // Filter tabs by permission/role/scope
+  // Filter tabs by permission and scope
   const visibleTabs = iamTabs.filter((tab) => {
+    // Company tab is only for global admins
     if (tab.href === "/iam/companies") {
-      return isAdmin && isGlobal
+      return isGlobal && hasPermission("manage_companies")
     }
-    return isAdmin && hasPermission(tab.permCode)
+    return hasPermission(tab.permCode)
   })
+  
+  // Tự động chuyển hướng nếu đang ở route gốc /iam và đã load xong auth
+  useEffect(() => {
+    if (pathname === "/iam" && !isLoading && visibleTabs.length > 0) {
+      router.replace(visibleTabs[0].href)
+    }
+  }, [pathname, isLoading, visibleTabs, router])
+
+  // Get current route's required permission
+  const currentTab = iamTabs.find(tab => pathname.startsWith(tab.href))
+  const requiredPerm = currentTab?.permCode
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col gap-4">
-      {/* IAM Header + Tab Navigation */}
-      <div className="shrink-0 rounded-lg border border-border/80 bg-card shadow-sm">
-        <div className="px-5 pt-4 pb-0">
-          <h1 className="text-lg font-bold text-foreground">Quản trị Hệ thống</h1>
-          <p className="mt-0.5 text-[13px] text-muted-foreground">
-            Quản lý tài khoản, vai trò, phân quyền và nhóm người dùng
-          </p>
+    <PermissionGuard 
+      permissions={["manage_users", "manage_groups", "manage_role", "manage_companies"]}
+    >
+      <div className="flex h-full min-h-0 flex-1 flex-col gap-4">
+        {/* IAM Header + Tab Navigation */}
+        <div className="shrink-0 rounded-lg border border-border/80 bg-card shadow-sm">
+          <div className="px-5 pt-4 pb-0">
+            <h1 className="text-lg font-bold text-foreground">Quản trị Hệ thống</h1>
+            <p className="mt-0.5 text-[13px] text-muted-foreground">
+              Quản lý tài khoản, vai trò, phân quyền và nhóm người dùng
+            </p>
+          </div>
+
+          {/* Tabs */}
+          <div className="mt-3 flex gap-0 border-b border-border/60 px-5">
+            {visibleTabs.map((tab) => {
+              const isActive = pathname.startsWith(tab.href)
+              return (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  className={cn(
+                    "relative px-4 py-2.5 text-[13px] font-semibold transition-colors",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {tab.label}
+                  {isActive && (
+                    <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary" />
+                  )}
+                </Link>
+              )
+            })}
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="mt-3 flex gap-0 border-b border-border/60 px-5">
-          {visibleTabs.map((tab) => {
-            const isActive = pathname.startsWith(tab.href)
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className={cn(
-                  "relative px-4 py-2.5 text-[13px] font-semibold transition-colors",
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {tab.label}
-                {isActive && (
-                  <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary" />
-                )}
-              </Link>
-            )
-          })}
+        {/* Content with specific guard per tab */}
+        <div className="flex-1 min-h-0 flex flex-col">
+          <PermissionGuard 
+            permission={requiredPerm}
+          >
+            {children}
+          </PermissionGuard>
         </div>
       </div>
-
-      {/* Content */}
-      {children}
-    </div>
+    </PermissionGuard>
   )
 }

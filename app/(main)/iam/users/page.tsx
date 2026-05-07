@@ -4,26 +4,7 @@ import { useState, useEffect } from "react"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { 
-  PlusIcon, 
-  ShieldIcon, 
   UserPlusIcon, 
   Trash2Icon, 
   Loader2Icon, 
@@ -33,7 +14,9 @@ import {
   GlobeIcon, 
   MailIcon, 
   FilterXIcon,
-  PencilIcon
+  PencilIcon,
+  ShieldIcon,
+  Building2Icon
 } from "lucide-react"
 import {
   Table,
@@ -62,16 +45,17 @@ import { PermissionsDialog } from "@/components/iam/shared/permissions-dialog"
 
 import { useUsers, useDeleteUser, useAssignUserPermissions, useUserPermissions } from "@/hooks/iam/use-users"
 import { useInfiniteCompanies } from "@/hooks/iam/use-companies"
-import { useInfiniteGroups, useGroupPermissions } from "@/hooks/iam/use-groups"
+import { useInfiniteGroups } from "@/hooks/iam/use-groups"
 import { CreateUserDialog } from "./_components/create-user-dialog"
 import { EditUserDialog } from "./_components/edit-user-dialog"
 import { IAMCombobox } from "@/components/iam/shared/iam-combobox"
 
-import type { AuthMeResponse, UserRole, UserScope } from "@/lib/types/iam"
+import type { AuthMeResponse } from "@/lib/types/iam"
 
 export default function UsersPage() {
   const { hasPermission, currentUser } = useAuth()
   const canManage = hasPermission("manage_users")
+  const isAdmin = currentUser?.role === "admin"
 
   // --- State for Dialogs ---
   const [createOpen, setCreateOpen] = useState(false)
@@ -93,11 +77,20 @@ export default function UsersPage() {
     setPage(1)
   }, [debouncedSearch, filterCompanyId, filterGroupId])
 
+  // Tự động set filter công ty cho người không phải admin
+  useEffect(() => {
+    if (!isAdmin && currentUser?.companyId) {
+      setFilterCompanyId(String(currentUser.companyId))
+    }
+  }, [isAdmin, currentUser])
+
   // --- Data Fetching ---
   const { data: usersData, isLoading: isLoadingUsers } = useUsers({
     page,
     search: debouncedSearch || undefined,
-    search_companyid: filterCompanyId !== "" ? Number(filterCompanyId) : undefined,
+    search_companyid: isAdmin 
+      ? (filterCompanyId !== "" ? Number(filterCompanyId) : undefined)
+      : currentUser?.companyId || undefined,
     search_groupid: filterGroupId !== "" ? Number(filterGroupId) : undefined,
   })
   const parsedFilterCompanyId = filterCompanyId !== "" ? Number(filterCompanyId) : null
@@ -107,11 +100,6 @@ export default function UsersPage() {
 
   const { data: userPerms, isLoading: isLoadingUserPerms } = useUserPermissions(
     permDialogOpen && selectedUser ? selectedUser.id : undefined
-  )
-
-  // Fetch group permissions for scoping user permissions
-  const { data: groupPerms } = useGroupPermissions(
-    permDialogOpen && selectedUser?.group_id ? selectedUser.group_id : undefined
   )
 
   // --- Mutations ---
@@ -165,14 +153,21 @@ export default function UsersPage() {
           )}
         </div>
 
-        <IAMCombobox
-          value={filterCompanyId}
-          onValueChange={(v) => { setFilterCompanyId(v); setFilterGroupId("") }}
-          placeholder="Tất cả tổ chức"
-          searchPlaceholder="Tìm tổ chức..."
-          className="h-9 w-full sm:w-[240px]"
-          useInfiniteHook={useInfiniteCompanies}
-        />
+        {isAdmin ? (
+          <IAMCombobox
+            value={filterCompanyId}
+            onValueChange={(v) => { setFilterCompanyId(v); setFilterGroupId("") }}
+            placeholder="Tất cả tổ chức"
+            searchPlaceholder="Tìm tổ chức..."
+            className="h-9 w-full sm:w-[240px]"
+            useInfiniteHook={useInfiniteCompanies}
+          />
+        ) : currentUser?.company && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
+            <Building2Icon className="size-4" />
+            <span>{currentUser.company.name}</span>
+          </div>
+        )}
 
         <IAMCombobox
           value={filterGroupId}
@@ -190,7 +185,11 @@ export default function UsersPage() {
             size="sm" 
             onClick={() => {
               setSearch("")
-              setFilterCompanyId("")
+              if (isAdmin) {
+                setFilterCompanyId("")
+              } else if (currentUser?.companyId) {
+                setFilterCompanyId(String(currentUser.companyId))
+              }
               setFilterGroupId("")
             }}
             className="h-9 text-xs text-muted-foreground hover:text-foreground"
@@ -237,10 +236,10 @@ export default function UsersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1.5">
-                          <Badge variant={user.role === "admin" ? "default" : "secondary"} className="h-5 text-[10px] uppercase tracking-wider px-1.5">
-                            {user.role}
+                          <Badge variant={(typeof user.role === 'object' ? user.role.name : user.role) === "admin" ? "default" : "secondary"} className="h-5 text-[10px] uppercase tracking-wider px-1.5">
+                            {typeof user.role === 'object' ? user.role.name : user.role}
                           </Badge>
-                          {user.role !== "member" && (
+                          {(typeof user.role === 'object' ? user.role.name : user.role) !== "member" && (
                             <Badge variant="outline" className={cn(
                               "h-5 text-[10px] uppercase tracking-wider px-1.5",
                               user.scope === "global" ? "border-amber-500/50 text-amber-600 bg-amber-500/5" :
@@ -281,8 +280,8 @@ export default function UsersPage() {
                         {formatDate(user.created_at)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {canManage && (
-                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                          {hasPermission("assign_permissions") && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -294,32 +293,37 @@ export default function UsersPage() {
                             >
                               <ShieldIcon className="mr-1.5 size-3.5" /> Phân quyền
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 text-xs hover:bg-primary/10 hover:text-primary"
-                              onClick={() => {
-                                setSelectedUser(user)
-                                setEditOpen(true)
-                              }}
-                            >
-                              <PencilIcon className="size-3.5" />
-                            </Button>
-                            {user.id !== currentUser?.id && (
+                          )}
+                          
+                          {canManage && (
+                            <>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
                                 onClick={() => {
                                   setSelectedUser(user)
-                                  setDeleteOpen(true)
+                                  setEditOpen(true)
                                 }}
                               >
-                                <Trash2Icon className="size-4" />
+                                <PencilIcon className="size-3.5" />
                               </Button>
-                            )}
-                          </div>
-                        )}
+                              {user.id !== currentUser?.id && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => {
+                                    setSelectedUser(user)
+                                    setDeleteOpen(true)
+                                  }}
+                                >
+                                  <Trash2Icon className="size-3.5" />
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -410,10 +414,9 @@ export default function UsersPage() {
         open={permDialogOpen}
         onOpenChange={setPermDialogOpen}
         title={`Phân quyền Tài khoản: ${selectedUser?.name}`}
-        description="Gán quyền cá nhân cho tài khoản này. Danh sách quyền bị giới hạn bởi Group mà người dùng trực thuộc."
+        description="Gán quyền cá nhân cho tài khoản này."
         initialPermissions={userPerms || []}
         isLoadingInitial={isLoadingUserPerms}
-        scopedPermissions={groupPerms}
         onSave={handleSavePermissions}
       />
     </div>

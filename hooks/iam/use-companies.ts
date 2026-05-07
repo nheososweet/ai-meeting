@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query"
 import { iamService } from "@/services/iam.service"
 import { toast } from "react-toastify"
+import { parseApiError } from "@/lib/api-error"
 
 /**
  * Hook để lấy danh sách tổ chức/công ty
@@ -41,7 +42,7 @@ export function useCreateCompany() {
       toast.success("Thêm mới tổ chức thành công")
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Lỗi khi thêm mới tổ chức")
+      toast.error(parseApiError(error))
     }
   })
 }
@@ -60,7 +61,7 @@ export function useUpdateCompany() {
       toast.success("Cập nhật tổ chức thành công")
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Lỗi khi cập nhật tổ chức")
+      toast.error(parseApiError(error))
     }
   })
 }
@@ -80,7 +81,7 @@ export function useDeleteCompany() {
       toast.success("Xóa tổ chức thành công")
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Lỗi khi xóa tổ chức")
+      toast.error(parseApiError(error))
     }
   })
 }
@@ -110,7 +111,7 @@ export function useAssignCompanyPermissions() {
       toast.success("Cập nhật quyền tổ chức thành công")
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Lỗi khi cập nhật quyền")
+      toast.error(parseApiError(error))
     }
   })
 }

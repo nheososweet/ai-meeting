@@ -55,6 +55,7 @@ import type {
   MeetingRecord,
   TranscriptSegment,
 } from "@/lib/types/meeting";
+import { PermissionGuard } from "@/components/iam/shared/permission-guard";
 
 const sourceMeeting = meetingRecords[0];
 const DEFAULT_EMAIL_SUBJECT_PREFIX = "Thông báo Biên bản Họp";
@@ -700,7 +701,8 @@ export default function WorkspacePage() {
   }
 
   return (
-    <div className="grid flex-1 gap-4 lg:h-[calc(100dvh-7.5rem)] lg:grid-cols-[1fr_1.8fr] lg:items-start">
+    <PermissionGuard permission="transcribe">
+      <div className="grid flex-1 gap-4 lg:h-[calc(100dvh-7.5rem)] lg:grid-cols-[1fr_1.8fr] lg:items-start">
       <section className="rounded-lg border border-border/80 bg-card p-5 shadow-sm lg:sticky lg:top-4 lg:max-h-[calc(100dvh-8.5rem)] lg:overflow-y-auto">
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-lg font-semibold text-foreground">
@@ -1118,5 +1120,6 @@ export default function WorkspacePage() {
         </div>
       ) : null}
     </div>
+    </PermissionGuard>
   );
 }

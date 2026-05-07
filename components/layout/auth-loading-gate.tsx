@@ -21,6 +21,13 @@ export function AuthLoadingGate({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Auth fail → proxy.ts sẽ redirect, render children tạm
+  // Auth fail or No Token → Redirect to login
+  if (!isLoading && !currentUser) {
+    if (typeof window !== "undefined") {
+      window.location.href = "/login"
+    }
+    return null
+  }
+
   return <>{children}</>
 }

@@ -24,8 +24,7 @@ export interface CreateUserPayload {
   name: string
   email: string
   password?: string
-  role: UserRole
-  scope?: UserScope | null // Only for Admin role
+  role_id: number
   company_id: number | null
   group_id: number | null
 }
@@ -33,11 +32,33 @@ export interface CreateUserPayload {
 export interface UpdateUserPayload {
   name?: string
   password?: string
-  role?: UserRole
-  scope?: UserScope | null
+  role_id?: number
   company_id?: number | null
   group_id?: number | null
   permissions?: string[]
+}
+
+export interface Role {
+  id: number
+  name: string
+  description: string
+  created_at: string
+  created_by: number | null
+}
+
+export interface CreateRolePayload {
+  name: string
+  description: string
+}
+
+export interface UpdateRolePayload {
+  name: string
+  description: string
+}
+
+export interface RolePermissionsResponse {
+  role_id: number
+  permissions: string[]
 }
 
 // ══════════════════════════════════════════════════════════
@@ -46,11 +67,11 @@ export interface UpdateUserPayload {
 
 export const iamService = {
   // ── Companies ───────────────────────────────────────────
-  
-  getCompanies: async (params?: { 
-    page?: number, 
-    page_size?: number, 
-    search?: string 
+
+  getCompanies: async (params?: {
+    page?: number,
+    page_size?: number,
+    search?: string
   }): Promise<PaginatedResponse<Company>> => {
     // API GET /org/companies
     const { data } = await pipelineApi.get<PaginatedResponse<Company>>("/org/companies", {
@@ -75,11 +96,11 @@ export const iamService = {
   },
 
   // ── Groups ──────────────────────────────────────────────
-  
-  getGroups: async (companyId: number, params?: { 
-    page?: number, 
-    page_size?: number, 
-    search?: string 
+
+  getGroups: async (companyId: number, params?: {
+    page?: number,
+    page_size?: number,
+    search?: string
   }): Promise<PaginatedResponse<Group>> => {
     // API GET /org/companies/{company_id}/groups
     const { data } = await pipelineApi.get<PaginatedResponse<Group>>(`/org/companies/${companyId}/groups`, {
@@ -101,7 +122,7 @@ export const iamService = {
   },
 
   // ── Users ───────────────────────────────────────────────
-  
+
   getUsers: async (params?: {
     page?: number
     page_size?: number
@@ -134,7 +155,7 @@ export const iamService = {
   },
 
   // ── Permissions ─────────────────────────────────────────
-  
+
   getPermissions: async (): Promise<any> => {
     // API GET /org/permissions
     const { data } = await pipelineApi.get("/org/permissions")
@@ -172,8 +193,40 @@ export const iamService = {
     return data.permissions || []
   },
 
-  assignUserPermissions: async (userId: number, permissions: string[]): Promise<void> => {
-    // API POST /org/users/{user_id}/permissions
-    await pipelineApi.post(`/org/users/${userId}/permissions`, permissions)
+  assignUserPermissions: async (userId: number, perms: string[]): Promise<void> => {
+    // API POST /auth/users/{user_id}/permissions
+    await pipelineApi.post(`/org/users/${userId}/permissions`, perms)
+  },
+
+  // --- Roles Management ---
+
+  getRoles: async (params?: { page?: number; page_size?: number; search?: string }): Promise<PaginatedResponse<Role>> => {
+    const { data } = await pipelineApi.get<PaginatedResponse<Role>>("/org/roles", { params })
+    return data
+  },
+
+  createRole: async (payload: CreateRolePayload): Promise<Role> => {
+    // The CURL shows name and description as query params
+    const { data } = await pipelineApi.post<Role>("/org/roles", null, {
+      params: { name: payload.name, description: payload.description }
+    })
+    return data
+  },
+
+  updateRole: async (roleId: number, payload: UpdateRolePayload): Promise<void> => {
+    await pipelineApi.put(`/org/roles/${roleId}`, payload)
+  },
+
+  deleteRole: async (roleId: number): Promise<void> => {
+    await pipelineApi.delete(`/org/roles/${roleId}`)
+  },
+
+  getRolePermissions: async (roleId: number): Promise<RolePermissionsResponse> => {
+    const { data } = await pipelineApi.get<RolePermissionsResponse>(`/org/roles/${roleId}/permissions`)
+    return data
+  },
+
+  assignRolePermissions: async (roleId: number, perms: string[]): Promise<void> => {
+    await pipelineApi.post(`/org/roles/${roleId}/permissions`, perms)
   },
 }

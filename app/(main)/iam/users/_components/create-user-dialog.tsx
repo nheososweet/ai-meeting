@@ -16,30 +16,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   Field,
   FieldGroup,
   FieldLabel,
   FieldError,
 } from "@/components/ui/field"
 import { IAMCombobox } from "@/components/iam/shared/iam-combobox"
-import { Loader2Icon } from "lucide-react"
+import { Loader2Icon, Building2Icon } from "lucide-react"
+import { useAuth } from "@/lib/auth/auth-context"
 import { useCreateUser } from "@/hooks/iam/use-users"
 import { useInfiniteCompanies } from "@/hooks/iam/use-companies"
 import { useInfiniteGroups } from "@/hooks/iam/use-groups"
+import { useInfiniteRoles } from "@/hooks/iam/use-roles"
 
 const userFormSchema = z.object({
   name: z.string().min(1, "Vui lòng nhập họ và tên"),
   email: z.string().email("Email không hợp lệ").min(1, "Vui lòng nhập email"),
   password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
-  role: z.enum(["admin", "member"]),
-  scope: z.enum(["global", "company", "group"]),
+  roleId: z.string().min(1, "Vui lòng chọn vai trò"),
   companyId: z.string().min(1, "Vui lòng chọn tổ chức"),
   groupId: z.string().optional(),
 })
@@ -52,14 +46,16 @@ interface CreateUserDialogProps {
 }
 
 export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) {
+  const { currentUser } = useAuth()
+  const isAdmin = currentUser?.role === "admin"
+
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
       name: "",
       email: "",
       password: "",
-      role: "member",
-      scope: "global",
+      roleId: "",
       companyId: "",
       groupId: "",
     },
@@ -69,8 +65,6 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
   const selectedCompanyId = form.watch("companyId")
   const parsedCompanyId = selectedCompanyId && selectedCompanyId !== "" ? Number(selectedCompanyId) : null
 
-  const selectedRole = form.watch("role")
-
   // --- Mutations ---
   const createMutation = useCreateUser()
 
@@ -78,8 +72,11 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
   useEffect(() => {
     if (!open) {
       form.reset()
+    } else if (!isAdmin && currentUser?.companyId) {
+      // Nếu không phải admin, tự động set companyId từ user hiện tại
+      form.setValue("companyId", String(currentUser.companyId))
     }
-  }, [open, form])
+  }, [open, form, isAdmin, currentUser])
 
   function onSubmit(values: UserFormValues) {
     createMutation.mutate(
@@ -87,9 +84,8 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
         name: values.name,
         email: values.email,
         password: values.password,
-        role: values.role,
-        scope: values.role === "admin" ? values.scope : null,
-        company_id: Number(values.companyId),
+        role_id: Number(values.roleId),
+        company_id: isAdmin ? Number(values.companyId) : (currentUser?.companyId as number),
         group_id: values.groupId ? Number(values.groupId) : null,
       },
       {
@@ -123,28 +119,6 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
                 )}
               />
               <Controller
-                name="role"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Vai trò <span className="text-destructive">*</span></FieldLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="member">Thành viên (Member)</SelectItem>
-                        <SelectItem value="admin">Quản trị (Admin)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FieldError errors={[fieldState.error]} />
-                  </Field>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Controller
                 name="email"
                 control={form.control}
                 render={({ field, fieldState }) => (
@@ -155,6 +129,9 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
                   </Field>
                 )}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <Controller
                 name="password"
                 control={form.control}
@@ -166,53 +143,58 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
                   </Field>
                 )}
               />
-            </div>
-
-            <div className="border-t border-border/60 my-1"></div>
-
-            {selectedRole === "admin" && (
+              
               <Controller
-                name="scope"
+                name="roleId"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Cấp độ truy cập (Scope) <span className="text-destructive">*</span></FieldLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="global">Global (Toàn quyền hệ thống)</SelectItem>
-                        <SelectItem value="company">Company (Quản lý cấp Công ty)</SelectItem>
-                        <SelectItem value="group">Group (Chỉ truy cập cấp Nhóm/Phòng ban)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FieldLabel>Vai trò người dùng <span className="text-destructive">*</span></FieldLabel>
+                    <IAMCombobox
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Chọn vai trò..."
+                      searchPlaceholder="Tìm vai trò..."
+                      useInfiniteHook={useInfiniteRoles}
+                    />
                     <FieldError errors={[fieldState.error]} />
                   </Field>
                 )}
               />
-            )}
+            </div>
 
-            <Controller
-              name="companyId"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Tổ chức / Công ty <span className="text-destructive">*</span></FieldLabel>
-                  <IAMCombobox
-                    value={field.value}
-                    onValueChange={(val) => {
-                      field.onChange(val)
-                      form.setValue("groupId", "")
-                    }}
-                    placeholder="Chọn tổ chức..."
-                    searchPlaceholder="Tìm tên tổ chức..."
-                    useInfiniteHook={useInfiniteCompanies}
-                  />
-                  <FieldError errors={[fieldState.error]} />
-                </Field>
-              )}
-            />
+            <div className="border-t border-border/60 my-1"></div>
+
+            {isAdmin ? (
+              <Controller
+                name="companyId"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Tổ chức / Công ty <span className="text-destructive">*</span></FieldLabel>
+                    <IAMCombobox
+                      value={field.value}
+                      onValueChange={(val) => {
+                        field.onChange(val)
+                        form.setValue("groupId", "")
+                      }}
+                      placeholder="Chọn tổ chức..."
+                      searchPlaceholder="Tìm tên tổ chức..."
+                      useInfiniteHook={useInfiniteCompanies}
+                    />
+                    <FieldError errors={[fieldState.error]} />
+                  </Field>
+                )}
+              />
+            ) : currentUser?.company && (
+              <Field>
+                <FieldLabel>Tổ chức / Công ty</FieldLabel>
+                <div className="flex items-center gap-3 px-3 py-2 rounded-md bg-primary/5 border border-primary/10 text-primary font-medium">
+                  <Building2Icon className="size-4" />
+                  <span>{currentUser.company.name}</span>
+                </div>
+              </Field>
+            )}
 
             <Controller
               name="groupId"

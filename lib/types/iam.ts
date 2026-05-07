@@ -88,8 +88,12 @@ export interface AuthMeResponse {
   id: number
   name: string
   email: string
-  role: UserRole
-  scope: UserScope
+  role_id?: number
+  role: {
+    id: number
+    name: UserRole
+  }
+  scope: UserScope | null
   company_id: number | null
   group_id: number | null
   company?: Company | null
@@ -107,6 +111,8 @@ export interface AuthMeResponse {
 export const PERMISSIONS = {
   MANAGE_USERS: "manage_users",
   MANAGE_GROUPS: "manage_groups",
+  MANAGE_ROLES: "manage_role",
+  MANAGE_COMPANIES: "manage_companies",
   ASSIGN_PERMISSIONS: "assign_permissions",
   ASSIGN_FILES: "assign_files",
   TRANSCRIBE: "transcribe",
@@ -128,9 +134,11 @@ export interface AuthUser {
   name: string
   email: string
   role: UserRole
-  scope: UserScope
+  scope: UserScope | null
   companyId: number | null
   groupId: number | null
+  company?: Company | null
+  group?: Group | null
   permissions: string[]
   isActive: boolean
 }
@@ -138,6 +146,7 @@ export interface AuthUser {
 export interface AuthContextValue {
   currentUser: AuthUser | null
   isLoading: boolean
+  isFetching: boolean
   isAuthenticated: boolean
   hasPermission: (code: string) => boolean
   hasAnyPermission: (codes: string[]) => boolean

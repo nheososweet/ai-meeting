@@ -5,6 +5,7 @@ import { ChevronRightIcon, ChevronDownIcon, UsersIcon, ShieldIcon, PlusIcon, Pen
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { Group } from "@/lib/types/iam"
+import { useAuth } from "@/lib/auth/auth-context"
 
 // ══════════════════════════════════════════════════════════
 // Types & Utilities
@@ -66,6 +67,7 @@ interface TreeItemProps {
 }
 
 function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeItemProps) {
+  const { hasPermission } = useAuth()
   const [isExpanded, setIsExpanded] = React.useState(true)
   const hasChildren = node.children.length > 0
 
@@ -116,8 +118,8 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
         </div>
 
         {/* Actions (Visible on hover) */}
-        {canManage && (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {hasPermission("assign_permissions") && (
             <Button
               variant="ghost"
               size="sm"
@@ -127,25 +129,30 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
               <ShieldIcon className="mr-1.5 size-3" />
               Phân quyền
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-[11px] px-2"
-              onClick={() => onAddChild(node)}
-            >
-              <PlusIcon className="mr-1.5 size-3" />
-              Thêm con
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
-              onClick={() => onEdit(node)}
-            >
-              <PencilIcon className="size-3" />
-            </Button>
-          </div>
-        )}
+          )}
+          
+          {canManage && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-[11px] px-2"
+                onClick={() => onAddChild(node)}
+              >
+                <PlusIcon className="mr-1.5 size-3" />
+                Thêm con
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                onClick={() => onEdit(node)}
+              >
+                <PencilIcon className="size-3" />
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Recursive Children */}

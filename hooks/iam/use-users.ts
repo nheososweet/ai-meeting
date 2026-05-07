@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { iamService, type CreateUserPayload } from "@/services/iam.service"
 import { toast } from "react-toastify"
+import { parseApiError } from "@/lib/api-error"
 
 /**
  * Hook để lấy danh sách tất cả người dùng
@@ -30,7 +31,7 @@ export function useCreateUser() {
       toast.success("Tạo tài khoản người dùng thành công")
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Lỗi khi tạo tài khoản")
+      toast.error(parseApiError(error))
     }
   })
 }
@@ -49,7 +50,7 @@ export function useUpdateUser() {
       toast.success("Cập nhật thông tin người dùng thành công")
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Lỗi khi cập nhật thông tin")
+      toast.error(parseApiError(error))
     }
   })
 }
@@ -67,7 +68,7 @@ export function useDeleteUser() {
       toast.success("Xóa người dùng thành công")
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Lỗi khi xóa người dùng")
+      toast.error(parseApiError(error))
     }
   })
 }
@@ -97,7 +98,7 @@ export function useAssignUserPermissions() {
       toast.success("Cập nhật quyền người dùng thành công")
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Lỗi khi cập nhật quyền")
+      toast.error(parseApiError(error))
     }
   })
 }

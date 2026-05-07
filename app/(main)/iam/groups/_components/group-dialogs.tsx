@@ -124,6 +124,7 @@ export function CreateGroupDialog({
                     placeholder="Chọn nhóm cha..."
                     searchPlaceholder="Tìm tên nhóm..."
                     useInfiniteHook={(params: any) => useInfiniteGroups(companyId, params)}
+                    selectedLabel={groups.find(g => String(g.id) === field.value)?.name}
                   />
                   <FieldError errors={[fieldState.error]} />
                 </Field>

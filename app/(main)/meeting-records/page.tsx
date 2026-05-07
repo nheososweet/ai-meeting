@@ -43,6 +43,7 @@ import { useFilesQuery } from "@/hooks/services/use-files";
 import { UploadFileDialog } from "./_components/upload-dialog";
 import { buildDownloadUrl } from "@/app/(main)/history/_lib/file-utils";
 import { useHistoryToast } from "@/app/(main)/history/_hooks/useHistoryToast";
+import { PermissionGuard } from "@/components/iam/shared/permission-guard";
 
 export default function MeetingRecordsPage() {
   const { hasPermission } = useAuth();
@@ -91,7 +92,8 @@ export default function MeetingRecordsPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm">
+    <PermissionGuard permission="assign_files">
+      <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm">
       <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-4 gap-4">
         <div className="flex-1 min-w-0">
           <h2 className="text-base font-bold text-foreground">Bản ghi cuộc họp</h2>
@@ -340,5 +342,6 @@ export default function MeetingRecordsPage() {
         </div>
       ) : null}
     </div>
+    </PermissionGuard>
   );
 }

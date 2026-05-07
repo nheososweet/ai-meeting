@@ -183,8 +183,8 @@ export default function CompaniesPage() {
                         {formatDate(company.created_at)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {canManage && (
-                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {hasPermission("assign_permissions") && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -196,30 +196,35 @@ export default function CompaniesPage() {
                             >
                               <ShieldIcon className="mr-1.5 size-3.5" /> Phân quyền
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                              onClick={() => {
-                                setSelectedCompany(company)
-                                setEditOpen(true)
-                              }}
-                            >
-                              <PencilIcon className="size-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => {
-                                setSelectedCompany(company)
-                                setDeleteOpen(true)
-                              }}
-                            >
-                              <Trash2Icon className="size-3.5" />
-                            </Button>
-                          </div>
-                        )}
+                          )}
+                          
+                          {canManage && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                onClick={() => {
+                                  setSelectedCompany(company)
+                                  setEditOpen(true)
+                                }}
+                              >
+                                <PencilIcon className="size-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => {
+                                  setSelectedCompany(company)
+                                  setDeleteOpen(true)
+                                }}
+                              >
+                                <Trash2Icon className="size-3.5" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

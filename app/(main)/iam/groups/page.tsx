@@ -2,42 +2,24 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { PlusIcon, ShieldIcon, UsersIcon, Loader2Icon } from "lucide-react"
+import { PlusIcon, Loader2Icon, Building2Icon } from "lucide-react"
 
 import { useAuth } from "@/lib/auth/auth-context"
 import { EmptyState } from "@/components/iam/shared/empty-state"
 import { PermissionsDialog } from "@/components/iam/shared/permissions-dialog"
 
 import { useCompanies, useInfiniteCompanies } from "@/hooks/iam/use-companies"
-import { useGroups, useAssignGroupPermissions, useGroupPermissions, useInfiniteGroups } from "@/hooks/iam/use-groups"
+import { useGroups, useAssignGroupPermissions, useGroupPermissions } from "@/hooks/iam/use-groups"
 import { CreateGroupDialog, EditGroupDialog } from "./_components/group-dialogs"
-import { useCompanyPermissions } from "@/hooks/iam/use-companies"
 import { IAMCombobox } from "@/components/iam/shared/iam-combobox"
 import type { Group } from "@/lib/types/iam"
-import { GroupTreeView, buildGroupTree } from "@/components/iam/groups/group-tree-view"
+import { GroupTreeView } from "@/components/iam/groups/group-tree-view"
 
 export default function GroupsPage() {
-  const { hasPermission } = useAuth()
+  const { hasPermission, currentUser } = useAuth()
   // Kiểm tra quyền
   const canManage = hasPermission("manage_groups")
+  const isAdmin = currentUser?.role === "admin"
 
   // State: Chọn công ty
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("")
@@ -51,32 +33,28 @@ export default function GroupsPage() {
   const [parentGroupId, setParentGroupId] = useState<string>("__none__")
 
   // Data fetching
-  const { data: companiesData, isLoading: isLoadingCompanies } = useCompanies()
+  const { data: companiesData } = useCompanies()
   const companies = companiesData?.data || []
 
-  // Tự động chọn công ty đầu tiên nếu có dữ liệu mà chưa chọn
-  if (!selectedCompanyId && companies.length > 0) {
-    setSelectedCompanyId(String(companies[0].id))
+  // Tự động chọn công ty phù hợp
+  if (!selectedCompanyId) {
+    if (!isAdmin && currentUser?.companyId) {
+      setSelectedCompanyId(String(currentUser.companyId))
+    } else if (companies.length > 0) {
+      setSelectedCompanyId(String(companies[0].id))
+    }
   }
 
-  const parsedCompanyId = selectedCompanyId ? Number(selectedCompanyId) : null
+  const parsedCompanyId = isAdmin 
+    ? (selectedCompanyId ? Number(selectedCompanyId) : null)
+    : (currentUser?.companyId || null)
+    
   const { data: groupsData, isLoading: isLoadingGroups, error: groupsError } = useGroups(parsedCompanyId)
   const groups = groupsData?.data || []
 
   const { data: groupPerms, isLoading: isLoadingGroupPerms } = useGroupPermissions(
     permDialogOpen && selectedGroup ? selectedGroup.id : undefined
   )
-
-  // Fetch parent permissions for scoping
-  // If no parent_id, use company permissions. If parent_id exists, use parent group permissions.
-  const parentGroupIdForPerms = permDialogOpen && selectedGroup?.parent_id ? selectedGroup.parent_id : undefined
-  const { data: parentGroupPerms } = useGroupPermissions(parentGroupIdForPerms)
-  
-  const { data: parentCompanyPerms } = useCompanyPermissions(
-    permDialogOpen && selectedGroup && !selectedGroup.parent_id ? Number(selectedCompanyId) : undefined
-  )
-
-  const scopedPerms = selectedGroup?.parent_id ? parentGroupPerms : parentCompanyPerms
 
   // Mutations
   const assignPermsMutation = useAssignGroupPermissions()
@@ -108,14 +86,22 @@ export default function GroupsPage() {
       <div className="shrink-0 flex flex-wrap items-center gap-3 border-b border-border/40 bg-muted/5 p-4">
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Cơ cấu tổ chức:</span>
-          <IAMCombobox
-            value={selectedCompanyId}
-            onValueChange={setSelectedCompanyId}
-            placeholder="Chọn tổ chức..."
-            searchPlaceholder="Tìm tên tổ chức..."
-            className="h-9 w-full sm:w-[240px]"
-            useInfiniteHook={useInfiniteCompanies}
-          />
+          {isAdmin ? (
+            <IAMCombobox
+              value={selectedCompanyId}
+              onValueChange={setSelectedCompanyId}
+              placeholder="Chọn tổ chức..."
+              searchPlaceholder="Tìm tên tổ chức..."
+              className="h-9 w-full sm:w-[240px]"
+              useInfiniteHook={useInfiniteCompanies}
+              selectedLabel={selectedCompanyName}
+            />
+          ) : currentUser?.company && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
+              <Building2Icon className="size-4" />
+              <span>{currentUser.company.name}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -173,10 +159,9 @@ export default function GroupsPage() {
         open={permDialogOpen}
         onOpenChange={setPermDialogOpen}
         title={`Phân quyền Group: ${selectedGroup?.name}`}
-        description={`Cấp quyền cho nhóm này. Thành viên cấp Group sẽ thừa hưởng các quyền này. Danh sách quyền bị giới hạn bởi cấp trên (Company hoặc Group cha).`}
+        description={`Cấp quyền cho nhóm này. Thành viên cấp Group sẽ thừa hưởng các quyền này.`}
         initialPermissions={groupPerms || []}
         isLoadingInitial={isLoadingGroupPerms}
-        scopedPermissions={scopedPerms}
         onSave={handleSavePermissions}
       />
     </div>

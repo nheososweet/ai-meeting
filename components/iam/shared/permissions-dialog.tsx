@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react"
-import { useQuery, useMutation } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { iamService } from "@/services/iam.service"
 import {
   Dialog,
@@ -12,19 +12,18 @@ import {
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { Loader2Icon, ShieldAlertIcon } from "lucide-react"
+import { Loader2Icon, ShieldAlertIcon, ShieldIcon, BriefcaseIcon, ZapIcon, HelpCircleIcon } from "lucide-react"
+import { PERMISSION_LABELS, PERMISSION_GROUPS } from "@/lib/auth/permissions"
 
 export interface PermissionsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
   description: string
-  // Currently assigned permissions (since we might not be able to fetch them, we pass them if known)
+  // Currently assigned permissions
   initialPermissions?: string[]
   isLoadingInitial?: boolean
   onSave: (permissions: string[]) => Promise<void>
-  /** If provided, only show these permissions (= parent's owned permissions) */
-  scopedPermissions?: string[]
 }
 
 export function PermissionsDialog({
@@ -35,7 +34,6 @@ export function PermissionsDialog({
   initialPermissions = [],
   isLoadingInitial = false,
   onSave,
-  scopedPermissions,
 }: PermissionsDialogProps) {
   const [selectedPerms, setSelectedPerms] = useState<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
@@ -51,7 +49,6 @@ export function PermissionsDialog({
   useEffect(() => {
     if (open) {
       if (Array.isArray(initialPermissions)) {
-        // Map qua getPermId để đề phòng initialPermissions bị trả về là object thay vì string
         setSelectedPerms(initialPermissions.map(getPermId))
       } else {
         setSelectedPerms([])
@@ -59,7 +56,7 @@ export function PermissionsDialog({
     }
   }, [open, initialPermissions])
 
-  // Helper to extract string ID from mixed API response (string or object)
+  // Helper to extract string ID from mixed API response
   function getPermId(perm: any): string {
     if (typeof perm === "string") return perm
     return perm?.slug || perm?.code || perm?.id || perm?.name || perm?.permission || JSON.stringify(perm)
@@ -67,8 +64,17 @@ export function PermissionsDialog({
 
   // Helper to extract human readable label
   function getPermLabel(perm: any): string {
-    if (typeof perm === "string") return perm
-    return perm?.description || perm?.name || perm?.slug || perm?.code || perm?.id || perm?.permission || JSON.stringify(perm)
+    const id = getPermId(perm)
+    if (PERMISSION_LABELS[id]) return PERMISSION_LABELS[id]
+    
+    if (typeof perm !== "string" && perm?.description && !perm.description.startsWith("Permission for")) {
+      return perm.description
+    }
+    
+    return id
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
   }
 
   function togglePermission(permId: string) {
@@ -93,17 +99,45 @@ export function PermissionsDialog({
       onOpenChange(false)
     } catch (err) {
       console.error("Failed to save permissions", err)
-      // Error handling could be improved with toast
     } finally {
       setIsSaving(false)
     }
   }
 
   const permissionsList = useMemo(() => {
-    const all = Array.isArray(allPerms) ? allPerms : []
-    if (!scopedPermissions) return all
-    return all.filter((p) => scopedPermissions.includes(getPermId(p)))
-  }, [allPerms, scopedPermissions])
+    return Array.isArray(allPerms) ? allPerms : []
+  }, [allPerms])
+
+  // Group permissions for display
+  const groupedPermissions = useMemo(() => {
+    if (permissionsList.length === 0) return []
+
+    const groups = PERMISSION_GROUPS.map((g) => ({
+      ...g,
+      items: permissionsList.filter((p) => g.perms.includes(getPermId(p))),
+    }))
+
+    const groupedIds = new Set(PERMISSION_GROUPS.flatMap((g) => g.perms))
+    const otherItems = permissionsList.filter((p) => !groupedIds.has(getPermId(p)))
+
+    if (otherItems.length > 0) {
+      groups.push({
+        name: "Khác",
+        icon: "HelpCircleIcon",
+        perms: otherItems.map(getPermId),
+        items: otherItems,
+      })
+    }
+
+    return groups.filter((g) => g.items.length > 0)
+  }, [permissionsList])
+
+  const iconMap: Record<string, any> = {
+    ShieldIcon,
+    BriefcaseIcon,
+    ZapIcon,
+    HelpCircleIcon,
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -125,11 +159,7 @@ export function PermissionsDialog({
             </div>
           ) : permissionsList.length === 0 ? (
             <div className="flex h-32 items-center justify-center text-muted-foreground text-sm text-center px-4">
-              {scopedPermissions ? (
-                "Tổ chức/Nhóm cấp trên chưa được gán quyền nào. Vui lòng gán quyền cho cấp trên trước."
-              ) : (
-                "Chưa có dữ liệu quyền trên hệ thống."
-              )}
+              Chưa có dữ liệu quyền trên hệ thống.
             </div>
           ) : (
             <div className="space-y-4">
@@ -147,25 +177,48 @@ export function PermissionsDialog({
                 </Label>
               </div>
 
-              <div className="grid gap-3 pl-1">
-                {permissionsList.map((rawPerm: any, index: number) => {
-                  const permId = getPermId(rawPerm)
-                  const permLabel = getPermLabel(rawPerm)
+              <div className="space-y-6">
+                {groupedPermissions.map((group) => {
+                  const Icon = iconMap[group.icon] || HelpCircleIcon
                   return (
-                    <div key={`${permId}-${index}`} className="flex items-start gap-3">
-                      <Checkbox
-                        id={`perm-${index}`}
-                        checked={selectedPerms.includes(permId)}
-                        onCheckedChange={() => togglePermission(permId)}
-                        className="mt-0.5"
-                      />
-                      <div className="grid gap-1">
-                        <Label
-                          htmlFor={`perm-${index}`}
-                          className="cursor-pointer font-medium leading-none break-all"
-                        >
-                          {permLabel}
-                        </Label>
+                    <div key={group.name} className="space-y-3">
+                      <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+                        <div className="flex size-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+                          <Icon className="size-3.5" />
+                        </div>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-foreground/70">
+                          {group.name}
+                        </h3>
+                      </div>
+                      
+                      <div className="grid gap-3.5 pl-1">
+                        {group.items.map((rawPerm: any, index: number) => {
+                          const permId = getPermId(rawPerm)
+                          const permLabel = getPermLabel(rawPerm)
+                          const uniqueId = `perm-${permId}-${index}`
+                          
+                          return (
+                            <div key={uniqueId} className="flex items-start gap-3 group/item">
+                              <Checkbox
+                                id={uniqueId}
+                                checked={selectedPerms.includes(permId)}
+                                onCheckedChange={() => togglePermission(permId)}
+                                className="mt-0.5"
+                              />
+                              <div className="grid gap-1">
+                                <Label
+                                  htmlFor={uniqueId}
+                                  className="cursor-pointer font-medium leading-none break-all group-hover/item:text-primary transition-colors"
+                                >
+                                  {permLabel}
+                                </Label>
+                                <span className="text-[10px] font-mono text-muted-foreground/60 uppercase">
+                                  {permId}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   )

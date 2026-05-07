@@ -16,13 +16,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   Field,
   FieldGroup,
   FieldLabel,
@@ -33,6 +26,7 @@ import { Loader2Icon } from "lucide-react"
 import { useUpdateUser } from "@/hooks/iam/use-users"
 import { useInfiniteCompanies } from "@/hooks/iam/use-companies"
 import { useInfiniteGroups } from "@/hooks/iam/use-groups"
+import { useInfiniteRoles } from "@/hooks/iam/use-roles"
 import type { AuthMeResponse } from "@/lib/types/iam"
 
 const editUserFormSchema = z.object({
@@ -41,8 +35,7 @@ const editUserFormSchema = z.object({
   password: z.string().optional().refine((val) => !val || val.length >= 8, {
     message: "Mật khẩu phải có ít nhất 8 ký tự nếu nhập",
   }),
-  role: z.enum(["admin", "member"]),
-  scope: z.enum(["global", "company", "group"]),
+  roleId: z.string().min(1, "Vui lòng chọn vai trò"),
   companyId: z.string().min(1, "Vui lòng chọn tổ chức"),
   groupId: z.string().optional(),
 })
@@ -62,8 +55,7 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
       name: "",
       email: "",
       password: "",
-      role: "member",
-      scope: "global",
+      roleId: "",
       companyId: "",
       groupId: "",
     },
@@ -76,8 +68,7 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
         name: user.name,
         email: user.email,
         password: "", // Always empty initially for security
-        role: user.role,
-        scope: user.scope || "global",
+        roleId: user.role?.id ? String(user.role.id) : user.role_id ? String(user.role_id) : "",
         companyId: user.company_id ? String(user.company_id) : "",
         groupId: user.group_id ? String(user.group_id) : "",
       })
@@ -87,7 +78,6 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
   // --- Data Fetching ---
   const selectedCompanyId = form.watch("companyId")
   const parsedCompanyId = selectedCompanyId && selectedCompanyId !== "" ? Number(selectedCompanyId) : null
-  const selectedRole = form.watch("role")
 
   // --- Mutations ---
   const updateMutation = useUpdateUser()
@@ -101,11 +91,9 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
         payload: {
           name: values.name,
           password: values.password || undefined,
-          role: values.role,
-          scope: values.role === "admin" ? values.scope : null,
+          role_id: Number(values.roleId),
           company_id: Number(values.companyId),
           group_id: values.groupId ? Number(values.groupId) : null,
-          // Note: permissions field can be added here if needed to be updated simultaneously
         },
       },
       {
@@ -139,28 +127,6 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
                 )}
               />
               <Controller
-                name="role"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Vai trò <span className="text-destructive">*</span></FieldLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="member">Thành viên (Member)</SelectItem>
-                        <SelectItem value="admin">Quản trị (Admin)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FieldError errors={[fieldState.error]} />
-                  </Field>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Controller
                 name="email"
                 control={form.control}
                 render={({ field, fieldState }) => (
@@ -171,6 +137,9 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
                   </Field>
                 )}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <Controller
                 name="password"
                 control={form.control}
@@ -182,32 +151,28 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
                   </Field>
                 )}
               />
-            </div>
-
-            <div className="border-t border-border/60 my-1"></div>
-
-            {selectedRole === "admin" && (
+              
               <Controller
-                name="scope"
+                name="roleId"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Cấp độ truy cập (Scope) <span className="text-destructive">*</span></FieldLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="global">Global (Toàn quyền hệ thống)</SelectItem>
-                        <SelectItem value="company">Company (Quản lý cấp Công ty)</SelectItem>
-                        <SelectItem value="group">Group (Chỉ truy cập cấp Nhóm/Phòng ban)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FieldLabel>Vai trò người dùng <span className="text-destructive">*</span></FieldLabel>
+                    <IAMCombobox
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Chọn vai trò..."
+                      searchPlaceholder="Tìm vai trò..."
+                      useInfiniteHook={useInfiniteRoles}
+                      selectedLabel={typeof user?.role === 'object' ? user.role.name : undefined}
+                    />
                     <FieldError errors={[fieldState.error]} />
                   </Field>
                 )}
               />
-            )}
+            </div>
+
+            <div className="border-t border-border/60 my-1"></div>
 
             <Controller
               name="companyId"
@@ -224,6 +189,7 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
                     placeholder="Chọn tổ chức..."
                     searchPlaceholder="Tìm tên tổ chức..."
                     useInfiniteHook={useInfiniteCompanies}
+                    selectedLabel={user?.company?.name}
                   />
                   <FieldError errors={[fieldState.error]} />
                 </Field>
@@ -243,6 +209,7 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
                     searchPlaceholder="Tìm tên nhóm..."
                     disabled={!selectedCompanyId}
                     useInfiniteHook={(params: any) => useInfiniteGroups(parsedCompanyId, params)}
+                    selectedLabel={user?.group?.name}
                   />
                   <FieldError errors={[fieldState.error]} />
                 </Field>

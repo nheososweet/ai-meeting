@@ -68,9 +68,9 @@ const appNav = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
-  const { hasAnyPermission, hasRole } = useAuth();
+  const { hasAnyPermission } = useAuth();
 
-  const canSeeIam = hasRole("admin");
+  const canSeeIam = hasAnyPermission(IAM_SIDEBAR_PERMISSIONS);
   const isIamActive = pathname.startsWith("/iam");
 
   const canSeeMeetingRecords = hasAnyPermission(WBS_SIDEBAR_PERMISSIONS);

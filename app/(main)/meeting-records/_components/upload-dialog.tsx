@@ -74,7 +74,9 @@ export function UploadFileDialog({ open, onOpenChange, showActionToast }: Upload
               {...register("title")}
             />
             {errors.title && (
-              <p className="text-xs text-destructive">{errors.title.message}</p>
+              <p className="text-xs text-destructive">
+                {errors.title.message?.toString()}
+              </p>
             )}
           </div>
           <div className="space-y-2">
@@ -87,7 +89,9 @@ export function UploadFileDialog({ open, onOpenChange, showActionToast }: Upload
               className="cursor-pointer"
             />
             {errors.file && (
-              <p className="text-xs text-destructive">{errors.file.message}</p>
+              <p className="text-xs text-destructive">
+                {errors.file.message?.toString()}
+              </p>
             )}
           </div>
           <DialogFooter className="pt-4">

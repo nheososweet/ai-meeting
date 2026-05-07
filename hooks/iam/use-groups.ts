@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tansta
 import { iamService } from "@/services/iam.service"
 import type { Group, PaginatedResponse } from "@/lib/types/iam"
 import { toast } from "react-toastify"
+import { parseApiError } from "@/lib/api-error"
 
 /**
  * Hook để lấy danh sách phòng ban/nhóm của một công ty
@@ -45,7 +46,7 @@ export function useCreateGroup() {
       toast.success("Thêm mới nhóm thành công")
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Lỗi khi thêm mới nhóm")
+      toast.error(parseApiError(error))
     }
   })
 }
@@ -64,7 +65,7 @@ export function useUpdateGroup() {
       toast.success("Cập nhật tên nhóm thành công")
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Lỗi khi cập nhật tên nhóm")
+      toast.error(parseApiError(error))
     }
   })
 }
@@ -94,7 +95,7 @@ export function useAssignGroupPermissions() {
       toast.success("Cập nhật quyền nhóm thành công")
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Lỗi khi cập nhật quyền")
+      toast.error(parseApiError(error))
     }
   })
 }

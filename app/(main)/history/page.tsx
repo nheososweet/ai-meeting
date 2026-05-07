@@ -30,6 +30,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { cn } from "@/lib/utils";
+import { PermissionGuard } from "@/components/iam/shared/permission-guard";
 
 export default function HistoryPage() {
   const [previewAudioRecordId, setPreviewAudioRecordId] = useState<
@@ -175,7 +176,8 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <PermissionGuard permission="view_records">
+      <div className="flex min-h-0 flex-1 flex-col">
       <section className="flex min-h-0 flex-col rounded-lg border border-border/80 bg-card p-4 sm:p-5 shadow-sm h-[calc(100dvh-6rem)] md:h-[calc(100dvh-8.5rem)]">
         <HistoryHeaderMetrics
           total={recordMetrics.total}
@@ -354,5 +356,6 @@ export default function HistoryPage() {
         </div>
       ) : null}
     </div>
+    </PermissionGuard>
   );
 }

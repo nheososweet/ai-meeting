@@ -11,6 +11,7 @@ export function useUsers(params?: {
   search?: string
   search_companyid?: number
   search_groupid?: number
+  is_active?: boolean
 }) {
   return useQuery({
     queryKey: ["iam", "users", params],
@@ -26,6 +27,7 @@ export function useInfiniteUsers(params?: {
   page_size?: number;
   search_companyid?: number;
   search_groupid?: number;
+  is_active?: boolean;
 }) {
   return useInfiniteQuery({
     queryKey: ["iam", "users", "infinite", params],

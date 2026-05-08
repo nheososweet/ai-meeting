@@ -40,6 +40,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { cn, formatDate } from "@/lib/utils"
 import {
@@ -81,12 +88,13 @@ export default function UsersPage() {
   const [page, setPage] = useState(1)
   const [filterCompanyId, setFilterCompanyId] = useState<string>("")
   const [filterGroupId, setFilterGroupId] = useState<string>("")
+  const [filterActive, setFilterActive] = useState<string>("all")
   const debouncedSearch = useDebounce(search, 500)
 
   // Reset page when filters change
   useEffect(() => {
     setPage(1)
-  }, [debouncedSearch, filterCompanyId, filterGroupId])
+  }, [debouncedSearch, filterCompanyId, filterGroupId, filterActive])
 
   // Tự động set filter công ty cho người không phải admin
   useEffect(() => {
@@ -103,6 +111,7 @@ export default function UsersPage() {
       ? (filterCompanyId !== "" ? Number(filterCompanyId) : undefined)
       : currentUser?.companyId || undefined,
     search_groupid: filterGroupId !== "" ? Number(filterGroupId) : undefined,
+    is_active: filterActive === "true" ? true : filterActive === "false" ? false : undefined,
   })
   const parsedFilterCompanyId = filterCompanyId !== "" ? Number(filterCompanyId) : null
   
@@ -198,7 +207,18 @@ export default function UsersPage() {
           useInfiniteHook={(params: any) => useInfiniteGroups(parsedFilterCompanyId, params)}
         />
 
-        {(search || filterCompanyId !== "" || filterGroupId !== "") && (
+        <Select value={filterActive} onValueChange={setFilterActive}>
+          <SelectTrigger className="h-9 w-full sm:w-[160px] text-xs">
+            <SelectValue placeholder="Trạng thái" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" className="text-xs">Tất cả trạng thái</SelectItem>
+            <SelectItem value="true" className="text-xs font-medium text-emerald-600">Đang hoạt động</SelectItem>
+            <SelectItem value="false" className="text-xs font-medium text-red-600">Đang bị khóa</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {(search || filterCompanyId !== "" || filterGroupId !== "" || filterActive !== "all") && (
           <Button 
             variant="ghost" 
             size="sm" 
@@ -210,6 +230,7 @@ export default function UsersPage() {
                 setFilterCompanyId(String(currentUser.companyId))
               }
               setFilterGroupId("")
+              setFilterActive("all")
             }}
             className="h-9 text-xs text-muted-foreground hover:text-foreground"
           >

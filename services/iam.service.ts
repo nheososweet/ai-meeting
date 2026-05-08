@@ -135,6 +135,7 @@ export const iamService = {
     search?: string
     search_companyid?: number
     search_groupid?: number
+    is_active?: boolean
   }): Promise<PaginatedResponse<AuthMeResponse>> => {
     // API GET /auth/users
     const { data } = await pipelineApi.get<PaginatedResponse<AuthMeResponse>>("/auth/users", {

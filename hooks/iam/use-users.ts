@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query"
 import { iamService, type CreateUserPayload } from "@/services/iam.service"
 import { toast } from "react-toastify"
 import { parseApiError } from "@/lib/api-error"
@@ -15,6 +15,27 @@ export function useUsers(params?: {
   return useQuery({
     queryKey: ["iam", "users", params],
     queryFn: () => iamService.getUsers(params),
+  })
+}
+
+/**
+ * Hook để lấy danh sách người dùng có phân trang (vô hạn)
+ */
+export function useInfiniteUsers(params?: { 
+  search?: string; 
+  page_size?: number;
+  search_companyid?: number;
+  search_groupid?: number;
+}) {
+  return useInfiniteQuery({
+    queryKey: ["iam", "users", "infinite", params],
+    queryFn: ({ pageParam = 1 }) => 
+      iamService.getUsers({ ...params, page: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { page, total_pages } = lastPage.meta
+      return page < total_pages ? page + 1 : undefined
+    },
   })
 }
 

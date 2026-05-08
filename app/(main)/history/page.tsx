@@ -1,25 +1,36 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { LoaderCircleIcon } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { 
+  Loader2Icon, 
+  AudioLinesIcon, 
+  FileTextIcon, 
+  FileCheckIcon, 
+  MailIcon, 
+  PlayIcon,
+  SearchIcon,
+  ClockIcon,
+  CheckCircle2Icon,
+  UserIcon,
+  FilterIcon,
+  DownloadIcon,
+  AudioLinesIcon as AudioIcon,
+  ChevronDownIcon
+} from "lucide-react";
 
-import { HistoryHeaderMetrics, type FilterType } from "@/app/(main)/history/_components/HistoryHeaderMetrics";
-import { HistoryRecordItem } from "@/app/(main)/history/_components/HistoryRecordItem";
 import { ReportPreviewDialog } from "@/app/(main)/history/_components/ReportPreviewDialog";
 import { SendEmailDialog } from "@/app/(main)/history/_components/SendEmailDialog";
 import { TranscriptPreviewDialog } from "@/app/(main)/history/_components/TranscriptPreviewDialog";
 import { HistorySpeakersLabelingDialog } from "@/app/(main)/history/_components/HistorySpeakersLabelingDialog";
 import {
-  historyDateTimeFormatter,
   resolveReportFilename,
 } from "@/app/(main)/history/_lib/file-utils";
 import { reformatTranscriptTimestamps } from "@/app/(main)/workspace/_lib/transcript-utils";
 import { useHistoryEmail } from "@/app/(main)/history/_hooks/useHistoryEmail";
 import { useHistoryToast } from "@/app/(main)/history/_hooks/useHistoryToast";
 import { useHistoryTranscriptPreview } from "@/app/(main)/history/_hooks/useHistoryTranscriptPreview";
-import { useRecordsQuery } from "@/hooks/services/use-records-query";
-import type { PipelineRecord } from "@/services/pipeline-records.service";
+import { useFilesQuery } from "@/hooks/services/use-files";
+import { FileRecord } from "@/lib/types/files";
 import {
   Pagination,
   PaginationContent,
@@ -29,46 +40,104 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth/auth-context";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn, formatDate } from "@/lib/utils";
 import { PermissionGuard } from "@/components/iam/shared/permission-guard";
+import { EmptyState } from "@/components/iam/shared/empty-state";
+import { useDebounce } from "@/hooks/use-debounce";
+
+const STEP_OPTIONS = [
+  { value: "transcribe", label: "Chuyển văn bản" },
+  { value: "summary", label: "Tóm tắt AI" },
+  { value: "report", label: "Biên bản họp" },
+  { value: "send_email", label: "Gửi Email" },
+];
+
+const VALUE_OPTIONS = [
+  { value: "success", label: "Thành công" },
+  { value: "failed", label: "Thất bại" },
+  { value: "waiting", label: "Đang chờ" },
+];
 
 export default function HistoryPage() {
-  const [previewAudioRecordId, setPreviewAudioRecordId] = useState<
-    number | null
-  >(null);
-  const [previewReportRecordId, setPreviewReportRecordId] = useState<
-    number | null
-  >(null);
+  const { hasPermission } = useAuth();
+  const canSendMail = hasPermission("send_mail");
+
+  const [previewAudioRecord, setPreviewAudioRecord] = useState<FileRecord | null>(null);
+  const [previewReportRecordId, setPreviewReportRecordId] = useState<number | null>(null);
   const [isLabelingDialogOpen, setIsLabelingDialogOpen] = useState(false);
 
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(15);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
 
-  const recordsQuery = useRecordsQuery({ page, size: pageSize });
-  const records = recordsQuery.data?.data;
-  const meta = recordsQuery.data?.meta;
+  // Granular Filters
+  const [statusStep, setStatusStep] = useState<string>("transcribe");
+  const [statusValue, setStatusValue] = useState<string>("success");
 
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const activeFilter = (searchParams.get("filter") as FilterType) || "all";
+  // Connect to the Files API with granular filters
+  const { data, isLoading, isError } = useFilesQuery({
+    page,
+    page_size: pageSize,
+    status_step: statusStep,
+    status_value: statusValue,
+    search: debouncedSearch || undefined,
+  });
 
-  function handleFilterChange(newFilter: FilterType) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("filter", newFilter);
-    router.replace(`${pathname}?${params.toString()}`);
-  }
+  const records = data?.data || [];
+  const meta = data?.meta;
 
-  const filteredRecords = useMemo(() => {
-    if (!records) return [];
-    if (activeFilter === "completed") {
-      return records.filter((r) => Boolean(r.reportUrl));
-    }
-    if (activeFilter === "pending") {
-      return records.filter((r) => !r.reportUrl);
-    }
-    return records;
-  }, [records, activeFilter]);
+  const adaptedRecords = useMemo(() => {
+    return records.map(r => ({
+      ...r,
+      reportUrl: r.report
+    }));
+  }, [records]);
 
   const { actionToast, showActionToast } = useHistoryToast();
 
@@ -82,7 +151,7 @@ export default function HistoryPage() {
     closeTranscriptPreview,
     setPreviewTranscriptByRecord,
   } = useHistoryTranscriptPreview({
-    records,
+    records: adaptedRecords as any,
     showActionToast,
   });
 
@@ -104,29 +173,15 @@ export default function HistoryPage() {
     handleEmailIsHtmlChange,
     handleSendEmail,
   } = useHistoryEmail({
-    records,
+    records: adaptedRecords as any,
     showActionToast,
+    canSendMail,
   });
 
-  const recordMetrics = useMemo(() => {
-    const list = records ?? [];
-
-    return {
-      total: list.length,
-      withReport: list.filter((record) => Boolean(record.reportUrl)).length,
-      withoutReport: list.filter((record) => !record.reportUrl).length,
-    };
-  }, [records]);
-
   const activeReportRecord = useMemo(() => {
-    if (!previewReportRecordId) {
-      return null;
-    }
-
-    return (
-      records?.find((record) => record.id === previewReportRecordId) ?? null
-    );
-  }, [previewReportRecordId, records]);
+    if (!previewReportRecordId) return null;
+    return adaptedRecords.find((record) => record.id === previewReportRecordId) ?? null;
+  }, [previewReportRecordId, adaptedRecords]);
 
   const activeReportFileName =
     activeReportRecord?.reportUrl && activeReportRecord.filename
@@ -143,10 +198,6 @@ export default function HistoryPage() {
     return reformatTranscriptTimestamps(raw);
   }, [previewTranscriptRecordId, previewTranscriptByRecord]);
 
-  function handleToggleAudioPreview(recordId: number) {
-    setPreviewAudioRecordId((prev) => (prev === recordId ? null : recordId));
-  }
-
   function handleLabelingSuccess(newRawTranscript: string) {
     if (previewTranscriptRecordId) {
       setPreviewTranscriptByRecord((prev) => ({
@@ -156,132 +207,294 @@ export default function HistoryPage() {
     }
   }
 
-  function handlePreviewReport(record: PipelineRecord) {
-    if (!record.reportUrl) {
-      return;
-    }
-
-    if (previewReportRecordId === record.id) {
-      setPreviewReportRecordId(null);
-      return;
-    }
-
-    setPreviewReportRecordId(record.id);
-  }
-
-  function handleReportDialogOpenChange(nextOpen: boolean) {
-    if (!nextOpen) {
-      setPreviewReportRecordId(null);
-    }
-  }
-
   return (
     <PermissionGuard permission="view_records">
-      <div className="flex min-h-0 flex-1 flex-col">
-      <section className="flex min-h-0 flex-col rounded-lg border border-border/80 bg-card p-4 sm:p-5 shadow-sm h-[calc(100dvh-6rem)] md:h-[calc(100dvh-8.5rem)]">
-        <HistoryHeaderMetrics
-          total={recordMetrics.total}
-          withReport={recordMetrics.withReport}
-          withoutReport={recordMetrics.withoutReport}
-          activeFilter={activeFilter}
-          onFilterChange={handleFilterChange}
-        />
+      <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm">
+        <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-4 gap-4">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-base font-bold text-foreground">Lịch sử họp</h2>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Select value={statusStep} onValueChange={(val) => { setStatusStep(val); setPage(1); }}>
+                <SelectTrigger className="h-9 w-[160px] text-xs font-medium bg-muted/20">
+                  <SelectValue placeholder="Bước xử lý" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STEP_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-        <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-md border border-border/40 bg-muted/10">
-          {recordsQuery.isLoading ? (
-            <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-              <LoaderCircleIcon className="size-4 animate-spin" />
-              Đang tải danh sách bản ghi...
+              <Select value={statusValue} onValueChange={(val) => { setStatusValue(val); setPage(1); }}>
+                <SelectTrigger className="h-9 w-[130px] text-xs font-medium bg-muted/20">
+                  <SelectValue placeholder="Trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  {VALUE_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          ) : recordsQuery.isError ? (
-            <div className="p-4 text-sm text-rose-600 dark:text-rose-400">
-              Không tải được danh sách bản ghi.
+
+            <div className="relative w-full max-w-[240px]">
+              <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Tìm kiếm cuộc họp..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-9 pl-8 text-xs bg-muted/10 border-border/60"
+              />
             </div>
-          ) : filteredRecords.length ? (
-            <div className="space-y-3 p-3">
-              {filteredRecords.map((record) => (
-                <HistoryRecordItem
-                  key={record.id}
-                  record={record}
-                  createdAtLabel={historyDateTimeFormatter.format(
-                    new Date(new Date(record.createTime).getTime() + 7 * 60 * 60 * 1000),
-                  )}
-                  previewAudioActive={previewAudioRecordId === record.id}
-                  previewTranscriptActive={
-                    previewTranscriptRecordId === record.id
-                  }
-                  previewReportActive={previewReportRecordId === record.id}
-                  loadingTranscript={loadingTranscriptRecordId === record.id}
-                  onToggleAudioPreview={handleToggleAudioPreview}
-                  onPreviewTranscript={handlePreviewTranscript}
-                  onPreviewReport={handlePreviewReport}
-                  onOpenSendEmailDialog={handleOpenSendEmailDialog}
-                />
-              ))}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 bg-muted/5">
+          {isLoading ? (
+            <div className="flex h-60 items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <Loader2Icon className="size-8 animate-spin text-primary/60" />
+                <p className="text-xs text-muted-foreground font-medium">Đang tải dữ liệu...</p>
+              </div>
             </div>
+          ) : isError ? (
+            <div className="flex h-40 items-center justify-center text-destructive text-sm font-medium">
+              Đã có lỗi xảy ra khi tải danh sách lịch sử.
+            </div>
+          ) : records.length === 0 ? (
+            <EmptyState
+              emptyText={search ? "Không tìm thấy kết quả phù hợp." : "Chưa có lịch sử cuộc họp."}
+            />
           ) : (
-            <div className="p-4 text-sm text-muted-foreground">
-              Chưa có bản ghi nào.
+            <div className="flex flex-col gap-4">
+              <div className="rounded-md border border-border/40 bg-card overflow-hidden shadow-sm">
+                <Table>
+                  <TableHeader className="bg-muted/30">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="w-[70px] text-[11px] font-bold uppercase tracking-wider pl-5">ID</TableHead>
+                      <TableHead className="text-[11px] font-bold uppercase tracking-wider">Cuộc họp</TableHead>
+                      <TableHead className="hidden lg:table-cell text-[11px] font-bold uppercase tracking-wider">Người xử lý</TableHead>
+                      <TableHead className="text-[11px] font-bold uppercase tracking-wider">Tiến độ</TableHead>
+                      <TableHead className="hidden md:table-cell text-[11px] font-bold uppercase tracking-wider">Ngày tạo</TableHead>
+                      <TableHead className="text-right text-[11px] font-bold uppercase tracking-wider pr-5">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {records.map((record) => (
+                      <TableRow key={record.id} className="group transition-colors hover:bg-muted/20">
+                        <TableCell className="font-mono text-xs text-muted-foreground pl-5">
+                          #{record.id}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-2">
+                              <AudioLinesIcon className="size-3.5 text-primary/70" />
+                              <span className="font-semibold text-sm text-foreground/90">
+                                {record.title || "Chưa có tiêu đề"}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-muted-foreground pl-5 truncate max-w-[280px]">
+                              {record.filename}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          <div className="flex items-center gap-2.5">
+                            {record.assignedToUsers.length > 0 ? (
+                              <>
+                                <Avatar className="size-7 border border-border/60">
+                                  <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-bold">
+                                    {record.assignedToUsers[0].name.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-medium text-foreground/80">{record.assignedToUsers[0].name}</span>
+                                  <span className="text-[10px] text-muted-foreground italic">Người xử lý</span>
+                                </div>
+                              </>
+                            ) : (
+                              <span className="text-xs text-muted-foreground italic">Chưa gán</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <StatusIndicator record={record} />
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground text-[11px]">
+                          {formatDate(record.createTime)}
+                        </TableCell>
+                        <TableCell className="text-right pr-5">
+                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                    onClick={() => setPreviewAudioRecord(record)}
+                                  >
+                                    <PlayIcon className="size-3.5 fill-current" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Nghe lại</TooltipContent>
+                              </Tooltip>
+
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                    onClick={() => handlePreviewTranscript(record as any)}
+                                  >
+                                    <FileTextIcon className="size-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Xem Transcript</TooltipContent>
+                              </Tooltip>
+
+                              {record.report && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-8 text-emerald-600 hover:bg-emerald-50"
+                                      onClick={() => {
+                                        setPreviewReportRecordId(record.id);
+                                      }}
+                                    >
+                                      <FileCheckIcon className="size-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Xem Biên bản</TooltipContent>
+                                </Tooltip>
+                              )}
+
+                              {canSendMail && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-8 text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
+                                      onClick={() => handleOpenSendEmailDialog(record.id)}
+                                    >
+                                      <MailIcon className="size-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Gửi Email</TooltipContent>
+                                </Tooltip>
+                              )}
+
+                              <DropdownMenu>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                        >
+                                          <DownloadIcon className="size-3.5" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Tải xuống</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Tùy chọn tải xuống</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem asChild disabled={!record.transcribeUrl}>
+                                    <a href={record.transcribeUrl || "#"} download className="flex items-center gap-2 cursor-pointer">
+                                      <FileTextIcon className="size-3.5 text-blue-500" />
+                                      <span className="text-xs">Tải bản gỡ băng (.txt)</span>
+                                    </a>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem asChild disabled={!record.audioUrl}>
+                                    <a href={record.audioUrl || "#"} download className="flex items-center gap-2 cursor-pointer">
+                                      <AudioIcon className="size-3.5 text-emerald-500" />
+                                      <span className="text-xs">Tải file âm thanh</span>
+                                    </a>
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TooltipProvider>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination Controls */}
+              {meta && meta.total_pages > 1 && (
+                <div className="flex items-center justify-between py-2">
+                  <div className="text-[11px] text-muted-foreground">
+                    Hiển thị <span className="font-medium text-foreground">{(meta.page - 1) * meta.page_size + 1}</span> - <span className="font-medium text-foreground">{Math.min(meta.page * meta.page_size, meta.total_items)}</span> trong <span className="font-medium text-foreground">{meta.total_items}</span> bản ghi
+                  </div>
+                  
+                  <Pagination className="w-auto mx-0">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (meta.has_prev) setPage(p => p - 1);
+                          }}
+                          className={cn("cursor-pointer h-8 text-[11px]", !meta.has_prev && "pointer-events-none opacity-50")}
+                          text="Trước"
+                        />
+                      </PaginationItem>
+                      
+                      {Array.from({ length: meta.total_pages }, (_, i) => i + 1).map((p) => {
+                        if (p === 1 || p === meta.total_pages || (p >= meta.page - 1 && p <= meta.page + 1)) {
+                          return (
+                            <PaginationItem key={p}>
+                              <PaginationLink 
+                                isActive={p === meta.page}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setPage(p);
+                                }}
+                                className="cursor-pointer h-8 w-8 text-[11px]"
+                              >
+                                {p}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+                        }
+                        if (p === meta.page - 2 || p === meta.page + 2) {
+                          return <PaginationItem key={p} className="h-8 w-8"><PaginationEllipsis /></PaginationItem>;
+                        }
+                        return null;
+                      })}
+
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (meta.has_next) setPage(p => p + 1);
+                          }}
+                          className={cn("cursor-pointer h-8 text-[11px]", !meta.has_next && "pointer-events-none opacity-50")}
+                          text="Sau"
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </div>
           )}
         </div>
-
-        {/* Pagination Controls */}
-        {meta && meta.total_pages > 1 && (
-          <div className="mt-4 flex items-center justify-between py-2 border-t border-border/40">
-            <div className="text-xs text-muted-foreground">
-              Hiển thị <span className="font-medium text-foreground">{(meta.page - 1) * meta.page_size + 1}</span> - <span className="font-medium text-foreground">{Math.min(meta.page * meta.page_size, meta.total_items)}</span> trong <span className="font-medium text-foreground">{meta.total_items}</span> bản ghi
-            </div>
-            
-            <Pagination className="w-auto mx-0">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (meta.has_prev) setPage(p => p - 1)
-                    }}
-                    className={cn("cursor-pointer", !meta.has_prev && "pointer-events-none opacity-50")}
-                  />
-                </PaginationItem>
-                
-                {Array.from({ length: meta.total_pages }, (_, i) => i + 1).map((p) => {
-                  if (p === 1 || p === meta.total_pages || (p >= meta.page - 1 && p <= meta.page + 1)) {
-                    return (
-                      <PaginationItem key={p}>
-                        <PaginationLink 
-                          isActive={p === meta.page}
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setPage(p)
-                          }}
-                          className="cursor-pointer"
-                        >
-                          {p}
-                        </PaginationLink>
-                      </PaginationItem>
-                    )
-                  }
-                  if (p === meta.page - 2 || p === meta.page + 2) {
-                    return <PaginationItem key={p}><PaginationEllipsis /></PaginationItem>
-                  }
-                  return null
-                })}
-
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (meta.has_next) setPage(p => p + 1)
-                    }}
-                    className={cn("cursor-pointer", !meta.has_next && "pointer-events-none opacity-50")}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
-      </section>
+      </div>
 
       <TranscriptPreviewDialog
         open={previewTranscriptRecordId !== null}
@@ -320,7 +533,7 @@ export default function HistoryPage() {
         reportRecordFilename={activeReportRecord?.filename}
         reportUrl={activeReportRecord?.reportUrl}
         reportFileName={activeReportFileName}
-        onOpenChange={handleReportDialogOpenChange}
+        onOpenChange={(nextOpen) => !nextOpen && setPreviewReportRecordId(null)}
       />
 
       <SendEmailDialog
@@ -342,6 +555,12 @@ export default function HistoryPage() {
         onSendEmail={handleSendEmail}
       />
 
+      <AudioPreviewDialog
+        file={previewAudioRecord}
+        isOpen={!!previewAudioRecord}
+        onClose={() => setPreviewAudioRecord(null)}
+      />
+
       {actionToast ? (
         <div
           className={`pointer-events-none fixed right-4 bottom-4 z-50 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur ${
@@ -355,7 +574,92 @@ export default function HistoryPage() {
           {actionToast.message}
         </div>
       ) : null}
-    </div>
     </PermissionGuard>
+  );
+}
+
+function StatusIndicator({ record }: { record: FileRecord }) {
+  const steps = [
+    { key: "transcribe", label: "Transcript" },
+    { key: "summary", label: "Tóm tắt" },
+    { key: "report", label: "Biên bản" },
+    { key: "sendEmail", label: "Email" },
+  ];
+
+  return (
+    <div className="flex items-center gap-1.5">
+      {steps.map((step) => {
+        const status = record.fileStatus[step.key as keyof typeof record.fileStatus];
+        return (
+          <TooltipProvider key={step.key}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center">
+                  {status === "success" ? (
+                    <CheckCircle2Icon className="size-3.5 text-emerald-500" />
+                  ) : status === "processing" ? (
+                    <Loader2Icon className="size-3.5 text-blue-500 animate-spin" />
+                  ) : (
+                    <ClockIcon className="size-3.5 text-slate-300" />
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <span className="text-[10px] font-medium">{step.label}: {status === "success" ? "Xong" : status === "processing" ? "Đang xử lý" : "Chờ"}</span>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      })}
+    </div>
+  );
+}
+
+function AudioPreviewDialog({ file, isOpen, onClose }: { file: FileRecord | null; isOpen: boolean; onClose: () => void; }) {
+  if (!file) return null;
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[450px] overflow-hidden gap-0 p-0 border-none shadow-2xl rounded-2xl bg-gradient-to-b from-background to-muted/20">
+        <div className="relative p-6 space-y-6">
+          <div className="space-y-1.5 pr-8">
+            <h3 className="text-lg font-bold text-foreground leading-tight line-clamp-2" title={file.title || file.filename}>
+              {file.title || file.filename}
+            </h3>
+            <p className="text-xs font-medium text-muted-foreground/80 truncate flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-primary/40 shrink-0" />
+              {file.filename}
+            </p>
+          </div>
+          
+          <button 
+            onClick={onClose}
+            className="absolute right-4 top-4 p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+          >
+            <ChevronDownIcon className="size-5 rotate-90" />
+          </button>
+
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-blue-500/20 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative bg-card border border-border/50 rounded-xl p-4 shadow-sm">
+              <audio controls className="w-full h-12 accent-primary custom-audio-player" src={file.audioUrl} autoPlay>
+                Trình duyệt của bạn không hỗ trợ audio player.
+              </audio>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-border/40">
+            <div className="flex items-center gap-2">
+               <div className="size-8 rounded-full bg-blue-50 flex items-center justify-center">
+                  <PlayIcon className="size-3 text-blue-600 fill-current" />
+               </div>
+               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Đang nghe thử</span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-xs font-bold hover:bg-rose-50 hover:text-rose-600 rounded-full h-8">
+              Kết thúc
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

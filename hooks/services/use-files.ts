@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { filesService } from "@/services/files.service";
 import { type FilesQueryParams } from "@/lib/types/files";
 
@@ -9,6 +9,22 @@ export function useFilesQuery(params?: FilesQueryParams) {
   return useQuery({
     queryKey: ["files", params],
     queryFn: () => filesService.getFiles(params),
+  });
+}
+
+/**
+ * Hook for infinite files list (lazy loading)
+ */
+export function useFilesInfiniteQuery(params?: Omit<FilesQueryParams, "page">) {
+  return useInfiniteQuery({
+    queryKey: ["files-infinite", params],
+    queryFn: ({ pageParam = 1 }) => 
+      filesService.getFiles({ ...params, page: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { page, total_pages } = lastPage.meta;
+      return page < total_pages ? page + 1 : undefined;
+    },
   });
 }
 

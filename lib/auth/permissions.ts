@@ -32,7 +32,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   "update_report": "Chỉnh sửa biên bản cuộc họp",
   "view_records": "Xem lịch sử cuộc họp",
   "send_mail": "Gửi báo cáo qua Email",
-  "chat": "Sử dụng trợ lý ảo AI (Chat)",
+  "process_pipeline": "Xử lý file",
 }
 
 /** Group permissions for better UI organization */
@@ -45,12 +45,12 @@ export const PERMISSION_GROUPS = [
   {
     name: "Nghiệp vụ",
     icon: "BriefcaseIcon",
-    perms: ["assign_files", "transcribe", "translate", "update_report", "view_records"]
+    perms: ["assign_files", "process_pipeline", "translate", "view_records"]
   },
   {
     name: "Tiện ích",
     icon: "ZapIcon",
-    perms: ["send_mail", "chat"]
+    perms: ["send_mail"]
   }
 ]
 
@@ -80,10 +80,8 @@ export const WBS_ROUTE_PERMISSIONS: Record<string, string> = {
 
 /** Permissions related to the workspace/pipeline features */
 export const WORKSPACE_PERMISSIONS: string[] = [
-  PERMISSIONS.TRANSCRIBE,
-  PERMISSIONS.UPDATE_REPORT,
+  PERMISSIONS.PROCESS_PIPELINE,
   PERMISSIONS.SEND_MAIL,
-  PERMISSIONS.CHAT,
 ]
 
 /** Permissions related to history/records */

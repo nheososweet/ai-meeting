@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   createInitialPipelineSteps,
@@ -30,10 +31,23 @@ type DiarizeTranscribeMutation = {
   }>;
 };
 
+type DiarizeTranscribeByFileIdMutation = {
+  mutateAsync: (params: {
+    fileId: number;
+    language: string;
+  }) => Promise<{
+    rawTranscription: string[];
+    refinedTranscription: string[];
+    audioUrl?: string;
+    id?: number;
+  }>;
+};
+
 type SummaryMinutesMutation = {
   mutateAsync: (params: {
     transcriptLines: string[];
     model: string;
+    fileId?: number;
   }) => Promise<{
     speakerSummaries: SpeakerSummary[];
     minutesMarkdown: string;
@@ -57,16 +71,18 @@ type UseWorkspacePipelineParams = {
   setNotice: React.Dispatch<React.SetStateAction<string>>;
   setUploadProgress: React.Dispatch<React.SetStateAction<number>>;
   setProcessingProgress: React.Dispatch<React.SetStateAction<number>>;
-  diarizeTranscribeMutation: DiarizeTranscribeMutation;
+  diarizeTranscribeMutation?: DiarizeTranscribeMutation;
+  diarizeTranscribeByFileIdMutation?: DiarizeTranscribeByFileIdMutation;
   summaryMinutesMutation: SummaryMinutesMutation;
   updateReportMutation: UpdateReportMutation;
 };
 
 type StartProcessingArgs = {
-  source: AudioInputSource;
+  source: AudioInputSource | "file_select";
   fileName: string;
   durationSecond: number;
   sourceAudioFile: File | null;
+  fileId?: number;
 };
 
 type RetryPipelineArgs = {
@@ -96,9 +112,11 @@ export function useWorkspacePipeline({
   setUploadProgress,
   setProcessingProgress,
   diarizeTranscribeMutation,
+  diarizeTranscribeByFileIdMutation,
   summaryMinutesMutation,
   updateReportMutation,
 }: UseWorkspacePipelineParams) {
+  const queryClient = useQueryClient();
   const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>(
     createInitialPipelineSteps,
   );
@@ -151,8 +169,9 @@ export function useWorkspacePipeline({
     fileName,
     durationSecond,
     sourceAudioFile,
+    fileId,
   }: StartProcessingArgs) {
-    if (!fileName) {
+    if (!fileName && !fileId) {
       clearTimer(uploadTimerRef);
       clearTimer(processingTimerRef);
       markPipelineAsError(
@@ -162,7 +181,7 @@ export function useWorkspacePipeline({
       return;
     }
 
-    if (!sourceAudioFile) {
+    if (!sourceAudioFile && !fileId) {
       clearTimer(uploadTimerRef);
       clearTimer(processingTimerRef);
       markPipelineAsError(
@@ -189,9 +208,11 @@ export function useWorkspacePipeline({
       title:
         source === "upload"
           ? `Phiên xử lý ${fileName}`
-          : "Phiên xử lý bản thu trực tiếp",
+          : source === "file_select"
+            ? `Xử lý file: ${fileName}`
+            : "Phiên xử lý bản thu trực tiếp",
       fileName,
-      inputSource: source,
+      inputSource: source === "file_select" ? "upload" : source,
       processingStatus: "processing",
       emailStatus: "not_sent",
       segments: [],
@@ -323,6 +344,7 @@ export function useWorkspacePipeline({
             const combinedResult = await summaryMinutesMutation.mutateAsync({
               transcriptLines: transcriptLinesForChat,
               model: "qwen3.5-flash-2026-02-23",
+              fileId: recordId,
             });
 
             summaries =
@@ -408,7 +430,6 @@ export function useWorkspacePipeline({
               progress: 100,
             }));
 
-            setProcessingProgress(100);
             setActiveMeeting((current) => ({
               ...current,
               processingStatus: "completed",
@@ -422,6 +443,9 @@ export function useWorkspacePipeline({
                 ? "Phiên họp đã sẵn sàng. Biên bản đã được lưu tự động."
                 : "Phiên họp đã sẵn sàng. Lưu biên bản thủ công để gửi mail.",
             );
+
+            // 🚀 Refetch assigned files list to update statuses
+            queryClient.invalidateQueries({ queryKey: ["files-infinite"] });
           } catch (error) {
             clearInterval(speakerSummaryTimer);
             if (minutesTimer) clearInterval(minutesTimer);
@@ -486,10 +510,21 @@ export function useWorkspacePipeline({
 
       void (async () => {
         try {
-          const apiResult = await diarizeTranscribeMutation.mutateAsync({
-            file: sourceAudioFile,
-            language: "Vietnamese",
-          });
+          const apiResult = fileId 
+            ? await (async () => {
+                if (!diarizeTranscribeByFileIdMutation) throw new Error("FileId mutation missing");
+                return await diarizeTranscribeByFileIdMutation.mutateAsync({
+                  fileId,
+                  language: "Vietnamese",
+                });
+              })()
+            : await (async () => {
+                if (!diarizeTranscribeMutation) throw new Error("Diarize mutation missing");
+                return await diarizeTranscribeMutation.mutateAsync({
+                  file: sourceAudioFile!,
+                  language: "Vietnamese",
+                });
+              })();
 
           const transcriptLines = apiResult.rawTranscription
             .map((line) => cleanTranscriptLine(line))

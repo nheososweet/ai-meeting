@@ -66,11 +66,11 @@ export function PermissionsDialog({
   function getPermLabel(perm: any): string {
     const id = getPermId(perm)
     if (PERMISSION_LABELS[id]) return PERMISSION_LABELS[id]
-    
+
     if (typeof perm !== "string" && perm?.description && !perm.description.startsWith("Permission for")) {
       return perm.description
     }
-    
+
     return id
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -105,7 +105,9 @@ export function PermissionsDialog({
   }
 
   const permissionsList = useMemo(() => {
-    return Array.isArray(allPerms) ? allPerms : []
+    const list = Array.isArray(allPerms) ? allPerms : []
+    const hiddenPerms = ["chat", "update_report", "transcribe"]
+    return list.filter((p) => !hiddenPerms.includes(getPermId(p)))
   }, [allPerms])
 
   // Group permissions for display
@@ -190,13 +192,13 @@ export function PermissionsDialog({
                           {group.name}
                         </h3>
                       </div>
-                      
+
                       <div className="grid gap-3.5 pl-1">
                         {group.items.map((rawPerm: any, index: number) => {
                           const permId = getPermId(rawPerm)
                           const permLabel = getPermLabel(rawPerm)
                           const uniqueId = `perm-${permId}-${index}`
-                          
+
                           return (
                             <div key={uniqueId} className="flex items-start gap-3 group/item">
                               <Checkbox

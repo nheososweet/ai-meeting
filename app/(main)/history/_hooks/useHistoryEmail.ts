@@ -35,9 +35,10 @@ const recipientEmailsSchema = z
 type UseHistoryEmailParams = {
   records?: PipelineRecord[];
   showActionToast: (message: string) => void;
+  canSendMail: boolean;
 };
 
-export function useHistoryEmail({ records, showActionToast }: UseHistoryEmailParams) {
+export function useHistoryEmail({ records, showActionToast, canSendMail }: UseHistoryEmailParams) {
   const [sendEmailRecordId, setSendEmailRecordId] = useState<number | null>(null);
   const [emailRecipientsInput, setEmailRecipientsInput] = useState("");
   const [emailValidationError, setEmailValidationError] = useState<
@@ -59,6 +60,10 @@ export function useHistoryEmail({ records, showActionToast }: UseHistoryEmailPar
   }, [sendEmailRecordId, records]);
 
   function handleOpenSendEmailDialog(recordId: number) {
+    if (!canSendMail) {
+      showActionToast("Bạn không có quyền thực hiện hành động này.");
+      return;
+    }
     const record = records?.find((candidate) => candidate.id === recordId);
     const fallbackSubject = buildDefaultSubject(record?.filename ?? "");
 
@@ -110,6 +115,10 @@ export function useHistoryEmail({ records, showActionToast }: UseHistoryEmailPar
   }
 
   async function handleSendEmail() {
+    if (!canSendMail) {
+      showActionToast("Bạn không có quyền thực hiện hành động này.");
+      return;
+    }
     if (!sendEmailRecordId || isSendingEmail) {
       return;
     }

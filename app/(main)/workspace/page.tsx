@@ -701,110 +701,108 @@ export default function WorkspacePage() {
   }
 
   return (
-    <PermissionGuard permission="transcribe">
+    <PermissionGuard permission="process_pipeline">
       <div className="grid flex-1 gap-4 lg:h-[calc(100dvh-7.5rem)] lg:grid-cols-[1fr_1.8fr] lg:items-start">
-      <section className="rounded-lg border border-border/80 bg-card p-5 shadow-sm lg:sticky lg:top-4 lg:max-h-[calc(100dvh-8.5rem)] lg:overflow-y-auto">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-lg font-semibold text-foreground">
-            Hệ thống báo cáo biên bản cuộc họp
-          </h1>
-          <span
-            className={`rounded-md px-2 py-1 text-xs font-semibold ${status.className}`}
-          >
-            {status.label}
-          </span>
-        </div>
+        <section className="rounded-lg border border-border/80 bg-card p-5 shadow-sm lg:sticky lg:top-4 lg:max-h-[calc(100dvh-8.5rem)] lg:overflow-y-auto">
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-lg font-semibold text-foreground">
+              Hệ thống báo cáo biên bản cuộc họp
+            </h1>
+            <span
+              className={`rounded-md px-2 py-1 text-xs font-semibold ${status.className}`}
+            >
+              {status.label}
+            </span>
+          </div>
 
-        <p className="mt-2 text-sm text-muted-foreground">
-          Tải file cuộc họp hoặc ghi âm trực tiếp để bắt đầu dịch băng và tổng
-          hợp nội dung.
-        </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Tải file cuộc họp hoặc ghi âm trực tiếp để bắt đầu dịch băng và tổng
+            hợp nội dung.
+          </p>
 
-        <div className="mt-4 inline-flex rounded-lg border border-border/70 bg-muted/40 p-1">
-          <button
-            type="button"
-            onClick={() => handleSwitchMode("upload")}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-              inputMode === "upload"
+          <div className="mt-4 inline-flex rounded-lg border border-border/70 bg-muted/40 p-1">
+            <button
+              type="button"
+              onClick={() => handleSwitchMode("upload")}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${inputMode === "upload"
                 ? "bg-white text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
-            }`}
-            disabled={busyProcessing}
-          >
-            Tải tệp
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSwitchMode("recording")}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-              inputMode === "recording"
+                }`}
+              disabled={busyProcessing}
+            >
+              Tải tệp
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSwitchMode("recording")}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${inputMode === "recording"
                 ? "bg-white text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
-            }`}
-            disabled={busyProcessing}
-          >
-            Thu âm trực tiếp
-          </button>
-        </div>
+                }`}
+              disabled={busyProcessing}
+            >
+              Thu âm trực tiếp
+            </button>
+          </div>
 
-        {inputMode === "upload" ? (
-          <UploadPanel
-            busyProcessing={busyProcessing}
-            isDraggingUpload={isDraggingUpload}
-            fileInputRef={fileInputRef}
-            selectedFile={selectedFile}
-            selectedFileName={selectedFileName}
-            selectedFileSizeLabel={selectedFileSizeLabel}
-            selectedFileDurationLabel={selectedFileDurationLabel}
-            filePreviewUrl={filePreviewUrl}
-            uploadWarning={uploadWarning}
-            onDragEnter={handleUploadDragEnter}
-            onDragOver={handleUploadDragOver}
-            onDragLeave={handleUploadDragLeave}
-            onDrop={handleUploadDrop}
-            onFileChange={handleFileChange}
-            onProcessSelectedFile={handleProcessSelectedFile}
-            onClearSelectedFile={handleClearSelectedFile}
-          />
-        ) : (
-          <RecordingPanel
-            busyProcessing={busyProcessing}
+          {inputMode === "upload" ? (
+            <UploadPanel
+              busyProcessing={busyProcessing}
+              isDraggingUpload={isDraggingUpload}
+              fileInputRef={fileInputRef}
+              selectedFile={selectedFile}
+              selectedFileName={selectedFileName}
+              selectedFileSizeLabel={selectedFileSizeLabel}
+              selectedFileDurationLabel={selectedFileDurationLabel}
+              filePreviewUrl={filePreviewUrl}
+              uploadWarning={uploadWarning}
+              onDragEnter={handleUploadDragEnter}
+              onDragOver={handleUploadDragOver}
+              onDragLeave={handleUploadDragLeave}
+              onDrop={handleUploadDrop}
+              onFileChange={handleFileChange}
+              onProcessSelectedFile={handleProcessSelectedFile}
+              onClearSelectedFile={handleClearSelectedFile}
+            />
+          ) : (
+            <RecordingPanel
+              busyProcessing={busyProcessing}
+              isRecording={isRecording}
+              recordingSecond={recordingSecond}
+              recordingPreviewUrl={recordingPreviewUrl}
+              recordingDurationLabel={recordingDurationLabel}
+              onToggleRecording={handleToggleRecording}
+              onProcessRecording={handleProcessRecording}
+              onClearRecording={handleClearRecording}
+            />
+          )}
+
+          {shouldShowPipeline ? (
+            <PipelineProgressCard
+              stageProgress={stageProgress}
+              pipelineSteps={pipelineSteps}
+              canRetryPipeline={canRetryPipeline}
+              failedStepId={failedStepId}
+              onRetryPipeline={handleRetryPipeline}
+            />
+          ) : null}
+
+          <Separator className="my-5" />
+
+          <SessionInfoCard
+            activeMeeting={activeMeeting}
             isRecording={isRecording}
-            recordingSecond={recordingSecond}
-            recordingPreviewUrl={recordingPreviewUrl}
-            recordingDurationLabel={recordingDurationLabel}
-            onToggleRecording={handleToggleRecording}
-            onProcessRecording={handleProcessRecording}
-            onClearRecording={handleClearRecording}
+            recordingElapsedMs={recordingElapsedMs}
           />
-        )}
+        </section>
 
-        {shouldShowPipeline ? (
-          <PipelineProgressCard
-            stageProgress={stageProgress}
-            pipelineSteps={pipelineSteps}
-            canRetryPipeline={canRetryPipeline}
-            failedStepId={failedStepId}
-            onRetryPipeline={handleRetryPipeline}
-          />
-        ) : null}
-
-        <Separator className="my-5" />
-
-        <SessionInfoCard
-          activeMeeting={activeMeeting}
-          isRecording={isRecording}
-          recordingElapsedMs={recordingElapsedMs}
-        />
-      </section>
-
-      <section className="rounded-lg border border-border/80 bg-card p-5 shadow-sm lg:flex lg:max-h-[calc(100dvh-8.5rem)] lg:flex-col lg:overflow-y-auto">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-foreground">
-            Kết quả xử lý
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {/* <Button
+        <section className="rounded-lg border border-border/80 bg-card p-5 shadow-sm lg:flex lg:max-h-[calc(100dvh-8.5rem)] lg:flex-col lg:overflow-y-auto">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-foreground">
+              Kết quả xử lý
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {/* <Button
               size="sm"
               variant="outline"
               className="gap-1.5"
@@ -814,7 +812,7 @@ export default function WorkspacePage() {
               <SparklesIcon className="size-4" />
               Tinh chỉnh biên bản
             </Button> */}
-            {/* <Button
+              {/* <Button
               size="sm"
               variant="outline"
               onClick={handleRefreshSpeakerSummary}
@@ -822,112 +820,112 @@ export default function WorkspacePage() {
             >
               Tóm tắt theo người nói
             </Button> */}
-            <SpeakersLabelingDialog
-              activeMeeting={activeMeeting}
-              onUpdateMeeting={setActiveMeeting}
-              setNotice={setNotice}
-              showActionToast={showActionToast}
-            />
-            <EmailDialog
-              open={isEmailDialogOpen}
-              onOpenChange={handleEmailDialogOpenChange}
-              canSendEmail={canSendEmail}
-              isSendingEmail={isSendingEmail}
-              reportUrl={activeMeeting.reportUrl}
-              emailSubjectInput={emailSubjectInput}
-              emailBodyInput={emailBodyInput}
-              emailIsHtml={emailIsHtml}
-              emailRecipientsInput={emailRecipientsInput}
-              emailTemplateValidationError={emailTemplateValidationError}
-              onEmailRecipientsInputChange={handleEmailRecipientsInputChange}
-              onEmailSubjectInputChange={handleEmailSubjectInputChange}
-              onEmailBodyInputChange={handleEmailBodyInputChange}
-              onEmailIsHtmlChange={handleEmailIsHtmlChange}
-              emailValidationError={emailValidationError}
-              onSubmitSendEmail={handleSubmitSendEmail}
-            />
+              <SpeakersLabelingDialog
+                activeMeeting={activeMeeting}
+                onUpdateMeeting={setActiveMeeting}
+                setNotice={setNotice}
+                showActionToast={showActionToast}
+              />
+              <EmailDialog
+                open={isEmailDialogOpen}
+                onOpenChange={handleEmailDialogOpenChange}
+                canSendEmail={canSendEmail}
+                isSendingEmail={isSendingEmail}
+                reportUrl={activeMeeting.reportUrl}
+                emailSubjectInput={emailSubjectInput}
+                emailBodyInput={emailBodyInput}
+                emailIsHtml={emailIsHtml}
+                emailRecipientsInput={emailRecipientsInput}
+                emailTemplateValidationError={emailTemplateValidationError}
+                onEmailRecipientsInputChange={handleEmailRecipientsInputChange}
+                onEmailSubjectInputChange={handleEmailSubjectInputChange}
+                onEmailBodyInputChange={handleEmailBodyInputChange}
+                onEmailIsHtmlChange={handleEmailIsHtmlChange}
+                emailValidationError={emailValidationError}
+                onSubmitSendEmail={handleSubmitSendEmail}
+              />
+            </div>
           </div>
-        </div>
 
-        <p className="mt-3 rounded-md border border-border/70 bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
-          {notice}
-        </p>
+          <p className="mt-3 rounded-md border border-border/70 bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
+            {notice}
+          </p>
 
-        {shouldShowMinutes ? (
-          <MinutesEditorDialog
-            open={isMinutesDialogOpen}
-            onOpenChange={handleMinutesDialogOpenChange}
-            onOpenEditor={handleOpenMinutesEditor}
-            minutesMarkdown={activeMeeting.minutes}
-            minutesDraft={minutesDraft}
-            onMinutesDraftChange={handleMinutesDraftChange}
-            minutesValidationError={minutesValidationError}
-            isSavingMinutes={isSavingMinutes}
-            onSaveMinutesDraft={handleSaveMinutesDraft}
-            reportUrl={activeMeeting.reportUrl}
-          />
-        ) : null}
+          {shouldShowMinutes ? (
+            <MinutesEditorDialog
+              open={isMinutesDialogOpen}
+              onOpenChange={handleMinutesDialogOpenChange}
+              onOpenEditor={handleOpenMinutesEditor}
+              minutesMarkdown={activeMeeting.minutes}
+              minutesDraft={minutesDraft}
+              onMinutesDraftChange={handleMinutesDraftChange}
+              minutesValidationError={minutesValidationError}
+              isSavingMinutes={isSavingMinutes}
+              onSaveMinutesDraft={handleSaveMinutesDraft}
+              reportUrl={activeMeeting.reportUrl}
+            />
+          ) : null}
 
-        {shouldShowRawTranscript ? (
-          <TranscriptComparisonDialog
-            rawTranscript={reformatTranscriptTimestamps(activeMeeting.rawTranscript)}
-            refinedTranscript={reformatTranscriptTimestamps(
-              activeMeeting.refinedTranscript ?? "",
-            )}
-            shouldShowRefinedTranscript={shouldShowRefinedTranscript}
-            onCopyRawTranscript={handleCopyRawTranscript}
-            onCopyRefinedTranscript={handleCopyRefinedTranscript}
-          />
-        ) : null}
+          {shouldShowRawTranscript ? (
+            <TranscriptComparisonDialog
+              rawTranscript={reformatTranscriptTimestamps(activeMeeting.rawTranscript)}
+              refinedTranscript={reformatTranscriptTimestamps(
+                activeMeeting.refinedTranscript ?? "",
+              )}
+              shouldShowRefinedTranscript={shouldShowRefinedTranscript}
+              onCopyRawTranscript={handleCopyRawTranscript}
+              onCopyRefinedTranscript={handleCopyRefinedTranscript}
+            />
+          ) : null}
 
-        {shouldShowDiarization || shouldShowSpeakerSummary ? (
-          <div className="mt-4 space-y-4">
-            {shouldShowDiarization ? (
-              <article className="rounded-lg border border-border/70 bg-white p-4 shadow-sm">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    Transcript theo người nói
-                  </h3>
-                  <div className="flex items-center gap-1">
-                    <span className="rounded-full border border-border/70 bg-background px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                      {activeMeeting.speakerCount} speaker
-                    </span>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          className="text-muted-foreground hover:text-foreground"
-                          aria-label="Mở toàn màn hình transcript theo người nói"
-                          title="Mở toàn màn hình"
-                        >
-                          <Maximize2Icon className="size-4" />
-                        </Button>
-                      </DialogTrigger>
-
-                      <DialogContent
-                        showCloseButton={false}
-                        className="mb-4 flex h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] flex-col justify-between gap-0 rounded-xl p-0 sm:max-w-none"
-                      >
-                        <ScrollArea className="min-h-0 flex-1 overflow-hidden">
-                          <DialogHeader className="space-y-0 text-left">
-                            <DialogTitle className="px-6 pt-6 text-base">
-                              Transcript theo người nói
-                            </DialogTitle>
-                            <DialogDescription className="px-6 pb-3 text-xs">
-                              Xem đầy đủ để đối sánh nội dung theo từng người
-                              nói.
-                            </DialogDescription>
-                          </DialogHeader>
-
-                          <div
-                            className={`grid gap-4 px-6 pb-6 ${shouldShowRefinedDiarization
-                              ? "md:grid-cols-1"
-                              : "grid-cols-1"
-                              }`}
+          {shouldShowDiarization || shouldShowSpeakerSummary ? (
+            <div className="mt-4 space-y-4">
+              {shouldShowDiarization ? (
+                <article className="rounded-lg border border-border/70 bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Transcript theo người nói
+                    </h3>
+                    <div className="flex items-center gap-1">
+                      <span className="rounded-full border border-border/70 bg-background px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        {activeMeeting.speakerCount} speaker
+                      </span>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            className="text-muted-foreground hover:text-foreground"
+                            aria-label="Mở toàn màn hình transcript theo người nói"
+                            title="Mở toàn màn hình"
                           >
-                            {/* <section className="space-y-2">
+                            <Maximize2Icon className="size-4" />
+                          </Button>
+                        </DialogTrigger>
+
+                        <DialogContent
+                          showCloseButton={false}
+                          className="mb-4 flex h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] flex-col justify-between gap-0 rounded-xl p-0 sm:max-w-none"
+                        >
+                          <ScrollArea className="min-h-0 flex-1 overflow-hidden">
+                            <DialogHeader className="space-y-0 text-left">
+                              <DialogTitle className="px-6 pt-6 text-base">
+                                Transcript theo người nói
+                              </DialogTitle>
+                              <DialogDescription className="px-6 pb-3 text-xs">
+                                Xem đầy đủ để đối sánh nội dung theo từng người
+                                nói.
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            <div
+                              className={`grid gap-4 px-6 pb-6 ${shouldShowRefinedDiarization
+                                ? "md:grid-cols-1"
+                                : "grid-cols-1"
+                                }`}
+                            >
+                              {/* <section className="space-y-2">
                               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                                 Bản gốc theo người nói
                               </p>
@@ -959,61 +957,61 @@ export default function WorkspacePage() {
                               </ul>
                             </section> */}
 
-                            {shouldShowRefinedDiarization ? (
-                              <section className="space-y-2">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                  Bản đã làm sạch theo người nói
-                                </p>
-                                <ul className="space-y-2 overflow-auto pr-1 md:max-h-[55dvh]">
-                                  {refinedSegments.map((segment) => (
-                                    <li
-                                      key={`dialog-refined-${segment.id}`}
-                                      className={`rounded-md border border-border/60 border-l-4 p-3 text-sm ${speakerToneClass(segment.speaker)}`}
-                                    >
-                                      <div className="flex items-center justify-between gap-2">
-                                        <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground">
-                                          {segment.speaker}
-                                        </span>
-                                        <span className="text-[11px] font-medium text-muted-foreground">
-                                          {formatTimelineSecond(
-                                            segment.startSecond,
-                                          )}{" "}
-                                          -{" "}
-                                          {formatTimelineSecond(
-                                            segment.endSecond,
-                                          )}
-                                        </span>
-                                      </div>
-                                      <p className="mt-2 leading-6 text-muted-foreground">
-                                        {segment.text}
-                                      </p>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </section>
-                            ) : null}
-                          </div>
-                        </ScrollArea>
+                              {shouldShowRefinedDiarization ? (
+                                <section className="space-y-2">
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Bản đã làm sạch theo người nói
+                                  </p>
+                                  <ul className="space-y-2 overflow-auto pr-1 md:max-h-[55dvh]">
+                                    {refinedSegments.map((segment) => (
+                                      <li
+                                        key={`dialog-refined-${segment.id}`}
+                                        className={`rounded-md border border-border/60 border-l-4 p-3 text-sm ${speakerToneClass(segment.speaker)}`}
+                                      >
+                                        <div className="flex items-center justify-between gap-2">
+                                          <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground">
+                                            {segment.speaker}
+                                          </span>
+                                          <span className="text-[11px] font-medium text-muted-foreground">
+                                            {formatTimelineSecond(
+                                              segment.startSecond,
+                                            )}{" "}
+                                            -{" "}
+                                            {formatTimelineSecond(
+                                              segment.endSecond,
+                                            )}
+                                          </span>
+                                        </div>
+                                        <p className="mt-2 leading-6 text-muted-foreground">
+                                          {segment.text}
+                                        </p>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </section>
+                              ) : null}
+                            </div>
+                          </ScrollArea>
 
-                        <DialogFooter className="mx-0 mb-0 rounded-none border-t px-6 pb-6 pt-4 sm:justify-end">
-                          <DialogClose asChild>
-                            <Button variant="outline">
-                              <ChevronLeftIcon className="size-4" />
-                              Quay lại
-                            </Button>
-                          </DialogClose>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                          <DialogFooter className="mx-0 mb-0 rounded-none border-t px-6 pb-6 pt-4 sm:justify-end">
+                            <DialogClose asChild>
+                              <Button variant="outline">
+                                <ChevronLeftIcon className="size-4" />
+                                Quay lại
+                              </Button>
+                            </DialogClose>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </div>
-                </div>
-                <div
-                  className={`mt-3 grid gap-3 ${shouldShowRefinedDiarization
-                    ? "md:grid-cols-1"
-                    : "grid-cols-1"
-                    }`}
-                >
-                  {/* <section className="space-y-2">
+                  <div
+                    className={`mt-3 grid gap-3 ${shouldShowRefinedDiarization
+                      ? "md:grid-cols-1"
+                      : "grid-cols-1"
+                      }`}
+                  >
+                    {/* <section className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground">
                       Bản gốc theo người nói
                     </p>
@@ -1040,86 +1038,86 @@ export default function WorkspacePage() {
                     </ul>
                   </section> */}
 
-                  {shouldShowRefinedDiarization ? (
-                    <section className="space-y-2">
-                      <p className="text-xs font-medium text-muted-foreground">
-                        Bản đã làm sạch theo người nói
-                      </p>
-                      <ul className="space-y-2 overflow-auto pr-1 xl:max-h-[52dvh]">
-                        {refinedSegments.map((segment) => (
-                          <li
-                            key={`refined-${segment.id}`}
-                            className={`rounded-md border border-border/60 border-l-4 p-3 text-sm ${speakerToneClass(segment.speaker)}`}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground">
-                                {segment.speaker}
-                              </span>
-                              <span className="text-[11px] font-medium text-muted-foreground">
-                                {formatTimelineSecond(segment.startSecond)} -{" "}
-                                {formatTimelineSecond(segment.endSecond)}
-                              </span>
-                            </div>
-                            <p className="mt-2 leading-6 text-muted-foreground">
-                              {segment.text}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-                  ) : null}
-                </div>
-              </article>
-            ) : null}
+                    {shouldShowRefinedDiarization ? (
+                      <section className="space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Bản đã làm sạch theo người nói
+                        </p>
+                        <ul className="space-y-2 overflow-auto pr-1 xl:max-h-[52dvh]">
+                          {refinedSegments.map((segment) => (
+                            <li
+                              key={`refined-${segment.id}`}
+                              className={`rounded-md border border-border/60 border-l-4 p-3 text-sm ${speakerToneClass(segment.speaker)}`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground">
+                                  {segment.speaker}
+                                </span>
+                                <span className="text-[11px] font-medium text-muted-foreground">
+                                  {formatTimelineSecond(segment.startSecond)} -{" "}
+                                  {formatTimelineSecond(segment.endSecond)}
+                                </span>
+                              </div>
+                              <p className="mt-2 leading-6 text-muted-foreground">
+                                {segment.text}
+                              </p>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    ) : null}
+                  </div>
+                </article>
+              ) : null}
 
-            {shouldShowSpeakerSummary ? (
-              <article className="rounded-lg border border-border/70 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-semibold text-foreground">
-                  Tóm tắt theo người nói
-                </h3>
-                <ul className="mt-3 space-y-3 overflow-auto xl:max-h-[52dvh]">
-                  {activeMeeting.speakerSummaries.map((summary) => (
-                    <li
-                      key={summary.speaker}
-                      className="rounded-md border border-border/60 bg-secondary/30 p-3 text-sm"
-                    >
-                      <p className="font-semibold text-foreground">
-                        {summary.speaker}
-                      </p>
-                      <ul className="mt-1 space-y-1 text-muted-foreground">
-                        {summary.keyPoints.map((point) => (
-                          <li key={point}>- {point}</li>
-                        ))}
-                      </ul>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ) : null}
-          </div>
-        ) : null}
-      </section>
+              {shouldShowSpeakerSummary ? (
+                <article className="rounded-lg border border-border/70 bg-white p-4 shadow-sm">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Tóm tắt theo người nói
+                  </h3>
+                  <ul className="mt-3 space-y-3 overflow-auto xl:max-h-[52dvh]">
+                    {activeMeeting.speakerSummaries.map((summary) => (
+                      <li
+                        key={summary.speaker}
+                        className="rounded-md border border-border/60 bg-secondary/30 p-3 text-sm"
+                      >
+                        <p className="font-semibold text-foreground">
+                          {summary.speaker}
+                        </p>
+                        <ul className="mt-1 space-y-1 text-muted-foreground">
+                          {summary.keyPoints.map((point) => (
+                            <li key={point}>- {point}</li>
+                          ))}
+                        </ul>
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              ) : null}
+            </div>
+          ) : null}
+        </section>
 
-      {actionToast ? (
-        <div
-          className={`fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur transition-all ${actionToast.variant === "success"
+        {actionToast ? (
+          <div
+            className={`fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur transition-all ${actionToast.variant === "success"
               ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
               : actionToast.variant === "error"
                 ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
                 : "border-blue-300/70 bg-blue-50/95 text-blue-900"
-            }`}
-        >
-          <span>{actionToast.message}</span>
-          <button
-            onClick={hideActionToast}
-            className="group flex size-5 items-center justify-center rounded-full transition-colors hover:bg-black/10 active:bg-black/20"
-            title="Đóng thông báo"
+              }`}
           >
-            <XIcon className="size-3.5 transition-transform group-hover:scale-110" />
-          </button>
-        </div>
-      ) : null}
-    </div>
+            <span>{actionToast.message}</span>
+            <button
+              onClick={hideActionToast}
+              className="group flex size-5 items-center justify-center rounded-full transition-colors hover:bg-black/10 active:bg-black/20"
+              title="Đóng thông báo"
+            >
+              <XIcon className="size-3.5 transition-transform group-hover:scale-110" />
+            </button>
+          </div>
+        ) : null}
+      </div>
     </PermissionGuard>
   );
 }

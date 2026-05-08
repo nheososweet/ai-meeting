@@ -212,27 +212,27 @@ function parseSendMailResponse(data: unknown): SendMailResponse {
 
   const results = Array.isArray(payload.results)
     ? payload.results
-        .map((item) => {
-          const parsedItem = item as UpstreamSendMailResultItem;
-          const email =
-            typeof parsedItem.email === "string" ? parsedItem.email.trim() : "";
-          const status =
-            typeof parsedItem.status === "string"
-              ? parsedItem.status.trim()
-              : "unknown";
+      .map((item) => {
+        const parsedItem = item as UpstreamSendMailResultItem;
+        const email =
+          typeof parsedItem.email === "string" ? parsedItem.email.trim() : "";
+        const status =
+          typeof parsedItem.status === "string"
+            ? parsedItem.status.trim()
+            : "unknown";
 
-          if (!email) {
-            return null;
-          }
+        if (!email) {
+          return null;
+        }
 
-          return {
-            email,
-            status: status || "unknown",
-          };
-        })
-        .filter((item): item is { email: string; status: string } =>
-          Boolean(item),
-        )
+        return {
+          email,
+          status: status || "unknown",
+        };
+      })
+      .filter((item): item is { email: string; status: string } =>
+        Boolean(item),
+      )
     : [];
 
   return {
@@ -280,6 +280,67 @@ export async function diarizeAndTranscribe(input: {
       typeof payload.filename === "string" && payload.filename.trim()
         ? payload.filename
         : input.file.name,
+    status:
+      typeof payload.status === "string" && payload.status.trim()
+        ? payload.status
+        : "success",
+    rawTranscription,
+    refinedTranscription: refinedTranscription.length
+      ? refinedTranscription
+      : rawTranscription,
+    audioUrl:
+      typeof payload.audio_url === "string" && payload.audio_url.trim()
+        ? payload.audio_url
+        : undefined,
+    transcribeUrl:
+      typeof payload.transcribe_url === "string" && payload.transcribe_url.trim()
+        ? payload.transcribe_url
+        : undefined,
+  };
+}
+
+export async function diarizeAndTranscribeByFileId(input: {
+  fileId: number;
+  language?: string;
+}): Promise<DiarizeTranscribeResponse> {
+  const formData = new URLSearchParams();
+  formData.append("file_id", String(input.fileId));
+  formData.append("language", input.language ?? "Vietnamese");
+
+  const response = await pipelineApi.post<UpstreamDiarizeTranscribeResponse>(
+    "/diarize-and-transcribe",
+    formData.toString(),
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    },
+  );
+
+  const payload = response.data;
+
+  const rawTranscription = ensureStringArray(
+    Array.isArray(payload.raw_transcription)
+      ? payload.raw_transcription
+      : payload.transcription,
+  );
+
+  if (!rawTranscription.length) {
+    throw new Error("API diarize/transcribe trả về dữ liệu không hợp lệ.");
+  }
+
+  const refinedTranscription = ensureStringArray(
+    Array.isArray(payload.refined_transcription)
+      ? payload.refined_transcription
+      : payload.raw_transcription,
+  );
+
+  return {
+    id: typeof payload.id === "number" ? payload.id : undefined,
+    filename:
+      typeof payload.filename === "string" && payload.filename.trim()
+        ? payload.filename
+        : `file_${input.fileId}`,
     status:
       typeof payload.status === "string" && payload.status.trim()
         ? payload.status
@@ -365,6 +426,7 @@ export async function updateTranscribe(input: {
 export async function generateSummaryAndMinutes(input: {
   transcriptLines: string[];
   model?: string;
+  fileId?: number;
 }): Promise<SummaryAndMinutesResponse> {
   const mergedTranscript = input.transcriptLines
     .map((line) => String(line ?? "").trim())
@@ -375,7 +437,7 @@ export async function generateSummaryAndMinutes(input: {
     throw new Error("Thiếu transcript để gọi API chat.");
   }
 
-  const response = await pipelineApi.post<UpstreamChatResponse>("/chat", {
+  const requestBody: Record<string, unknown> = {
     messages: [
       {
         role: "user",
@@ -383,7 +445,13 @@ export async function generateSummaryAndMinutes(input: {
       },
     ],
     model: input.model ?? "qwen3.5-flash-2026-02-23",
-  });
+  };
+
+  if (input.fileId) {
+    requestBody.file_id = input.fileId;
+  }
+
+  const response = await pipelineApi.post<UpstreamChatResponse>("/chat", requestBody);
 
   const reply = response.data?.reply;
 
@@ -438,6 +506,7 @@ export async function sendMail(input: {
   emails: string[];
   momFileUrl: string;
   template: MailTemplatePayload;
+  fileId?: number;
 }): Promise<SendMailResponse> {
   const cleanedEmails = input.emails
     .map((email) => String(email ?? "").trim())
@@ -463,7 +532,7 @@ export async function sendMail(input: {
     throw new Error("Thiếu nội dung email.");
   }
 
-  const response = await pipelineApi.post<unknown>("/send-mail", {
+  const requestBody: Record<string, unknown> = {
     template: {
       subject,
       body,
@@ -471,7 +540,13 @@ export async function sendMail(input: {
     },
     emails: cleanedEmails,
     mom_file_url: momFileUrl,
-  });
+  };
+
+  if (input.fileId) {
+    requestBody.file_id = input.fileId;
+  }
+
+  const response = await pipelineApi.post<unknown>("/send-mail", requestBody);
 
   return parseSendMailResponse(response.data);
 }
@@ -518,4 +593,24 @@ export async function getRecords(params?: {
     data: records,
     meta: payload.meta,
   };
+}
+
+interface UpstreamTranslateResponse {
+  translated_text: string;
+}
+
+export async function translateTranscript(payload: {
+  text: string;
+  targetLanguage: string;
+}): Promise<string> {
+  const response = await pipelineApi.post<UpstreamTranslateResponse>(
+    "/translate",
+    {
+      text: payload.text,
+      target_language: payload.targetLanguage,
+      model: "qwen-plus",
+      temperature: 0.3,
+    }
+  );
+  return response.data.translated_text;
 }

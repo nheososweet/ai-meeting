@@ -51,11 +51,10 @@ function UploadPanelView({
       </label>
 
       <div
-        className={`group cursor-pointer rounded-xl border border-dashed p-3 transition-all md:p-4 ${
-          isDraggingUpload
+        className={`group cursor-pointer rounded-xl border border-dashed p-3 transition-all md:p-4 ${isDraggingUpload
             ? "border-primary bg-primary/5 scale-[1.01]"
             : "border-border/70 bg-secondary/50 hover:border-primary/50 hover:bg-muted/50"
-        } ${busyProcessing ? "pointer-events-none opacity-70" : ""}`}
+          } ${busyProcessing ? "pointer-events-none opacity-70" : ""}`}
         onDragEnter={onDragEnter}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}

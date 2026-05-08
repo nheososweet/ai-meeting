@@ -16,9 +16,10 @@ function normalizeFileRecord(record: UpstreamFileRecord): FileRecord {
     id: record.id,
     createTime: record.create_time,
     uploaderId: record.uploader_id,
-    assignedToUserIds: record.assigned_to_user_ids,
-    assignedToGroupIds: record.assigned_to_group_ids,
-    assignedToCompanyIds: record.assigned_to_company_ids,
+    assignedToUsers: record.assigned_to_users || [],
+    assignedToGroups: record.assigned_to_groups || [],
+    assignedToCompanies: record.assigned_to_companies || [],
+    assignedByUser: record.assigned_by_user,
     companyId: record.company_id,
     groupId: record.group_id,
     s3Key: record.s3_key,
@@ -27,8 +28,22 @@ function normalizeFileRecord(record: UpstreamFileRecord): FileRecord {
     report: record.report,
     filename: record.filename,
     title: record.title,
-    status: record.status as FileRecordStatus,
+    fileStatus: {
+      report: record.file_status.report,
+      upload: record.file_status.upload,
+      summary: record.file_status.summary,
+      sendEmail: record.file_status.send_email,
+      transcribe: record.file_status.transcribe,
+    },
+    // Derive a top-level status for the UI badge based on transcription/report status
+    status: (record.file_status.report === "success" 
+      ? "completed" 
+      : record.file_status.upload === "success" 
+        ? "processing" 
+        : "pending") as FileRecordStatus,
     processedAt: record.processed_at,
+    size: record.size,
+    duration: record.duration,
   };
 }
 

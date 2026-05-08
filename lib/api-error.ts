@@ -24,7 +24,7 @@ export function parseApiError(error: any): string {
 
   // 2. Handle 403 Forbidden
   if (status === 403) {
-    return "Bạn không có quyền thực hiện thao tác này"
+    return data?.detail || "Bạn không có quyền thực hiện thao tác này"
   }
 
   // 3. Handle 422 Unprocessable Entity (FastAPI Validation)

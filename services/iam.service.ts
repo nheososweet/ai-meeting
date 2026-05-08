@@ -61,6 +61,12 @@ export interface RolePermissionsResponse {
   permissions: string[]
 }
 
+export interface AssignFilePayload {
+  assignee_user_ids: number[]
+  assignee_group_ids: number[]
+  assignee_company_ids: number[]
+}
+
 // ══════════════════════════════════════════════════════════
 // C. IAM Service
 // ══════════════════════════════════════════════════════════
@@ -228,5 +234,10 @@ export const iamService = {
 
   assignRolePermissions: async (roleId: number, perms: string[]): Promise<void> => {
     await pipelineApi.post(`/org/roles/${roleId}/permissions`, perms)
+  },
+
+  // --- Files Assignment ---
+  assignFile: async (fileId: number, payload: AssignFilePayload): Promise<void> => {
+    await pipelineApi.post(`/files/${fileId}/assign`, payload)
   },
 }

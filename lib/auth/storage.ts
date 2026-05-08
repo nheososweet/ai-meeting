@@ -14,7 +14,7 @@ export function setTokenInStorage(token: string): void {
   if (typeof window !== "undefined") {
     // 1. For client-side API requests (Axios interceptor)
     localStorage.setItem(TOKEN_KEY, token)
-    
+
     // 2. For server-side route protection (proxy.ts)
     // Note: We use JS cookie so proxy.ts can read it on next page load.
     // 86400 seconds = 1 day

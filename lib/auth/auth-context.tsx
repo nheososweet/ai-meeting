@@ -78,8 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["auth", "me"],
     queryFn: fetchMe,
     retry: false,
-    staleTime: 0, // Always consider stale to trigger background sync on mount (F5)
-    refetchOnWindowFocus: true, // Sync data when user returns to the tab
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    refetchOnWindowFocus: false, // Disable refetch when switching back to the tab
     enabled: hasToken, // Only fetch if token exists
     initialData: cachedUser ?? undefined,
     // No initialDataUpdatedAt → data is immediately stale → background refetch

@@ -19,17 +19,17 @@ import { IAM_SIDEBAR_PERMISSIONS, WBS_SIDEBAR_PERMISSIONS } from "@/lib/auth/per
 
 const appNav = {
   main: [
+    // {
+    //   title: "TRÌNH BIÊN TẬP CUỘC HỌP",
+    //   href: "/workspace",
+    //   icon: MicIcon,
+    //   requiredPerms: ["process_pipeline"],
+    // },
     {
-      title: "TRÌNH BIÊN TẬP CUỘC HỌP",
-      href: "/workspace",
-      icon: MicIcon,
-      requiredPerms: ["transcribe"],
-    },
-    {
-      title: "Trình biên tập (Mới)",
+      title: "Trình biên tập cuộc họp",
       href: "/meeting",
       icon: LayoutDashboardIcon,
-      requiredPerms: ["transcribe"],
+      requiredPerms: ["process_pipeline"],
     },
     {
       title: "Lịch sử cuộc họp",
@@ -76,7 +76,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const canSeeMeetingRecords = hasAnyPermission(WBS_SIDEBAR_PERMISSIONS);
   const isMeetingRecordsActive = pathname.startsWith("/meeting-records");
 
-  const visibleMain = appNav.main.filter((item: any) => 
+  const visibleMain = appNav.main.filter((item: any) =>
     !item.requiredPerms || hasAnyPermission(item.requiredPerms)
   );
 

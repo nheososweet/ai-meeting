@@ -61,7 +61,7 @@ export function AppHeader() {
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-2 outline-none rounded-md px-2 py-1.5 hover:bg-muted/50 transition-colors">
                 <Avatar className="size-8 rounded-md overflow-hidden">
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold rounded-md">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                     {getInitials(currentUser.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -79,7 +79,7 @@ export function AppHeader() {
                 <DropdownMenuLabel className="p-0 font-normal">
                   <div className="flex items-center gap-2 px-2 py-2 text-left text-sm">
                     <Avatar className="h-8 w-8 rounded-md overflow-hidden">
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold rounded-md">
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                         {getInitials(currentUser.name)}
                       </AvatarFallback>
                     </Avatar>

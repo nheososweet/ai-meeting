@@ -66,29 +66,29 @@ export function PipelineProgressCard({
             const statusMeta =
               step.status === "completed"
                 ? {
-                    icon: (
-                      <CheckCircle2Icon className="size-4 text-emerald-600" />
-                    ),
-                    label: "Hoàn tất",
-                  }
+                  icon: (
+                    <CheckCircle2Icon className="size-4 text-emerald-600" />
+                  ),
+                  label: "Hoàn tất",
+                }
                 : step.status === "running"
                   ? {
-                      icon: (
-                        <CircleDashedIcon className="size-4 animate-spin text-amber-600" />
-                      ),
-                      label: "Đang chạy",
-                    }
+                    icon: (
+                      <CircleDashedIcon className="size-4 animate-spin text-amber-600" />
+                    ),
+                    label: "Đang chạy",
+                  }
                   : step.status === "error"
                     ? {
-                        icon: <XCircleIcon className="size-4 text-rose-600" />,
-                        label: "Lỗi",
-                      }
+                      icon: <XCircleIcon className="size-4 text-rose-600" />,
+                      label: "Lỗi",
+                    }
                     : {
-                        icon: (
-                          <CircleIcon className="size-4 text-muted-foreground/60" />
-                        ),
-                        label: "Chờ",
-                      };
+                      icon: (
+                        <CircleIcon className="size-4 text-muted-foreground/60" />
+                      ),
+                      label: "Chờ",
+                    };
 
             return (
               <li

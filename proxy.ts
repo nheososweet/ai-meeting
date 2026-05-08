@@ -24,7 +24,7 @@ export function proxy(request: NextRequest) {
 
   // Authenticated + accessing login page → redirect to workspace
   if (isPublicPath && token) {
-    return NextResponse.redirect(new URL("/workspace", request.url))
+    return NextResponse.redirect(new URL("/meeting", request.url))
   }
 
   return NextResponse.next()

@@ -4,59 +4,37 @@ import { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2Icon,
   ChevronDownIcon,
-  ChevronLeftIcon,
   ChevronUpIcon,
   CircleDashedIcon,
   CircleIcon,
   FolderOpenIcon,
   Loader2Icon,
   Maximize2Icon,
-  XCircleIcon,
-  XIcon,
 } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RecordingPanel } from "@/components/workspace/recording-panel";
-import { UploadPanel } from "@/components/workspace/upload-panel";
 import { EmailDialog } from "@/app/(main)/workspace/_components/EmailDialog";
 import { MinutesEditorDialog } from "@/app/(main)/workspace/_components/MinutesEditorDialog";
 import { PipelineProgressCard } from "@/app/(main)/workspace/_components/PipelineProgressCard";
 import { TranscriptComparisonDialog } from "@/app/(main)/workspace/_components/TranscriptComparisonDialog";
+import { TranslateDialog } from "@/app/(main)/meeting/_components/TranslateDialog";
 import {
   formatDuration,
-  formatFileSize,
   statusConfig,
 } from "@/app/(main)/workspace/_lib/format-utils";
 import { PIPELINE_STEP_WEIGHT } from "@/app/(main)/workspace/_lib/pipeline-constants";
 import { SpeakersLabelingDialog } from "@/app/(main)/workspace/_components/SpeakersLabelingDialog";
 import {
   cleanTranscriptLine,
-  formatTimelineSecond,
   parseTranscriptSegments,
-  reformatTranscriptTimestamps,
 } from "@/app/(main)/workspace/_lib/transcript-utils";
 import {
   minutesDraftSchema,
@@ -65,7 +43,7 @@ import {
 import { useWorkspaceRecording } from "@/app/(main)/workspace/_hooks/useWorkspaceRecording";
 import { useWorkspacePipeline } from "@/app/(main)/workspace/_hooks/useWorkspacePipeline";
 import { useWorkspaceToast } from "@/app/(main)/workspace/_hooks/useWorkspaceToast";
-import { useWorkspaceUpload } from "@/app/(main)/workspace/_hooks/useWorkspaceUpload";
+import { useDiarizeTranscribeByFileIdMutation } from "@/hooks/services/use-diarize-transcribe-by-file-id-mutation";
 import { useDiarizeTranscribeMutation } from "@/hooks/services/use-diarize-transcribe-mutation";
 import { useSummaryMinutesMutation } from "@/hooks/services/use-summary-minutes-mutation";
 import { useUpdateReportMutation } from "@/hooks/services/use-update-report-mutation";
@@ -78,6 +56,11 @@ import type {
   TranscriptSegment,
 } from "@/lib/types/meeting";
 import { PermissionGuard } from "@/components/iam/shared/permission-guard";
+import { FileSelector } from "./_components/file-selector";
+import { FileRecord } from "@/lib/types/files";
+import { cn } from "@/lib/utils";
+
+import { useAuth } from "@/lib/auth/auth-context";
 
 const sourceMeeting = meetingRecords[0];
 const DEFAULT_EMAIL_SUBJECT_PREFIX = "Thông báo Biên bản Họp";
@@ -129,12 +112,12 @@ function resolveMailTemplate(
 const initialMeeting: MeetingRecord = {
   ...sourceMeeting,
   title: "Phiên mới chưa xử lý",
-  fileName: "Chưa có tệp nguồn",
+  fileName: "Chưa có file nguồn",
   inputSource: "upload",
   processingStatus: "idle",
   emailStatus: "not_sent",
   rawTranscript:
-    "Transcript sẽ hiển thị sau khi bạn tải tệp hoặc hoàn tất bản thu trực tiếp.",
+    "Transcript sẽ hiển thị sau khi bạn chọn file và hoàn tất xử lý AI.",
   refinedTranscript:
     "Bản làm sạch sẽ hiển thị sau khi hệ thống xử lý xong transcript gốc.",
   segments: [],
@@ -158,16 +141,23 @@ function TabEmptyState({ busyProcessing }: { busyProcessing: boolean }) {
   return (
     <div className="mt-10 flex flex-col items-center justify-center rounded-lg border border-dashed border-border/80 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
       <FolderOpenIcon className="mb-3 size-8 text-muted-foreground/50" />
-      <p>Chưa có dữ liệu. Vui lòng tải lên tệp hoặc bắt đầu thu âm.</p>
+      <p>Chưa có dữ liệu. Vui lòng chọn file được gán hoặc bắt đầu thu âm.</p>
     </div>
   );
 }
 
 export default function MeetingPage() {
   const diarizeTranscribeMutation = useDiarizeTranscribeMutation();
+  const diarizeTranscribeByFileIdMutation = useDiarizeTranscribeByFileIdMutation();
   const summaryMinutesMutation = useSummaryMinutesMutation();
   const updateReportMutation = useUpdateReportMutation();
+
+  const { hasPermission } = useAuth();
+  const canSendMail = hasPermission("send_mail");
+  const canTranslate = hasPermission("translate");
+
   const [inputMode, setInputMode] = useState<AudioInputSource>("upload");
+  const [selectedFileRecord, setSelectedFileRecord] = useState<FileRecord | null>(null);
   const [activeMeeting, setActiveMeeting] =
     useState<MeetingRecord>(initialMeeting);
   const [, setUploadProgress] = useState(0);
@@ -175,6 +165,7 @@ export default function MeetingPage() {
   const [notice, setNotice] = useState(
     "Sẵn sàng nhận tệp hoặc bắt đầu thu âm trực tiếp.",
   );
+
   const [emailRecipientsInput, setEmailRecipientsInput] = useState("");
   const [emailValidationError, setEmailValidationError] = useState<
     string | null
@@ -196,11 +187,12 @@ export default function MeetingPage() {
   >(null);
   const [isSavingMinutes, setIsSavingMinutes] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+
   const busyProcessing =
     activeMeeting.processingStatus === "uploading" ||
     activeMeeting.processingStatus === "processing";
 
-  const { actionToast, showActionToast, hideActionToast } = useWorkspaceToast();
+  const { actionToast, showActionToast } = useWorkspaceToast();
 
   const {
     pipelineSteps,
@@ -217,37 +209,9 @@ export default function MeetingPage() {
     setUploadProgress,
     setProcessingProgress,
     diarizeTranscribeMutation,
+    diarizeTranscribeByFileIdMutation,
     summaryMinutesMutation,
     updateReportMutation,
-  });
-
-  const {
-    selectedFile,
-    selectedFileName,
-    selectedFileSizeBytes,
-    selectedFileDurationSecond,
-    filePreviewUrl,
-    uploadWarning,
-    isDraggingUpload,
-    fileInputRef,
-    clearUploadState,
-    handleFileChange,
-    handleUploadDragEnter,
-    handleUploadDragOver,
-    handleUploadDragLeave,
-    handleUploadDrop,
-    handleClearSelectedFile,
-  } = useWorkspaceUpload({
-    busyProcessing,
-    initialMeeting,
-    setActiveMeeting,
-    onResetPipelineSteps: resetPipelineSteps,
-    onResetFailedStep: () => setFailedStepId(null),
-    onResetProgress: () => {
-      setUploadProgress(0);
-      setProcessingProgress(0);
-    },
-    onSetNotice: setNotice,
   });
 
   const {
@@ -264,7 +228,7 @@ export default function MeetingPage() {
     initialMeeting,
     setInputMode,
     setActiveMeeting,
-    onClearUploadState: clearUploadState,
+    onClearUploadState: () => setSelectedFileRecord(null),
     onResetPipelineSteps: resetPipelineSteps,
     onSetNotice: setNotice,
   });
@@ -287,17 +251,6 @@ export default function MeetingPage() {
     return Math.max(0, Math.min(100, Math.round(weightedProgress)));
   }, [activeMeeting.processingStatus, pipelineSteps]);
 
-  const selectedFileSizeLabel = selectedFileSizeBytes
-    ? formatFileSize(selectedFileSizeBytes)
-    : "--";
-  const selectedFileDurationLabel = selectedFileDurationSecond
-    ? formatDuration(selectedFileDurationSecond)
-    : "Đang đọc thời lượng...";
-  const recordingDurationLabel = formatDuration(
-    isRecording
-      ? Math.max(1, Math.round(recordingElapsedMs / 1000))
-      : recordingSecond,
-  );
   const shouldShowPipeline = activeMeeting.processingStatus !== "idle";
   const shouldShowMinutes = activeMeeting.minutes !== initialMeeting.minutes;
   const shouldShowRawTranscript =
@@ -311,6 +264,32 @@ export default function MeetingPage() {
   const shouldShowDiarization = activeMeeting.segments.length > 0;
   const shouldShowSpeakerSummary = activeMeeting.speakerSummaries.length > 0;
   const canRetryPipeline = Boolean(failedStepId) && !busyProcessing;
+  const recordingDurationLabel = formatDuration(
+    isRecording
+      ? Math.max(1, Math.round(recordingElapsedMs / 1000))
+      : recordingSecond,
+  );
+
+  // Sync selected file status after pipeline completes
+  useEffect(() => {
+    if (activeMeeting.processingStatus === "completed" && selectedFileRecord) {
+      setSelectedFileRecord((prev) =>
+        prev
+          ? {
+            ...prev,
+            fileStatus: {
+              ...prev.fileStatus,
+              transcribe: "success",
+              report: activeMeeting.reportUrl
+                ? "success"
+                : prev.fileStatus.report,
+            },
+          }
+          : null,
+      );
+    }
+  }, [activeMeeting.processingStatus, activeMeeting.reportUrl]);
+
   const refinedSegments = useMemo(() => {
     const refinedText = (activeMeeting.refinedTranscript ?? "").trim();
 
@@ -325,6 +304,7 @@ export default function MeetingPage() {
 
     return parseTranscriptSegments(refinedLines);
   }, [activeMeeting.refinedTranscript]);
+
   const shouldShowRefinedDiarization = refinedSegments.length > 0;
 
   const availableTabs = [
@@ -337,7 +317,6 @@ export default function MeetingPage() {
   const [activeTab, setActiveTab] = useState<string>("transcript");
   const [isInputOpen, setIsInputOpen] = useState(true);
 
-  // Auto-collapse khi pipeline bắt đầu chạy
   useEffect(() => {
     if (busyProcessing) {
       setIsInputOpen(false);
@@ -359,9 +338,9 @@ export default function MeetingPage() {
     retryPipeline({
       busyProcessing,
       activeMeeting,
-      selectedFile,
-      selectedFileName,
-      selectedFileDurationSecond,
+      selectedFile: null,
+      selectedFileName: activeMeeting.fileName,
+      selectedFileDurationSecond: activeMeeting.durationSecond,
       recordingFile,
       recordingSecond,
     });
@@ -376,20 +355,7 @@ export default function MeetingPage() {
     }
 
     try {
-      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(transcript);
-      } else if (typeof document !== "undefined") {
-        const textArea = document.createElement("textarea");
-        textArea.value = transcript;
-        textArea.style.position = "fixed";
-        textArea.style.opacity = "0";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-      }
-
+      await navigator.clipboard.writeText(transcript);
       showActionToast("Đã copy raw transcript.");
     } catch {
       showActionToast("Copy thất bại, vui lòng thử lại.");
@@ -405,20 +371,7 @@ export default function MeetingPage() {
     }
 
     try {
-      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(transcript);
-      } else if (typeof document !== "undefined") {
-        const textArea = document.createElement("textarea");
-        textArea.value = transcript;
-        textArea.style.position = "fixed";
-        textArea.style.opacity = "0";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-      }
-
+      await navigator.clipboard.writeText(transcript);
       showActionToast("Đã copy bản đã làm sạch.");
     } catch {
       showActionToast("Copy thất bại, vui lòng thử lại.");
@@ -426,10 +379,7 @@ export default function MeetingPage() {
   }
 
   function handleSwitchMode(mode: AudioInputSource) {
-    if (mode === inputMode) {
-      return;
-    }
-
+    if (mode === inputMode) return;
     if (busyProcessing) {
       setNotice("Không thể đổi chế độ khi pipeline đang xử lý.");
       return;
@@ -440,7 +390,7 @@ export default function MeetingPage() {
       setActiveMeeting((prev) => ({
         ...prev,
         title: "Phiên mới chưa xử lý",
-        fileName: "Chưa có tệp nguồn",
+        fileName: "Chưa có file nguồn",
         inputSource: "upload",
         processingStatus: "idle",
         rawTranscript: initialMeeting.rawTranscript,
@@ -453,50 +403,45 @@ export default function MeetingPage() {
         mailTemplate: buildDefaultMailTemplate(""),
       }));
       setInputMode("upload");
-      return;
+    } else {
+      setSelectedFileRecord(null);
+      setActiveMeeting((prev) => ({
+        ...prev,
+        title: "Bản thu sẵn sàng",
+        fileName: "Chưa có bản ghi",
+        inputSource: "recording",
+        processingStatus: "idle",
+        rawTranscript: initialMeeting.rawTranscript,
+        refinedTranscript: initialMeeting.refinedTranscript,
+        segments: [],
+        speakerSummaries: [],
+        minutes: initialMeeting.minutes,
+        speakerCount: 0,
+        durationSecond: 0,
+        mailTemplate: buildDefaultMailTemplate(""),
+      }));
+      setInputMode("recording");
     }
-
-    clearUploadState();
-    setActiveMeeting((prev) => ({
-      ...prev,
-      title: "Bản thu sẵn sàng",
-      fileName: "Chưa có bản ghi",
-      inputSource: "recording",
-      processingStatus: "idle",
-      rawTranscript: initialMeeting.rawTranscript,
-      refinedTranscript: initialMeeting.refinedTranscript,
-      segments: [],
-      speakerSummaries: [],
-      minutes: initialMeeting.minutes,
-      speakerCount: 0,
-      durationSecond: 0,
-      mailTemplate: buildDefaultMailTemplate(""),
-    }));
-    setInputMode("recording");
   }
 
   function handleProcessSelectedFile() {
-    if (!selectedFile || !selectedFileName) {
+    if (!selectedFileRecord) {
       setNotice("Vui lòng chọn tệp audio trước khi xử lý.");
       return;
     }
 
-    if (isRecording) {
-      setNotice("Hãy dừng thu âm trước khi xử lý tệp tải lên.");
-      return;
-    }
-
     showActionToast(
-      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt và không thao tác các nút khác để đảm bảo Pipeline hoạt động chính xác.",
+      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt để đảm bảo Pipeline hoạt động chính xác.",
       "info",
       15000,
     );
+
     startProcessing({
-      source: "upload",
-      fileName: selectedFileName,
-      durationSecond:
-        selectedFileDurationSecond ?? (activeMeeting.durationSecond || 240),
-      sourceAudioFile: selectedFile,
+      source: "file_select",
+      fileName: selectedFileRecord.title || selectedFileRecord.filename,
+      durationSecond: 0,
+      sourceAudioFile: null,
+      fileId: selectedFileRecord.id,
     });
   }
 
@@ -507,7 +452,7 @@ export default function MeetingPage() {
     }
 
     showActionToast(
-      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt và không thao tác các nút khác để đảm bảo Pipeline hoạt động chính xác.",
+      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt để đảm bảo Pipeline hoạt động chính xác.",
       "info",
       15000,
     );
@@ -526,20 +471,15 @@ export default function MeetingPage() {
   }
 
   function handleSaveMinutesDraft() {
-    if (isSavingMinutes) {
-      return;
-    }
+    if (isSavingMinutes) return;
 
     const parsed = minutesDraftSchema.safeParse(minutesDraft);
-
     if (!parsed.success) {
-      const message = parsed.error.issues[0]?.message;
-      setMinutesValidationError(message ?? "Biên bản không hợp lệ.");
+      setMinutesValidationError(parsed.error.issues[0]?.message ?? "Biên bản không hợp lệ.");
       return;
     }
 
     const apiRecordId = activeMeeting.apiRecordId;
-
     if (!apiRecordId) {
       setMinutesValidationError("Không có ID phiên họp để lưu biên bản.");
       return;
@@ -567,8 +507,7 @@ export default function MeetingPage() {
         showActionToast("Đã lưu biên bản thành công.");
         setIsEmailDialogOpen(true);
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Lỗi không xác định";
+        const message = error instanceof Error ? error.message : "Lỗi không xác định";
         setMinutesValidationError(`Lỗi khi lưu biên bản: ${message}`);
         setNotice(`Lỗi lưu biên bản: ${message}`);
       } finally {
@@ -577,16 +516,12 @@ export default function MeetingPage() {
     })();
   }
 
-  function handleSendEmail(
-    recipients: string[],
-    template: MeetingMailTemplate,
-  ) {
-    if (!canSendEmail || isSendingEmail) {
-      if (!activeMeeting.reportUrl?.trim()) {
-        setNotice("Vui lòng xem, chỉnh sửa và lưu biên bản để gửi email.");
-      }
+  function handleSendEmail(recipients: string[], template: MeetingMailTemplate) {
+    if (!canSendMail) {
+      showActionToast("Bạn không có quyền gửi email biên bản.", "error");
       return;
     }
+    if (!canSendEmail || isSendingEmail) return;
 
     setIsSendingEmail(true);
     setNotice("Đang gửi email biên bản...");
@@ -597,6 +532,7 @@ export default function MeetingPage() {
           emails: recipients,
           momFileUrl: activeMeeting.reportUrl ?? "",
           template,
+          fileId: activeMeeting.apiRecordId,
         });
 
         const failedRecipients = new Set(
@@ -604,18 +540,14 @@ export default function MeetingPage() {
             .filter((item) => item.status !== "sent")
             .map((item) => item.email.toLowerCase()),
         );
-        const shouldMarkAllFailed =
-          sendResult.failed > 0 && sendResult.results.length === 0;
+        const shouldMarkAllFailed = sendResult.failed > 0 && sendResult.results.length === 0;
 
         setActiveMeeting((prev) => ({
           ...prev,
           emailStatus: sendResult.failed > 0 ? "failed" : "sent",
           emailLogs: [
             ...recipients.map((recipient, index) => {
-              const failed =
-                shouldMarkAllFailed ||
-                failedRecipients.has(recipient.trim().toLowerCase());
-
+              const failed = shouldMarkAllFailed || failedRecipients.has(recipient.trim().toLowerCase());
               return {
                 id: `email-${recipient}-${Date.now()}-${index}`,
                 recipient,
@@ -629,37 +561,9 @@ export default function MeetingPage() {
         }));
 
         setIsEmailDialogOpen(sendResult.failed > 0);
-
-        if (sendResult.failed > 0) {
-          setNotice(
-            `Gửi email hoàn tất với ${sendResult.sent}/${sendResult.total} thành công.`,
-          );
-          showActionToast(
-            `Đã gửi ${sendResult.sent}/${sendResult.total} email, còn ${sendResult.failed} lỗi.`,
-          );
-          return;
-        }
-
-        setNotice("Đã gửi email thành công.");
-        showActionToast("Đã gửi email thành công.");
+        showActionToast(sendResult.failed > 0 ? `Đã gửi ${sendResult.sent}/${sendResult.total} email, còn ${sendResult.failed} lỗi.` : "Đã gửi email thành công.");
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-
-        setActiveMeeting((prev) => ({
-          ...prev,
-          emailStatus: "failed",
-          emailLogs: [
-            ...recipients.map((recipient, index) => ({
-              id: `email-failed-${recipient}-${Date.now()}-${index}`,
-              recipient,
-              sentAt: new Date().toISOString(),
-              status: "failed" as const,
-            })),
-            ...prev.emailLogs,
-          ],
-          mailTemplate: template,
-        }));
+        const errorMessage = error instanceof Error ? error.message : String(error);
         setNotice(`Gửi email thất bại: ${errorMessage}`);
         showActionToast(`Gửi email thất bại: ${errorMessage}`);
       } finally {
@@ -670,78 +574,37 @@ export default function MeetingPage() {
 
   function handleSubmitSendEmail() {
     const parsed = recipientEmailsSchema.safeParse(emailRecipientsInput);
-
     if (!parsed.success) {
-      const message = parsed.error.issues[0]?.message;
-      setEmailValidationError(message ?? "Danh sách email không hợp lệ.");
+      setEmailValidationError(parsed.error.issues[0]?.message ?? "Danh sách email không hợp lệ.");
       return;
     }
 
     const subject = emailSubjectInput.trim();
     const body = emailBodyInput.trim();
-
-    if (!subject) {
-      setEmailTemplateValidationError("Vui lòng nhập tiêu đề email.");
-      return;
-    }
-
-    if (!body) {
-      setEmailTemplateValidationError("Vui lòng nhập nội dung email.");
+    if (!subject || !body) {
+      setEmailTemplateValidationError("Vui lòng nhập đầy đủ tiêu đề và nội dung.");
       return;
     }
 
     setEmailValidationError(null);
     setEmailTemplateValidationError(null);
-    handleSendEmail(parsed.data, {
-      subject,
-      body,
-      isHtml: emailIsHtml,
-    });
+    handleSendEmail(parsed.data, { subject, body, isHtml: emailIsHtml });
   }
 
   function handleEmailDialogOpenChange(nextOpen: boolean) {
+    if (nextOpen && !canSendMail) {
+      showActionToast("Bạn không có quyền gửi email biên bản.", "error");
+      return;
+    }
     if (nextOpen && !canSendEmail) {
       setNotice("Vui lòng xem, chỉnh sửa và lưu biên bản để gửi email.");
       return;
     }
-
     setIsEmailDialogOpen(nextOpen);
-    if (nextOpen) {
-      setEmailValidationError(null);
-      setEmailTemplateValidationError(null);
-    }
-  }
-
-  function handleEmailRecipientsInputChange(value: string) {
-    setEmailRecipientsInput(value);
-    if (emailValidationError) {
-      setEmailValidationError(null);
-    }
-  }
-
-  function handleEmailSubjectInputChange(value: string) {
-    setEmailSubjectInput(value);
-    if (emailTemplateValidationError) {
-      setEmailTemplateValidationError(null);
-    }
-  }
-
-  function handleEmailBodyInputChange(value: string) {
-    setEmailBodyInput(value);
-    if (emailTemplateValidationError) {
-      setEmailTemplateValidationError(null);
-    }
-  }
-
-  function handleEmailIsHtmlChange(nextValue: boolean) {
-    setEmailIsHtml(nextValue);
   }
 
   function handleMinutesDialogOpenChange(nextOpen: boolean) {
-    if (isSavingMinutes) {
-      return;
-    }
-
+    if (isSavingMinutes) return;
     setIsMinutesDialogOpen(nextOpen);
     if (nextOpen) {
       setMinutesDraft(activeMeeting.minutes);
@@ -757,575 +620,251 @@ export default function MeetingPage() {
   }
 
   return (
-    <PermissionGuard permission="transcribe">
+    <PermissionGuard permission="process_pipeline">
       <div className="flex flex-1 flex-col gap-4">
-      {/* ═══════════ COLLAPSIBLE — Phần nhập liệu & Pipeline ═══════════ */}
-      <Collapsible open={isInputOpen} onOpenChange={setIsInputOpen}>
-        <section className="rounded-lg border border-border/80 bg-card shadow-sm">
-          {/* TRIGGER — Luôn hiển thị */}
-          <CollapsibleTrigger asChild>
-            <div className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted/30 md:px-5 md:py-4">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <div>
-                  <h1 className="text-base font-semibold text-foreground">
-                    Trình biên tập phiên họp
-                  </h1>
-                  {!isInputOpen && !shouldShowPipeline && (
-                    <p className="mt-0.5 text-[13px] text-muted-foreground">
-                      Tải lên hoặc thu âm trực tiếp để xử lý AI.
-                    </p>
-                  )}
+        <Collapsible open={isInputOpen} onOpenChange={setIsInputOpen}>
+          <section className="rounded-lg border border-border/80 bg-card shadow-sm">
+            <CollapsibleTrigger asChild>
+              <div className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted/30 md:px-5 md:py-4">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <h1 className="text-base font-semibold text-foreground">Trình biên tập phiên họp</h1>
+                  <span className={cn("rounded-md px-2 py-1 text-xs font-semibold", status.className)}>
+                    {status.label}
+                  </span>
                 </div>
-                <span
-                  className={`rounded-md px-2 py-1 text-xs font-semibold ${status.className}`}
-                >
-                  {status.label}
-                </span>
+                {isInputOpen ? <ChevronUpIcon className="size-5 text-muted-foreground" /> : <ChevronDownIcon className="size-5 text-muted-foreground" />}
               </div>
+            </CollapsibleTrigger>
+
+            {!isInputOpen && shouldShowPipeline && (
+              <div className="border-t border-border/60 px-4 pb-3 pt-2 md:px-5 md:pb-4 md:pt-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${stageProgress}%` }} />
+                  </div>
+                  <span className="min-w-[40px] text-right text-xs font-bold text-primary">{stageProgress}%</span>
+                </div>
+                <p className="mt-2 text-xs font-medium text-muted-foreground">{notice}</p>
+              </div>
+            )}
+
+            <CollapsibleContent forceMount className={cn("border-t border-border/60", !isInputOpen && "hidden")}>
+              <div className="p-4 md:p-6 lg:p-8">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10">
+                  <div className="flex-1 space-y-6">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant={inputMode === "upload" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleSwitchMode("upload")}
+                        className="h-8 rounded-full px-4 text-xs font-semibold"
+                      >
+                        Chọn tệp đã giao
+                      </Button>
+                      <Button
+                        variant={inputMode === "recording" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleSwitchMode("recording")}
+                        className="h-8 rounded-full px-4 text-xs font-semibold"
+                      >
+                        Thu âm trực tiếp
+                      </Button>
+                    </div>
+
+                    {inputMode === "upload" ? (
+                      <div className="min-h-[400px]">
+                        <FileSelector
+                          selectedFileRecord={selectedFileRecord}
+                          onFileSelect={setSelectedFileRecord}
+                          onProcessFile={handleProcessSelectedFile}
+                          busyProcessing={busyProcessing}
+                        />
+                      </div>
+                    ) : (
+                      <RecordingPanel
+                        isRecording={isRecording}
+                        recordingSecond={recordingSecond}
+                        recordingPreviewUrl={recordingPreviewUrl}
+                        recordingDurationLabel={recordingDurationLabel}
+                        onToggleRecording={handleToggleRecording}
+                        onClearRecording={handleClearRecording}
+                        onProcessRecording={handleProcessRecording}
+                        busyProcessing={busyProcessing}
+                      />
+                    )}
+                  </div>
+
+                  <div className="w-full shrink-0 lg:w-80">
+                    <PipelineProgressCard
+                      stageProgress={stageProgress}
+                      pipelineSteps={pipelineSteps}
+                      canRetryPipeline={canRetryPipeline}
+                      failedStepId={failedStepId}
+                      onRetryPipeline={handleRetryPipeline}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </section>
+        </Collapsible>
+
+        <section className="flex-1 overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full flex-col">
+            <div className="flex items-center justify-between border-b border-border/60 px-4 py-2 bg-muted/10">
+              <TabsList className="h-9 bg-transparent p-0 gap-1">
+                {availableTabs.map((tab) => (
+                  <TabsTrigger key={tab.id} value={tab.id} className="h-8 rounded-md px-3 text-xs font-medium transition-all data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm">
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
               <div className="flex items-center gap-2">
-                {isInputOpen ? (
-                  <ChevronUpIcon className="size-5 text-muted-foreground" />
-                ) : (
-                  <ChevronDownIcon className="size-5 text-muted-foreground" />
+                {activeTab === "transcript" && shouldShowRawTranscript && (
+                  <Button variant="ghost" size="sm" onClick={handleCopyRawTranscript} className="h-8 gap-1.5 text-[11px] font-semibold text-muted-foreground">Copy Raw</Button>
+                )}
+                {activeTab === "transcript" && shouldShowRefinedTranscript && (
+                  <Button variant="ghost" size="sm" onClick={handleCopyRefinedTranscript} className="h-8 gap-1.5 text-[11px] font-semibold text-primary">Copy Refined</Button>
+                )}
+                {activeTab === "transcript" && canTranslate && (shouldShowRawTranscript || shouldShowRefinedTranscript) && (
+                  <TranslateDialog 
+                    initialText={activeMeeting.refinedTranscript || activeMeeting.rawTranscript} 
+                  />
+                )}
+                {activeTab === "diarization" && shouldShowRefinedDiarization && (
+                  <SpeakersLabelingDialog
+                    activeMeeting={activeMeeting}
+                    onUpdateMeeting={setActiveMeeting}
+                    setNotice={setNotice}
+                    showActionToast={showActionToast}
+                  />
                 )}
               </div>
             </div>
-          </CollapsibleTrigger>
 
-          {/* Collapsed + Đang xử lý → Mini progress inline */}
-          {!isInputOpen && shouldShowPipeline && (
-            <div className="border-t border-border/60 px-4 pb-3 pt-2 md:px-5 md:pb-4 md:pt-3">
-              {/* Mini progress bar */}
-              <div className="flex items-center gap-3">
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${stageProgress}%` }}
-                  />
-                </div>
-                <span className="text-xs font-semibold text-muted-foreground tabular-nums">
-                  {stageProgress}%
-                </span>
-              </div>
-              {/* Pipeline steps inline */}
-              <TooltipProvider delayDuration={200}>
-                <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
-                  {pipelineSteps.map((step) => {
-                    const stepIcon =
-                      step.status === "completed" ? (
-                        <CheckCircle2Icon className="size-3.5 text-emerald-600" />
-                      ) : step.status === "running" ? (
-                        <CircleDashedIcon className="size-3.5 animate-spin text-amber-600" />
-                      ) : step.status === "error" ? (
-                        <XCircleIcon className="size-3.5 text-rose-600" />
+            <ScrollArea className="flex-1">
+              <div className="p-4 md:p-6 lg:p-8">
+                <TabsContent value="transcript" className="mt-0 outline-none">
+                  {!shouldShowRawTranscript ? (
+                    <TabEmptyState busyProcessing={busyProcessing} />
+                  ) : (
+                    <article className="mx-auto max-w-4xl space-y-4">
+                      {shouldShowRawTranscript && shouldShowRefinedTranscript ? (
+                        <TranscriptComparisonDialog
+                          rawTranscript={activeMeeting.rawTranscript}
+                          refinedTranscript={activeMeeting.refinedTranscript ?? ""}
+                          shouldShowRefinedTranscript={shouldShowRefinedTranscript}
+                          onCopyRawTranscript={handleCopyRawTranscript}
+                          onCopyRefinedTranscript={handleCopyRefinedTranscript}
+                        />
                       ) : (
-                        <CircleIcon className="size-3.5 text-muted-foreground/50" />
-                      );
-                    return (
-                      <Tooltip key={step.id}>
-                        <TooltipTrigger asChild>
-                          <div className="flex cursor-default items-center gap-1.5 text-xs text-muted-foreground">
-                            {stepIcon}
-                            <span
-                              className={`font-medium ${
-                                step.status === "running"
-                                  ? "text-amber-700"
-                                  : step.status === "completed"
-                                    ? "text-emerald-700"
-                                    : step.status === "error"
-                                      ? "text-rose-700"
-                                      : ""
-                              }`}
-                            >
-                              {step.title.replace(/^\d+\)\s*/, "")}
-                            </span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="max-w-xs">
-                          <p className="font-semibold">{step.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {step.description}
-                          </p>
-                          <p className="mt-1 text-xs">Tiến độ: {step.progress}%</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
-                </div>
-              </TooltipProvider>
-              {canRetryPipeline && (
-                <div className="mt-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-7 px-2 text-[11px]"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRetryPipeline();
-                    }}
-                  >
-                    Thử lại bước lỗi
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* CONTENT — Chỉ khi expanded */}
-          <CollapsibleContent>
-            <div className="border-t border-border/60 px-4 pb-4 pt-3 md:px-5 md:pb-5 md:pt-4">
-              {/* Thông tin phiên */}
-              <div className="flex flex-wrap gap-x-4 gap-y-2 rounded-md border border-border/60 bg-secondary/30 px-3 py-2 text-xs text-muted-foreground">
-                <p>
-                  <span className="font-medium text-foreground">Phiên:</span>{" "}
-                  {activeMeeting.title}
-                </p>
-                <p>
-                  <span className="font-medium text-foreground">Speaker:</span>{" "}
-                  {activeMeeting.speakerCount}
-                </p>
-                <p>
-                  <span className="font-medium text-foreground">Thời lượng:</span>{" "}
-                  {formatDuration(
-                    isRecording
-                      ? Math.max(1, Math.round(recordingElapsedMs / 1000))
-                      : activeMeeting.durationSecond,
-                  )}
-                </p>
-              </div>
-
-              {/* Toggle Upload / Recording */}
-              <div className="mt-4 inline-flex rounded-lg border border-border/70 bg-muted/40 p-1">
-                <button
-                  type="button"
-                  onClick={() => handleSwitchMode("upload")}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    inputMode === "upload"
-                      ? "bg-white text-primary shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  disabled={busyProcessing}
-                >
-                  Tải tệp
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchMode("recording")}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    inputMode === "recording"
-                      ? "bg-white text-primary shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  disabled={busyProcessing}
-                >
-                  Thu âm trực tiếp
-                </button>
-              </div>
-
-              {/* Upload / Recording panels */}
-              {inputMode === "upload" ? (
-                <UploadPanel
-                  busyProcessing={busyProcessing}
-                  isDraggingUpload={isDraggingUpload}
-                  fileInputRef={fileInputRef}
-                  selectedFile={selectedFile}
-                  selectedFileName={selectedFileName}
-                  selectedFileSizeLabel={selectedFileSizeLabel}
-                  selectedFileDurationLabel={selectedFileDurationLabel}
-                  filePreviewUrl={filePreviewUrl}
-                  uploadWarning={uploadWarning}
-                  onDragEnter={handleUploadDragEnter}
-                  onDragOver={handleUploadDragOver}
-                  onDragLeave={handleUploadDragLeave}
-                  onDrop={handleUploadDrop}
-                  onFileChange={handleFileChange}
-                  onProcessSelectedFile={handleProcessSelectedFile}
-                  onClearSelectedFile={handleClearSelectedFile}
-                />
-              ) : (
-                <RecordingPanel
-                  busyProcessing={busyProcessing}
-                  isRecording={isRecording}
-                  recordingSecond={recordingSecond}
-                  recordingPreviewUrl={recordingPreviewUrl}
-                  recordingDurationLabel={recordingDurationLabel}
-                  onToggleRecording={handleToggleRecording}
-                  onProcessRecording={handleProcessRecording}
-                  onClearRecording={handleClearRecording}
-                />
-              )}
-
-              {/* Pipeline progress (chi tiết) */}
-              {shouldShowPipeline ? (
-                <PipelineProgressCard
-                  stageProgress={stageProgress}
-                  pipelineSteps={pipelineSteps}
-                  canRetryPipeline={canRetryPipeline}
-                  failedStepId={failedStepId}
-                  onRetryPipeline={handleRetryPipeline}
-                />
-              ) : null}
-            </div>
-          </CollapsibleContent>
-        </section>
-      </Collapsible>
-
-      {/* ═══════════ KẾT QUẢ XỬ LÝ ═══════════ */}
-      <section className="flex flex-col rounded-lg border border-border/80 bg-card p-4 shadow-sm md:p-5">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <h2 className="text-lg font-semibold text-foreground">
-            Kết quả xử lý
-          </h2>
-          <div className="flex flex-wrap items-center gap-2">
-            {/* <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5"
-              onClick={handleGenerateMinutes}
-              disabled={activeMeeting.processingStatus !== "completed"}
-            >
-              <SparklesIcon className="size-4" />
-              Tinh chỉnh biên bản
-            </Button> */}
-            {/* <Button
-              size="sm"
-              variant="outline"
-              onClick={handleRefreshSpeakerSummary}
-              disabled={activeMeeting.processingStatus !== "completed"}
-            >
-              Tóm tắt theo người nói
-            </Button> */}
-            <SpeakersLabelingDialog
-              activeMeeting={activeMeeting}
-              onUpdateMeeting={setActiveMeeting}
-              setNotice={setNotice}
-              showActionToast={showActionToast}
-            />
-            <EmailDialog
-              open={isEmailDialogOpen}
-              onOpenChange={handleEmailDialogOpenChange}
-              canSendEmail={canSendEmail}
-              isSendingEmail={isSendingEmail}
-              reportUrl={activeMeeting.reportUrl}
-              emailSubjectInput={emailSubjectInput}
-              emailBodyInput={emailBodyInput}
-              emailIsHtml={emailIsHtml}
-              emailRecipientsInput={emailRecipientsInput}
-              emailTemplateValidationError={emailTemplateValidationError}
-              onEmailRecipientsInputChange={handleEmailRecipientsInputChange}
-              onEmailSubjectInputChange={handleEmailSubjectInputChange}
-              onEmailBodyInputChange={handleEmailBodyInputChange}
-              onEmailIsHtmlChange={handleEmailIsHtmlChange}
-              emailValidationError={emailValidationError}
-              onSubmitSendEmail={handleSubmitSendEmail}
-            />
-          </div>
-        </div>
-
-        <p className="mt-3 rounded-md border border-border/70 bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
-          {notice}
-        </p>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4 flex flex-col">
-          <TabsList 
-            className="h-auto w-full justify-start overflow-x-auto rounded-none border-b border-border/60 bg-transparent p-0 [&::-webkit-scrollbar]:hidden"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {availableTabs.map((tab) => (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                className="whitespace-nowrap rounded-none border-b-2 border-transparent px-4 py-2 text-sm font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <div className="pt-2">
-            <TabsContent value="minutes" className="m-0 border-none p-0 outline-none">
-              {shouldShowMinutes ? (
-                <MinutesEditorDialog
-                  open={isMinutesDialogOpen}
-                  onOpenChange={handleMinutesDialogOpenChange}
-                  onOpenEditor={handleOpenMinutesEditor}
-                  minutesMarkdown={activeMeeting.minutes}
-                  minutesDraft={minutesDraft}
-                  onMinutesDraftChange={handleMinutesDraftChange}
-                  minutesValidationError={minutesValidationError}
-                  isSavingMinutes={isSavingMinutes}
-                  onSaveMinutesDraft={handleSaveMinutesDraft}
-                  reportUrl={activeMeeting.reportUrl}
-                />
-              ) : (
-                <TabEmptyState busyProcessing={busyProcessing} />
-              )}
-            </TabsContent>
-
-            <TabsContent value="transcript" className="m-0 border-none p-0 outline-none">
-              {shouldShowRawTranscript ? (
-                <TranscriptComparisonDialog
-                  rawTranscript={reformatTranscriptTimestamps(activeMeeting.rawTranscript)}
-                  refinedTranscript={reformatTranscriptTimestamps(
-                    activeMeeting.refinedTranscript ?? "",
-                  )}
-                  shouldShowRefinedTranscript={shouldShowRefinedTranscript}
-                  onCopyRawTranscript={handleCopyRawTranscript}
-                  onCopyRefinedTranscript={handleCopyRefinedTranscript}
-                />
-              ) : (
-                <TabEmptyState busyProcessing={busyProcessing} />
-              )}
-            </TabsContent>
-
-            <TabsContent value="diarization" className="m-0 border-none p-0 outline-none">
-              {shouldShowDiarization ? (
-              <article className="rounded-lg border border-border/70 bg-white p-4 shadow-sm mt-4">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    Transcript theo người nói
-                  </h3>
-                  <div className="flex items-center gap-1">
-                    <span className="rounded-full border border-border/70 bg-background px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                      {activeMeeting.speakerCount} speaker
-                    </span>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          className="text-muted-foreground hover:text-foreground"
-                          aria-label="Mở toàn màn hình transcript theo người nói"
-                          title="Mở toàn màn hình"
-                        >
-                          <Maximize2Icon className="size-4" />
-                        </Button>
-                      </DialogTrigger>
-
-                      <DialogContent
-                        showCloseButton={false}
-                        className="mb-4 flex h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] flex-col justify-between gap-0 rounded-xl p-0 sm:max-w-none"
-                      >
-                        <ScrollArea className="min-h-0 flex-1 overflow-hidden">
-                          <DialogHeader className="space-y-0 text-left">
-                            <DialogTitle className="px-6 pt-6 text-base">
-                              Transcript theo người nói
-                            </DialogTitle>
-                            <DialogDescription className="px-6 pb-3 text-xs">
-                              Xem đầy đủ để đối sánh nội dung theo từng người
-                              nói.
-                            </DialogDescription>
-                          </DialogHeader>
-
-                          <div
-                            className={`grid gap-4 px-6 pb-6 ${shouldShowRefinedDiarization
-                              ? "md:grid-cols-1"
-                              : "grid-cols-1"
-                              }`}
-                          >
-                            {/* <section className="space-y-2">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                Bản gốc theo người nói
-                              </p>
-                              <ul className="space-y-2 overflow-auto pr-1 md:max-h-[55dvh]">
-                                {activeMeeting.segments.map((segment) => (
-                                  <li
-                                    key={`dialog-${segment.id}`}
-                                    className={`rounded-md border border-border/60 border-l-4 p-3 text-sm ${speakerToneClass(segment.speaker)}`}
-                                  >
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground">
-                                        {segment.speaker}
-                                      </span>
-                                      <span className="text-[11px] font-medium text-muted-foreground">
-                                        {formatTimelineSecond(
-                                          segment.startSecond,
-                                        )}{" "}
-                                        -{" "}
-                                        {formatTimelineSecond(
-                                          segment.endSecond,
-                                        )}
-                                      </span>
-                                    </div>
-                                    <p className="mt-2 leading-6 text-muted-foreground">
-                                      {segment.text}
-                                    </p>
-                                  </li>
+                        <div className="rounded-lg border border-border/70 bg-white p-6 shadow-sm">
+                          {shouldShowRefinedTranscript ? (
+                            <div className="space-y-6 animate-in fade-in duration-700">
+                              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
+                                <CheckCircle2Icon className="size-4" /> Bản đã làm sạch (Refined)
+                              </div>
+                              <div className="prose prose-sm max-w-none text-foreground/90">
+                                {activeMeeting.refinedTranscript?.split("\n").map((line, i) => (
+                                  <p key={i} className="mb-4">{line}</p>
                                 ))}
-                              </ul>
-                            </section> */}
-
-                            {shouldShowRefinedDiarization ? (
-                              <section className="space-y-2">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                  Bản đã làm sạch theo người nói
-                                </p>
-                                <ul className="space-y-2 overflow-auto pr-1 md:max-h-[55dvh]">
-                                  {refinedSegments.map((segment) => (
-                                    <li
-                                      key={`dialog-refined-${segment.id}`}
-                                      className={`rounded-md border border-border/60 border-l-4 p-3 text-sm ${speakerToneClass(segment.speaker)}`}
-                                    >
-                                      <div className="flex items-center justify-between gap-2">
-                                        <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground">
-                                          {segment.speaker}
-                                        </span>
-                                        <span className="text-[11px] font-medium text-muted-foreground">
-                                          {formatTimelineSecond(
-                                            segment.startSecond,
-                                          )}{" "}
-                                          -{" "}
-                                          {formatTimelineSecond(
-                                            segment.endSecond,
-                                          )}
-                                        </span>
-                                      </div>
-                                      <p className="mt-2 leading-6 text-muted-foreground">
-                                        {segment.text}
-                                      </p>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </section>
-                            ) : null}
-                          </div>
-                        </ScrollArea>
-
-                        <DialogFooter className="mx-0 mb-0 rounded-none border-t px-6 pb-6 pt-4 sm:justify-end">
-                          <DialogClose asChild>
-                            <Button variant="outline">
-                              <ChevronLeftIcon className="size-4" />
-                              Quay lại
-                            </Button>
-                          </DialogClose>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </div>
-                <div
-                  className={`mt-3 grid gap-3 ${shouldShowRefinedDiarization
-                    ? "md:grid-cols-1"
-                    : "grid-cols-1"
-                    }`}
-                >
-                  {/* <section className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground">
-                      Bản gốc theo người nói
-                    </p>
-                    <ul className="space-y-2 overflow-auto pr-1 xl:max-h-[52dvh]">
-                      {activeMeeting.segments.map((segment) => (
-                        <li
-                          key={segment.id}
-                          className={`rounded-md border border-border/60 border-l-4 p-3 text-sm ${speakerToneClass(segment.speaker)}`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground">
-                              {segment.speaker}
-                            </span>
-                            <span className="text-[11px] font-medium text-muted-foreground">
-                              {formatTimelineSecond(segment.startSecond)} -{" "}
-                              {formatTimelineSecond(segment.endSecond)}
-                            </span>
-                          </div>
-                          <p className="mt-2 leading-6 text-muted-foreground">
-                            {segment.text}
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
-                  </section> */}
-
-                  {shouldShowRefinedDiarization ? (
-                    <section className="space-y-2">
-                      <p className="text-xs font-medium text-muted-foreground">
-                        Bản đã làm sạch theo người nói
-                      </p>
-                      <ul className="space-y-2 pr-1">
-                        {refinedSegments.map((segment) => (
-                          <li
-                            key={`refined-${segment.id}`}
-                            className={`rounded-md border border-border/60 border-l-4 p-3 text-sm ${speakerToneClass(segment.speaker)}`}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground">
-                                {segment.speaker}
-                              </span>
-                              <span className="text-[11px] font-medium text-muted-foreground">
-                                {formatTimelineSecond(segment.startSecond)} -{" "}
-                                {formatTimelineSecond(segment.endSecond)}
-                              </span>
+                              </div>
                             </div>
-                            <p className="mt-2 leading-6 text-muted-foreground">
-                              {segment.text}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-                  ) : null}
-                </div>
-              </article>
-              ) : (
-                <TabEmptyState busyProcessing={busyProcessing} />
-              )}
-            </TabsContent>
+                          ) : (
+                            <div className="space-y-6">
+                              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                <CircleIcon className="size-4" /> Bản gốc (Raw Transcript)
+                              </div>
+                              <div className="prose prose-sm max-w-none whitespace-pre-wrap text-foreground/80">
+                                {activeMeeting.rawTranscript}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </article>
+                  )}
+                </TabsContent>
 
-            <TabsContent value="summary" className="m-0 border-none p-0 outline-none">
-              {shouldShowSpeakerSummary ? (
-              <article className="rounded-lg border border-border/70 bg-white p-4 shadow-sm mt-4">
-                <h3 className="text-sm font-semibold text-foreground">
-                  Tóm tắt theo người nói
-                </h3>
-                <ul className="mt-3 space-y-3">
-                  {activeMeeting.speakerSummaries.map((summary) => (
-                    <li
-                      key={summary.speaker}
-                      className="rounded-md border border-border/60 bg-secondary/30 p-3 text-sm"
-                    >
-                      <p className="font-semibold text-foreground">
-                        {summary.speaker}
-                      </p>
-                      <ul className="mt-1 space-y-1 text-muted-foreground">
-                        {summary.keyPoints.map((point) => (
-                          <li key={point}>- {point}</li>
-                        ))}
-                      </ul>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-              ) : (
-                <TabEmptyState busyProcessing={busyProcessing} />
-              )}
-            </TabsContent>
-          </div>
-        </Tabs>
-      </section>
+                <TabsContent value="diarization" className="mt-0 outline-none">
+                  {!shouldShowDiarization ? <TabEmptyState busyProcessing={busyProcessing} /> : (
+                    <div className="mx-auto max-w-3xl space-y-6">
+                      {(shouldShowRefinedDiarization ? refinedSegments : activeMeeting.segments).map((segment, i) => (
+                        <div key={i} className={cn("group relative flex flex-col gap-2 rounded-xl border-l-4 p-4 transition-all hover:shadow-md", speakerToneClass(segment.speaker))}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-bold text-foreground">{segment.speaker}</span>
+                            <span className="rounded-full bg-muted/60 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">{segment.startSecond}s - {segment.endSecond}s</span>
+                          </div>
+                          <p className="text-sm leading-relaxed text-foreground/90">{segment.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
 
-      {actionToast ? (
-        <div
-          className={`fixed bottom-4 left-4 right-4 z-[100] flex items-start justify-between gap-3 rounded-lg border px-4 py-3 text-sm font-medium shadow-xl backdrop-blur transition-all sm:left-auto sm:right-4 sm:max-w-md sm:items-center ${
-            actionToast.variant === "success"
-              ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
-              : actionToast.variant === "error"
-                ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
-                : "border-blue-300/70 bg-blue-50/95 text-blue-900"
-          }`}
-        >
-          <span className="leading-snug">{actionToast.message}</span>
-          <button
-            onClick={hideActionToast}
-            className="group flex size-6 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-black/10 active:bg-black/20"
-            title="Đóng thông báo"
-          >
-            <XIcon className="size-4 transition-transform group-hover:scale-110" />
-          </button>
-        </div>
-      ) : null}
-    </div>
+                <TabsContent value="summary" className="mt-0 outline-none">
+                  {!shouldShowSpeakerSummary ? <TabEmptyState busyProcessing={busyProcessing} /> : (
+                    <div className="mx-auto max-w-4xl grid gap-6 sm:grid-cols-2">
+                      {activeMeeting.speakerSummaries.map((s, i) => (
+                        <div key={i} className="rounded-xl border border-border/80 bg-muted/20 p-5 transition-all">
+                          <div className="mb-4 flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-foreground">{s.speaker}</h4>
+                          </div>
+                          <ul className="space-y-3">{s.keyPoints.map((point, j) => <li key={j} className="flex gap-3 text-sm text-foreground/80"><span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/40" />{point}</li>)}</ul>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="minutes" className="mt-0 outline-none">
+                  {!shouldShowMinutes ? (
+                    <TabEmptyState busyProcessing={busyProcessing} />
+                  ) : (
+                    <article className="mx-auto max-w-4xl space-y-4">
+                      <div className="flex justify-end gap-2">
+                        <EmailDialog
+                          open={isEmailDialogOpen}
+                          onOpenChange={handleEmailDialogOpenChange}
+                          canSendEmail={canSendEmail}
+                          isSendingEmail={isSendingEmail}
+                          reportUrl={activeMeeting.reportUrl}
+                          emailSubjectInput={emailSubjectInput}
+                          emailBodyInput={emailBodyInput}
+                          emailIsHtml={emailIsHtml}
+                          emailRecipientsInput={emailRecipientsInput}
+                          emailTemplateValidationError={emailTemplateValidationError}
+                          onEmailRecipientsInputChange={setEmailRecipientsInput}
+                          onEmailSubjectInputChange={setEmailSubjectInput}
+                          onEmailBodyInputChange={setEmailBodyInput}
+                          onEmailIsHtmlChange={setEmailIsHtml}
+                          emailValidationError={emailValidationError}
+                          onSubmitSendEmail={handleSubmitSendEmail}
+                        />
+                      </div>
+                      <MinutesEditorDialog
+                        open={isMinutesDialogOpen}
+                        onOpenChange={handleMinutesDialogOpenChange}
+                        onOpenEditor={handleOpenMinutesEditor}
+                        minutesMarkdown={activeMeeting.minutes}
+                        minutesDraft={minutesDraft}
+                        onMinutesDraftChange={handleMinutesDraftChange}
+                        onSaveMinutesDraft={handleSaveMinutesDraft}
+                        isSavingMinutes={isSavingMinutes}
+                        minutesValidationError={minutesValidationError}
+                        reportUrl={activeMeeting.reportUrl}
+                      />
+                    </article>
+                  )}
+                </TabsContent>
+              </div>
+            </ScrollArea>
+          </Tabs>
+        </section>
+
+
+      </div>
     </PermissionGuard>
   );
 }

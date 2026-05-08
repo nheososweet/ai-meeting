@@ -16,7 +16,12 @@ import {
   FilterXIcon,
   PencilIcon,
   ShieldIcon,
-  Building2Icon
+  Building2Icon,
+  PowerIcon,
+  ShieldCheckIcon,
+  ShieldAlertIcon,
+  UserCheckIcon,
+  UserXIcon
 } from "lucide-react"
 import {
   Table,
@@ -37,13 +42,19 @@ import {
 } from "@/components/ui/pagination"
 import { Badge } from "@/components/ui/badge"
 import { cn, formatDate } from "@/lib/utils"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 import { useAuth } from "@/lib/auth/auth-context"
 import { EmptyState } from "@/components/iam/shared/empty-state"
 import { ConfirmDialog } from "@/components/iam/shared/confirm-dialog"
 import { PermissionsDialog } from "@/components/iam/shared/permissions-dialog"
 
-import { useUsers, useDeleteUser, useAssignUserPermissions, useUserPermissions } from "@/hooks/iam/use-users"
+import { useUsers, useDeleteUser, useUpdateUser, useAssignUserPermissions, useUserPermissions } from "@/hooks/iam/use-users"
 import { useInfiniteCompanies } from "@/hooks/iam/use-companies"
 import { useInfiniteGroups } from "@/hooks/iam/use-groups"
 import { CreateUserDialog } from "./_components/create-user-dialog"
@@ -104,6 +115,7 @@ export default function UsersPage() {
 
   // --- Mutations ---
   const deleteMutation = useDeleteUser()
+  const updateMutation = useUpdateUser()
   const assignPermsMutation = useAssignUserPermissions()
 
   function handleDelete() {
@@ -116,6 +128,13 @@ export default function UsersPage() {
   async function handleSavePermissions(permissions: string[]) {
     if (!selectedUser) return
     await assignPermsMutation.mutateAsync({ userId: selectedUser.id, perms: permissions })
+  }
+
+  function handleToggleStatus(user: AuthMeResponse) {
+    updateMutation.mutate({ 
+      userId: user.id, 
+      payload: { is_active: !user.is_active } 
+    })
   }
 
   return (
@@ -215,6 +234,7 @@ export default function UsersPage() {
                     <TableHead className="w-[80px]">ID</TableHead>
                     <TableHead>Tài khoản</TableHead>
                     <TableHead>Vai trò & Phạm vi</TableHead>
+                    <TableHead>Trạng thái</TableHead>
                     <TableHead className="hidden lg:table-cell">Tổ chức / Nhóm</TableHead>
                     <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
                     <TableHead className="text-right">Thao tác</TableHead>
@@ -252,6 +272,15 @@ export default function UsersPage() {
                           )}
                         </div>
                       </TableCell>
+                      <TableCell>
+                         <Badge variant={user.is_active ? "outline" : "destructive"} className={cn(
+                           "h-5 text-[10px] uppercase tracking-wider px-1.5",
+                           user.is_active ? "border-emerald-500/50 text-emerald-600 bg-emerald-500/5" : "border-red-500/50 text-red-600 bg-red-500/5"
+                         )}>
+                           <span className={cn("mr-1.5 size-1.5 rounded-full", user.is_active ? "bg-emerald-500" : "bg-red-500")} />
+                           {user.is_active ? "Hoạt động" : "Bị khóa"}
+                         </Badge>
+                      </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         <div className="flex flex-col gap-1 max-w-[200px]">
                           {user.company ? (
@@ -280,50 +309,86 @@ export default function UsersPage() {
                         {formatDate(user.created_at)}
                       </TableCell>
                       <TableCell className="text-right">
+                        <TooltipProvider>
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                          {hasPermission("assign_permissions") && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 text-xs hover:bg-primary/10 hover:text-primary"
-                              onClick={() => {
-                                setSelectedUser(user)
-                                setPermDialogOpen(true)
-                              }}
-                            >
-                              <ShieldIcon className="mr-1.5 size-3.5" /> Phân quyền
-                            </Button>
-                          )}
-                          
-                          {canManage && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                onClick={() => {
-                                  setSelectedUser(user)
-                                  setEditOpen(true)
-                                }}
-                              >
-                                <PencilIcon className="size-3.5" />
-                              </Button>
-                              {user.id !== currentUser?.id && (
+                          {hasPermission("assign_permissions") && user.scope !== "global" && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
-                                  size="icon"
-                                  className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  size="sm"
+                                  className="h-8 text-xs hover:bg-primary/10 hover:text-primary"
                                   onClick={() => {
                                     setSelectedUser(user)
-                                    setDeleteOpen(true)
+                                    setPermDialogOpen(true)
                                   }}
                                 >
-                                  <Trash2Icon className="size-3.5" />
+                                  <ShieldIcon className="mr-1.5 size-3.5" /> Phân quyền
                                 </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Gán quyền trực tiếp cho tài khoản</TooltipContent>
+                            </Tooltip>
+                          )}
+                          
+                          {canManage && user.scope !== "global" && (
+                            <>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={cn(
+                                      "size-8",
+                                      user.is_active ? "text-amber-500 hover:text-amber-600 hover:bg-amber-50" : "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"
+                                    )}
+                                    onClick={() => handleToggleStatus(user)}
+                                    disabled={updateMutation.isPending}
+                                  >
+                                    {user.is_active ? <UserXIcon className="size-3.5" /> : <UserCheckIcon className="size-3.5" />}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{user.is_active ? "Vô hiệu hóa tài khoản" : "Kích hoạt tài khoản"}</TooltipContent>
+                              </Tooltip>
+
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                    onClick={() => {
+                                      setSelectedUser(user)
+                                      setEditOpen(true)
+                                    }}
+                                  >
+                                    <PencilIcon className="size-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Chỉnh sửa thông tin</TooltipContent>
+                              </Tooltip>
+
+                              {user.id !== currentUser?.id && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                      onClick={() => {
+                                        setSelectedUser(user)
+                                        setDeleteOpen(true)
+                                      }}
+                                    >
+                                      <Trash2Icon className="size-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Xóa tài khoản vĩnh viễn</TooltipContent>
+                                </Tooltip>
                               )}
                             </>
                           )}
                         </div>
+                        </TooltipProvider>
                       </TableCell>
                     </TableRow>
                   ))}

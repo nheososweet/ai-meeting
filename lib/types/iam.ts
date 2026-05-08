@@ -121,6 +121,7 @@ export const PERMISSIONS = {
   CHAT: "chat",
   VIEW_RECORDS: "view_records",
   TRANSLATE: "translate",
+  PROCESS_PIPELINE: "process_pipeline",
 } as const
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]

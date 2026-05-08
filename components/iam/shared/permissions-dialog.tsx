@@ -14,6 +14,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Loader2Icon, ShieldAlertIcon, ShieldIcon, BriefcaseIcon, ZapIcon, HelpCircleIcon } from "lucide-react"
 import { PERMISSION_LABELS, PERMISSION_GROUPS } from "@/lib/auth/permissions"
+import { useAuth } from "@/lib/auth/auth-context"
+import { cn } from "@/lib/utils"
 
 export interface PermissionsDialogProps {
   open: boolean
@@ -37,6 +39,10 @@ export function PermissionsDialog({
 }: PermissionsDialogProps) {
   const [selectedPerms, setSelectedPerms] = useState<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
+  
+  const { currentUser } = useAuth()
+  const myPermissions = currentUser?.permissions || []
+  const isGlobalAdmin = currentUser?.scope === "global"
 
   // Fetch all available permissions from backend
   const { data: allPerms, isLoading, error } = useQuery({
@@ -78,17 +84,30 @@ export function PermissionsDialog({
   }
 
   function togglePermission(permId: string) {
+    if (!isGlobalAdmin && !myPermissions.includes(permId)) return
+
     setSelectedPerms((prev) =>
       prev.includes(permId) ? prev.filter((p) => p !== permId) : [...prev, permId]
     )
   }
 
   function toggleAll() {
-    if (!allPerms || !Array.isArray(allPerms)) return
-    if (selectedPerms.length === allPerms.length) {
-      setSelectedPerms([])
+    if (!permissionsList.length) return
+    
+    const toggleableIds = permissionsList
+      .map(getPermId)
+      .filter((id) => isGlobalAdmin || myPermissions.includes(id))
+      
+    if (toggleableIds.length === 0) return
+
+    const allToggleableSelected = toggleableIds.every((id) => selectedPerms.includes(id))
+
+    if (allToggleableSelected) {
+      // Remove only toggleable perms
+      setSelectedPerms((prev) => prev.filter((id) => !toggleableIds.includes(id)))
     } else {
-      setSelectedPerms(allPerms.map(getPermId))
+      // Add all toggleable perms
+      setSelectedPerms((prev) => Array.from(new Set([...prev, ...toggleableIds])))
     }
   }
 
@@ -107,8 +126,15 @@ export function PermissionsDialog({
   const permissionsList = useMemo(() => {
     const list = Array.isArray(allPerms) ? allPerms : []
     const hiddenPerms = ["chat", "update_report", "transcribe"]
-    return list.filter((p) => !hiddenPerms.includes(getPermId(p)))
-  }, [allPerms])
+    
+    return list.filter((p) => {
+      const permId = getPermId(p)
+      if (hiddenPerms.includes(permId)) return false
+      
+      // Only show permissions the current user has (or if they are global admin)
+      return isGlobalAdmin || myPermissions.includes(permId)
+    })
+  }, [allPerms, isGlobalAdmin, myPermissions])
 
   // Group permissions for display
   const groupedPermissions = useMemo(() => {

@@ -20,7 +20,7 @@ function LoginContent() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/meeting";
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const queryClient = useQueryClient();
 
   const loginMutation = useMutation({

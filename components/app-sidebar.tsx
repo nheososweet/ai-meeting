@@ -26,9 +26,14 @@ const appNav = {
     //   requiredPerms: ["process_pipeline"],
     // },
     {
+      title: "Bảng điều khiển",
+      href: "/dashboard",
+      icon: LayoutDashboardIcon,
+    },
+    {
       title: "Trình biên tập cuộc họp",
       href: "/meeting",
-      icon: LayoutDashboardIcon,
+      icon: MicIcon,
       requiredPerms: ["process_pipeline"],
     },
     {
@@ -136,32 +141,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 );
               })}
 
-              {/* Meeting Records Navigation — Sidebar Guard */}
-              {canSeeMeetingRecords && (
-                <Link
-                  href={appNav.meetingRecords.href}
+              {/* Meeting Records Navigation — Always Visible */}
+              <Link
+                href={appNav.meetingRecords.href}
+                className={cn(
+                  "group flex items-center gap-3 px-3 py-3.5 border-b border-sidebar-border transition-colors",
+                  isMeetingRecordsActive
+                    ? "text-primary"
+                    : "text-sidebar-foreground hover:text-primary"
+                )}
+              >
+                <div
                   className={cn(
-                    "group flex items-center gap-3 px-3 py-3.5 border-b border-sidebar-border transition-colors",
+                    "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
                     isMeetingRecordsActive
-                      ? "text-primary"
-                      : "text-sidebar-foreground hover:text-primary"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-primary/10 text-primary group-hover:bg-primary/20"
                   )}
                 >
-                  <div
-                    className={cn(
-                      "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
-                      isMeetingRecordsActive
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-primary/10 text-primary group-hover:bg-primary/20"
-                    )}
-                  >
-                    <appNav.meetingRecords.icon className="size-[18px]" />
-                  </div>
-                  <span className="text-[13px] font-bold uppercase tracking-wide flex-1">
-                    {appNav.meetingRecords.title}
-                  </span>
-                </Link>
-              )}
+                  <appNav.meetingRecords.icon className="size-[18px]" />
+                </div>
+                <span className="text-[13px] font-bold uppercase tracking-wide flex-1">
+                  {appNav.meetingRecords.title}
+                </span>
+              </Link>
 
               {/* IAM Navigation — Sidebar Guard */}
               {canSeeIam && (

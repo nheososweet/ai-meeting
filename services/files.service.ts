@@ -1,4 +1,4 @@
-import { pipelineApi } from "@/services/pipeline-api";
+import { api, pipelineApi } from "@/services/pipeline-api";
 import { type PaginatedResponse } from "@/lib/types/iam";
 import {
   type UpstreamFileRecord,
@@ -52,7 +52,7 @@ export const filesService = {
    * Fetch list of files with optional filters and pagination
    */
   getFiles: async (params?: FilesQueryParams): Promise<PaginatedResponse<FileRecord>> => {
-    const response = await pipelineApi.get<PaginatedResponse<UpstreamFileRecord>>("/files", {
+    const response = await api.get<PaginatedResponse<UpstreamFileRecord>>("/files", {
       params,
     });
 

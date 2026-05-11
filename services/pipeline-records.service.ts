@@ -1,4 +1,4 @@
-import { pipelineApi } from "@/services/pipeline-api";
+import { api, pipelineApi } from "@/services/pipeline-api";
 import { type PaginatedResponse } from "@/lib/types/iam";
 
 interface UpstreamDiarizeTranscribeResponse {
@@ -368,7 +368,7 @@ export async function updateReport(input: {
   formData.append("id", String(input.id));
   formData.append("text_content", input.textContent);
 
-  const response = await pipelineApi.post<UpstreamUpdateReportResponse>(
+  const response = await api.post<UpstreamUpdateReportResponse>(
     "/update-report",
     formData.toString(),
     {
@@ -398,7 +398,7 @@ export async function updateTranscribe(input: {
   formData.append("id", String(input.id));
   formData.append("text_content", input.textContent);
 
-  const response = await pipelineApi.post<UpstreamUpdateTranscribeResponse>(
+  const response = await api.post<UpstreamUpdateTranscribeResponse>(
     "/update-transcribe",
     formData.toString(),
     {
@@ -546,7 +546,7 @@ export async function sendMail(input: {
     requestBody.file_id = input.fileId;
   }
 
-  const response = await pipelineApi.post<unknown>("/send-mail", requestBody);
+  const response = await api.post<unknown>("/send-mail", requestBody);
 
   return parseSendMailResponse(response.data);
 }
@@ -555,7 +555,7 @@ export async function getRecords(params?: {
   page?: number;
   size?: number;
 }): Promise<PaginatedResponse<PipelineRecord>> {
-  const response = await pipelineApi.get<PaginatedResponse<UpstreamRecord>>(
+  const response = await api.get<PaginatedResponse<UpstreamRecord>>(
     "/records",
     { params },
   );

@@ -116,12 +116,12 @@ export default function RootLayout({
       lang="vi"
       className={`${openSans.variable} h-full antialiased`}
     >
-      <Script
-        id="theme-init"
-        strategy="beforeInteractive"
-        dangerouslySetInnerHTML={{ __html: themeInitScript }}
-      />
       <body className="min-h-full flex flex-col">
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
         <Providers>{children}</Providers>
       </body>
     </html>

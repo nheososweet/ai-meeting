@@ -56,6 +56,7 @@ export function PermissionGuard({
               alt="Loading"
               fill
               className="object-contain animate-pulse"
+              sizes="80px"
             />
           </div>
         </div>

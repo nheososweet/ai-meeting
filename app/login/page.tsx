@@ -70,8 +70,7 @@ function LoginContent() {
           fill
           className="object-cover"
           priority
-          quality={100}
-          unoptimized
+          sizes="100vw"
         />
       </div>
 
@@ -86,6 +85,7 @@ function LoginContent() {
                 alt="Quốc Huy"
                 fill
                 className="object-contain"
+                sizes="96px"
               />
             </div>
             <h1 className="text-primary text-xl font-extrabold leading-tight uppercase tracking-wider">

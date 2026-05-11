@@ -94,6 +94,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             alt="Quốc Huy"
             fill
             className="object-contain"
+            sizes="48px"
           />
         </div>
         <h2 className="text-[11px] font-extrabold leading-tight text-primary uppercase text-center tracking-wide">

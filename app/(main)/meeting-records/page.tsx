@@ -104,7 +104,7 @@ export default function MeetingRecordsPage() {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [previewRecord, setPreviewRecord] = useState<FileRecord | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<FileRecord | null>(null);
-  
+
   const [search, setSearch] = useState("");
   const [statusStep, setStatusStep] = useState<string>("upload");
   const [statusValue, setStatusValue] = useState<string>("success");
@@ -138,11 +138,11 @@ export default function MeetingRecordsPage() {
           </p>
         </div>
 
-        {canManage && (
-          <Button onClick={() => setIsUploadOpen(true)} size="sm" className="shrink-0">
-            <PlusIcon className="mr-1.5 size-4" /> Tải lên file
-          </Button>
-        )}
+        {/* {canManage && ( */}
+        <Button onClick={() => setIsUploadOpen(true)} size="sm" className="shrink-0">
+          <PlusIcon className="mr-1.5 size-4" /> Tải lên file
+        </Button>
+        {/* )} */}
       </div>
 
       {/* Filter Toolbar */}
@@ -224,7 +224,7 @@ export default function MeetingRecordsPage() {
                 <TableBody>
                   {records.map((record) => {
                     const isCompleted = record.status === "completed";
-                    
+
                     return (
                       <TableRow key={record.id} className="group transition-colors hover:bg-muted/20">
                         <TableCell className="font-mono text-xs text-muted-foreground">
@@ -250,22 +250,22 @@ export default function MeetingRecordsPage() {
                           <TooltipProvider>
                             <div className="flex items-center gap-2">
                               {(() => {
-                                const totalAssignees = 
-                                  record.assignedToUsers.length + 
-                                  record.assignedToGroups.length + 
+                                const totalAssignees =
+                                  record.assignedToUsers.length +
+                                  record.assignedToGroups.length +
                                   record.assignedToCompanies.length;
-                                
+
                                 if (totalAssignees === 0) {
                                   return <span className="text-xs text-muted-foreground italic">Chưa phân bổ</span>;
                                 }
-  
+
                                 const displayLimit = 3;
                                 const allAssignees = [
                                   ...record.assignedToUsers.map(u => ({ id: u.id, name: u.name, type: 'user' })),
                                   ...record.assignedToGroups.map(g => ({ id: g.id, name: g.name, type: 'group' })),
                                   ...record.assignedToCompanies.map(c => ({ id: c.id, name: c.name, type: 'company' }))
                                 ];
-  
+
                                 return (
                                   <Tooltip>
                                     <TooltipTrigger asChild>
@@ -275,9 +275,9 @@ export default function MeetingRecordsPage() {
                                             <Avatar key={`${assignee.type}-${assignee.id}`} size="sm">
                                               <AvatarFallback className={cn(
                                                 "text-[10px]",
-                                                assignee.type === 'company' ? "bg-blue-100 text-blue-600" : 
-                                                assignee.type === 'group' ? "bg-amber-100 text-amber-600" : 
-                                                "bg-primary/10 text-primary"
+                                                assignee.type === 'company' ? "bg-blue-100 text-blue-600" :
+                                                  assignee.type === 'group' ? "bg-amber-100 text-amber-600" :
+                                                    "bg-primary/10 text-primary"
                                               )}>
                                                 {assignee.type === 'user' && <UserIcon className="size-3" />}
                                                 {assignee.type === 'group' && <UsersIcon className="size-3" />}
@@ -385,8 +385,8 @@ export default function MeetingRecordsPage() {
                                         disabled={isCompleted}
                                         className={cn(
                                           "size-8",
-                                          isCompleted 
-                                            ? "text-muted-foreground/40 cursor-not-allowed" 
+                                          isCompleted
+                                            ? "text-muted-foreground/40 cursor-not-allowed"
                                             : "text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
                                         )}
                                         onClick={() => {
@@ -497,9 +497,9 @@ export default function MeetingRecordsPage() {
         )}
       </div>
 
-      <UploadFileDialog 
-        open={isUploadOpen} 
-        onOpenChange={setIsUploadOpen} 
+      <UploadFileDialog
+        open={isUploadOpen}
+        onOpenChange={setIsUploadOpen}
         showActionToast={showActionToast}
       />
 
@@ -524,13 +524,12 @@ export default function MeetingRecordsPage() {
 
       {actionToast ? (
         <div
-          className={`pointer-events-none fixed right-4 bottom-4 z-50 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur ${
-            actionToast.variant === "success"
-              ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
-              : actionToast.variant === "error"
-                ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
-                : "border-border/70 bg-background/95 text-foreground"
-          }`}
+          className={`pointer-events-none fixed right-4 bottom-4 z-50 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur ${actionToast.variant === "success"
+            ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
+            : actionToast.variant === "error"
+              ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
+              : "border-border/70 bg-background/95 text-foreground"
+            }`}
         >
           {actionToast.message}
         </div>
@@ -577,13 +576,13 @@ function StatusIndicator({ record }: { record: FileRecord }) {
   );
 }
 
-function AudioPreviewDialog({ 
-  file, 
-  isOpen, 
-  onClose 
-}: { 
-  file: FileRecord | null; 
-  isOpen: boolean; 
+function AudioPreviewDialog({
+  file,
+  isOpen,
+  onClose
+}: {
+  file: FileRecord | null;
+  isOpen: boolean;
   onClose: () => void;
 }) {
   if (!file) return null;

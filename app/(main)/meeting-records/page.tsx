@@ -338,7 +338,7 @@ export default function MeetingRecordsPage() {
                             {formatDate(record.createTime)}
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center justify-end gap-1">
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -534,10 +534,10 @@ function AudioPreviewDialog({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle className="text-base truncate pr-6">
+          <DialogTitle className="text-base line-clamp-2 break-all pr-6" title={file.title || file.filename}>
             {file.title || file.filename}
           </DialogTitle>
-          <DialogDescription className="text-xs truncate">
+          <DialogDescription className="text-xs line-clamp-2 break-all" title={file.filename}>
             {file.filename}
           </DialogDescription>
         </DialogHeader>

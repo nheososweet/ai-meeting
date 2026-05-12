@@ -329,35 +329,8 @@ export default function HistoryPage() {
                           {formatDate(record.createTime)}
                         </TableCell>
                         <TableCell className="text-right pr-5">
-                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end gap-1">
                             <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                    onClick={() => setPreviewAudioRecord(record)}
-                                  >
-                                    <PlayIcon className="size-3.5 fill-current" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Nghe lại</TooltipContent>
-                              </Tooltip>
-
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                    onClick={() => handlePreviewTranscript(record as any)}
-                                  >
-                                    <FileTextIcon className="size-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Xem bản gỡ băng</TooltipContent>
-                              </Tooltip>
 
                               {record.report && (
                                 <Tooltip>
@@ -376,6 +349,34 @@ export default function HistoryPage() {
                                   <TooltipContent>Xem Biên bản</TooltipContent>
                                 </Tooltip>
                               )}
+
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                    onClick={() => handlePreviewTranscript(record as any)}
+                                  >
+                                    <FileTextIcon className="size-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Xem bản gỡ băng</TooltipContent>
+                              </Tooltip>
+
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                    onClick={() => setPreviewAudioRecord(record)}
+                                  >
+                                    <PlayIcon className="size-3.5 fill-current" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Nghe lại</TooltipContent>
+                              </Tooltip>
 
                               {canSendMail && (
                                 <Tooltip>
@@ -572,14 +573,14 @@ function AudioPreviewDialog({ file, isOpen, onClose }: { file: FileRecord | null
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[450px] overflow-hidden gap-0 p-0 border-none shadow-2xl rounded-2xl bg-gradient-to-b from-background to-muted/20">
-        <div className="relative p-6 space-y-6">
-          <div className="space-y-1.5 pr-8">
-            <h3 className="text-lg font-bold text-foreground leading-tight line-clamp-2" title={file.title || file.filename}>
+        <div className="relative p-6 space-y-6 min-w-0">
+          <div className="space-y-1.5 pr-8 min-w-0">
+            <h3 className="text-lg font-bold text-foreground leading-tight line-clamp-2 break-all" title={file.title || file.filename}>
               {file.title || file.filename}
             </h3>
-            <p className="text-xs font-medium text-muted-foreground/80 truncate flex items-center gap-1.5">
+            <p className="text-xs font-medium text-muted-foreground/80 flex items-center gap-1.5 min-w-0">
               <span className="size-1.5 rounded-full bg-primary/40 shrink-0" />
-              {file.filename}
+              <span className="truncate min-w-0" title={file.filename}>{file.filename}</span>
             </p>
           </div>
 

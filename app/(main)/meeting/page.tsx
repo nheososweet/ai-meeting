@@ -621,16 +621,18 @@ export default function MeetingPage() {
 
         <section className="flex-1 overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b border-border/60 px-4 py-2 bg-muted/10">
-              <TabsList className="h-9 bg-transparent p-0 gap-1">
-                {availableTabs.map((tab) => (
-                  <TabsTrigger key={tab.id} value={tab.id} className="h-8 rounded-md px-3 text-xs font-medium transition-all data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm">
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-border/60 px-4 py-2 bg-muted/10 gap-2 overflow-hidden">
+              <div className="w-full overflow-x-auto pb-1 -mb-1" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                <TabsList className="h-9 bg-transparent p-0 gap-1 w-max">
+                  {availableTabs.map((tab) => (
+                    <TabsTrigger key={tab.id} value={tab.id} className="h-8 rounded-md px-3 text-xs font-medium transition-all data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm">
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
                 {activeTab === "transcript" && shouldShowRawTranscript && (
                   <Button variant="ghost" size="sm" onClick={handleCopyRawTranscript} className="h-8 gap-1.5 text-[11px] font-semibold text-muted-foreground">Sao chép bản gốc</Button>
                 )}

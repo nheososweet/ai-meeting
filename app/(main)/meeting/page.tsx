@@ -7,6 +7,7 @@ import {
   ChevronUpIcon,
   CircleDashedIcon,
   CircleIcon,
+  Edit3Icon,
   FolderOpenIcon,
   Loader2Icon,
   Maximize2Icon,
@@ -34,6 +35,7 @@ import { SpeakersLabelingDialog } from "@/app/(main)/workspace/_components/Speak
 import {
   cleanTranscriptLine,
   parseTranscriptSegments,
+  buildSpeakerSummariesFromSegments,
 } from "@/app/(main)/workspace/_lib/transcript-utils";
 import {
   minutesDraftSchema,
@@ -45,6 +47,7 @@ import { useDiarizeTranscribeByFileIdMutation } from "@/hooks/services/use-diari
 import { useDiarizeTranscribeMutation } from "@/hooks/services/use-diarize-transcribe-mutation";
 import { useSummaryMinutesMutation } from "@/hooks/services/use-summary-minutes-mutation";
 import { useUpdateReportMutation } from "@/hooks/services/use-update-report-mutation";
+import { useUpdateTranscribeMutation } from "@/hooks/services/use-update-transcribe-mutation";
 import { meetingRecords } from "@/lib/mock/meetings";
 import { sendMail } from "@/services/pipeline-records.service";
 import type {
@@ -54,6 +57,7 @@ import type {
   TranscriptSegment,
 } from "@/lib/types/meeting";
 
+import { TranscriptEditorDialog } from "./_components/TranscriptEditorDialog";
 import { FileSelector } from "./_components/file-selector";
 import { FileRecord } from "@/lib/types/files";
 import { cn } from "@/lib/utils";
@@ -149,6 +153,7 @@ export default function MeetingPage() {
   const diarizeTranscribeByFileIdMutation = useDiarizeTranscribeByFileIdMutation();
   const summaryMinutesMutation = useSummaryMinutesMutation();
   const updateReportMutation = useUpdateReportMutation();
+  const updateTranscribeMutation = useUpdateTranscribeMutation();
 
   const { hasPermission } = useAuth();
   const canSendMail = hasPermission("send_mail");
@@ -179,6 +184,9 @@ export default function MeetingPage() {
   const [emailIsHtml, setEmailIsHtml] = useState(true);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [isMinutesDialogOpen, setIsMinutesDialogOpen] = useState(false);
+  const [isTranscriptEditorOpen, setIsTranscriptEditorOpen] = useState(false);
+  const [isSavingTranscript, setIsSavingTranscript] = useState(false);
+  const [transcriptValidationError, setTranscriptValidationError] = useState<string | null>(null);
   const [minutesDraft, setMinutesDraft] = useState(initialMeeting.minutes);
   const [minutesValidationError, setMinutesValidationError] = useState<
     string | null
@@ -437,6 +445,48 @@ export default function MeetingPage() {
     })();
   }
 
+  async function handleSaveTranscript(content: string) {
+    const apiRecordId = activeMeeting.apiRecordId;
+    if (!apiRecordId) {
+      setTranscriptValidationError("Không có ID phiên họp để cập nhật bản gỡ băng.");
+      return;
+    }
+
+    setTranscriptValidationError(null);
+    setIsSavingTranscript(true);
+
+    try {
+      await updateTranscribeMutation.mutateAsync({
+        id: apiRecordId,
+        textContent: content,
+      });
+
+      setActiveMeeting((prev) => {
+        const newSegments = parseTranscriptSegments(content.split("\n"));
+        const updatedSummaries = buildSpeakerSummariesFromSegments(
+          newSegments,
+          prev.speakerSummaries
+        );
+
+        return {
+          ...prev,
+          refinedTranscript: content,
+          speakerSummaries: updatedSummaries,
+          segments: newSegments,
+          speakerCount: new Set(newSegments.map(s => s.speaker)).size,
+        };
+      });
+      
+      setIsTranscriptEditorOpen(false);
+      showActionToast("Đã lưu bản gỡ băng thành công.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Lỗi không xác định";
+      setTranscriptValidationError(`Lỗi khi lưu bản gỡ băng: ${message}`);
+    } finally {
+      setIsSavingTranscript(false);
+    }
+  }
+
   function handleSendEmail(recipients: string[], template: MeetingMailTemplate) {
     if (!canSendMail) {
       showActionToast("Bạn không có quyền gửi email biên bản.", "error");
@@ -637,7 +687,12 @@ export default function MeetingPage() {
                   <Button variant="ghost" size="sm" onClick={handleCopyRawTranscript} className="h-8 gap-1.5 text-[11px] font-semibold text-muted-foreground">Sao chép bản gốc</Button>
                 )}
                 {activeTab === "transcript" && shouldShowRefinedTranscript && (
-                  <Button variant="ghost" size="sm" onClick={handleCopyRefinedTranscript} className="h-8 gap-1.5 text-[11px] font-semibold text-primary">Sao chép bản làm sạch</Button>
+                  <Button variant="ghost" size="sm" onClick={handleCopyRefinedTranscript} className="h-8 gap-1.5 text-[11px] font-semibold text-primary hover:bg-primary/10">Sao chép bản làm sạch</Button>
+                )}
+                {activeTab === "transcript" && (shouldShowRawTranscript || shouldShowRefinedTranscript) && (
+                  <Button variant="ghost" size="sm" onClick={() => setIsTranscriptEditorOpen(true)} className="h-8 gap-1.5 text-[11px] font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10">
+                    <Edit3Icon className="size-3.5" /> Chỉnh sửa
+                  </Button>
                 )}
                 {activeTab === "transcript" && canTranslate && (shouldShowRawTranscript || shouldShowRefinedTranscript) && (
                   <TranslateDialog 
@@ -775,7 +830,14 @@ export default function MeetingPage() {
           </Tabs>
         </section>
 
-
+        <TranscriptEditorDialog
+          open={isTranscriptEditorOpen}
+          onOpenChange={setIsTranscriptEditorOpen}
+          rawTranscript={activeMeeting.refinedTranscript || activeMeeting.rawTranscript}
+          isSaving={isSavingTranscript}
+          onSave={handleSaveTranscript}
+          error={transcriptValidationError}
+        />
       </div>
     </>
   );

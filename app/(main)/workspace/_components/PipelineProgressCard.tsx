@@ -27,7 +27,7 @@ export function PipelineProgressCard({
     <>
       <div className="mt-4 rounded-lg border border-border/70 bg-secondary/50 p-3">
         <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-          <span>Tiến độ pipeline</span>
+          <span>Tiến độ quy trình</span>
           <span>{stageProgress}%</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
@@ -41,7 +41,7 @@ export function PipelineProgressCard({
       <div className="mt-3 rounded-lg border border-border/70 bg-secondary/50 p-3">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Pipeline chi tiết
+            Chi tiết quy trình
           </h3>
           {canRetryPipeline ? (
             <Button
@@ -58,7 +58,7 @@ export function PipelineProgressCard({
         {failedStepId ? (
           <p className="mt-2 text-[11px] text-rose-600 dark:text-rose-300">
             Đã phát hiện lỗi ở bước: {failedStepId}. Bạn có thể thử lại để chạy
-            lại pipeline.
+            lại quy trình.
           </p>
         ) : null}
         <ul className="mt-3 space-y-2">

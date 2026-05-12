@@ -66,7 +66,7 @@ export function TranscriptComparisonDialog({
             Đối chiếu transcript
           </h3> */}
           <h3 className="text-sm font-semibold text-foreground">
-            Transcript
+            Bản gỡ băng
           </h3>
         </div>
 
@@ -78,7 +78,7 @@ export function TranscriptComparisonDialog({
                 variant="ghost"
                 size="icon-sm"
                 className="text-muted-foreground hover:text-foreground"
-                aria-label="Mở toàn màn hình raw transcript"
+                aria-label="Mở toàn màn hình bản gỡ băng gốc"
                 title="Mở toàn màn hình"
               >
                 <Maximize2Icon className="size-4" />
@@ -92,7 +92,7 @@ export function TranscriptComparisonDialog({
               <ScrollArea className="min-h-0 flex-1 overflow-hidden">
                 <DialogHeader className="space-y-0 text-left">
                   <DialogTitle className="px-6 pt-6 text-base">
-                    Đối chiếu transcript toàn phiên
+                    Đối chiếu bản gỡ băng toàn phiên
                   </DialogTitle>
                   <DialogDescription className="px-6 pb-3 text-xs">
                     So sánh bản gốc và bản đã làm sạch để rà soát nhanh.
@@ -107,8 +107,8 @@ export function TranscriptComparisonDialog({
                         variant="ghost"
                         size="icon-sm"
                         className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                        aria-label="Copy bản gốc từ nhận diện"
-                        title="Copy bản gốc"
+                        aria-label="Sao chép bản gốc"
+                        title="Sao chép bản gốc"
                         onClick={onCopyRawTranscript}
                       >
                         <CopyIcon className="size-4" />
@@ -129,8 +129,8 @@ export function TranscriptComparisonDialog({
                         variant="ghost"
                         size="icon-sm"
                         className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                        aria-label="Copy bản đã làm sạch"
-                        title="Copy bản sạch"
+                        aria-label="Sao chép bản đã làm sạch"
+                        title="Sao chép bản làm sạch"
                         onClick={onCopyRefinedTranscript}
                         disabled={!shouldShowRefinedTranscript}
                       >
@@ -170,8 +170,8 @@ export function TranscriptComparisonDialog({
               variant="ghost"
               size="icon-sm"
               className="h-7 w-7 text-muted-foreground hover:text-foreground"
-              aria-label="Copy bản gốc từ nhận diện"
-              title="Copy bản gốc"
+              aria-label="Sao chép bản gốc"
+              title="Sao chép bản gốc"
               onClick={onCopyRawTranscript}
             >
               <CopyIcon className="size-4" />
@@ -192,8 +192,8 @@ export function TranscriptComparisonDialog({
               variant="ghost"
               size="icon-sm"
               className="h-7 w-7 text-muted-foreground hover:text-foreground"
-              aria-label="Copy bản đã làm sạch"
-              title="Copy bản sạch"
+              aria-label="Sao chép bản đã làm sạch"
+              title="Sao chép bản làm sạch"
               onClick={onCopyRefinedTranscript}
               disabled={!shouldShowRefinedTranscript}
             >

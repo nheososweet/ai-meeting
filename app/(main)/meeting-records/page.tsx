@@ -138,7 +138,7 @@ export default function MeetingRecordsPage() {
 
         {/* {canManage && ( */}
         <Button onClick={() => setIsUploadOpen(true)} size="sm" className="shrink-0">
-          <PlusIcon className="mr-1.5 size-4" /> Tải lên file
+          <PlusIcon className="mr-1.5 size-4" /> Tải lên tệp
         </Button>
         {/* )} */}
       </div>
@@ -148,7 +148,7 @@ export default function MeetingRecordsPage() {
         <div className="relative w-full sm:w-[280px]">
           <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
-            placeholder="Tìm theo tên file hoặc tiêu đề..."
+            placeholder="Tìm theo tên tệp hoặc tiêu đề..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-9 pl-8 pr-8"
@@ -413,7 +413,7 @@ export default function MeetingRecordsPage() {
                                       </span>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      {isCompleted ? "File đã xử lý xong, không thể giao việc" : "Giao hồ sơ"}
+                                      {isCompleted ? "Tệp đã xử lý xong, không thể giao việc" : "Giao hồ sơ"}
                                     </TooltipContent>
                                   </Tooltip>
                                 )}
@@ -484,7 +484,7 @@ export default function MeetingRecordsPage() {
 function StatusIndicator({ record }: { record: FileRecord }) {
   const steps = [
     { key: "upload", label: "Tải lên" },
-    { key: "transcribe", label: "Transcript" },
+    { key: "transcribe", label: "Bản gỡ băng" },
     { key: "summary", label: "Tóm tắt" },
     { key: "report", label: "Biên bản" },
     { key: "sendEmail", label: "Email" },

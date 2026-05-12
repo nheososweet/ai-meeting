@@ -86,7 +86,7 @@ export function EmailDialog({
         {reportUrl ? (
           <div className="min-w-0 space-y-1 rounded-md border border-border/70 bg-muted/30 px-3 py-2">
             <p className="text-xs font-medium text-muted-foreground">
-              URL file biên bản
+              URL tệp biên bản
             </p>
             <a
               href={reportUrl}

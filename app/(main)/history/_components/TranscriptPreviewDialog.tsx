@@ -70,7 +70,7 @@ export function TranscriptPreviewDialog({
       >
         <DialogHeader className="space-y-0 text-left">
           <DialogTitle className="px-4 pt-4 text-base sm:px-6 sm:pt-6">
-            Xem nhanh transcript
+            Xem nhanh bản gỡ băng
           </DialogTitle>
           <DialogDescription className="px-4 pb-3 text-xs sm:px-6">
             {transcriptRecordFilename ??
@@ -82,12 +82,12 @@ export function TranscriptPreviewDialog({
           {transcriptRecordId && isLoading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <LoaderCircleIcon className="size-4 animate-spin" />
-              Đang tải nội dung transcript...
+              Đang tải nội dung bản gỡ băng...
             </div>
           ) : (
             <div className="wrap-break-word text-sm leading-7 text-muted-foreground">
               {renderStyledTranscript(transcriptContent) ||
-                "Chưa có nội dung transcript."}
+                "Chưa có nội dung bản gỡ băng."}
             </div>
           )}
         </div>
@@ -101,7 +101,7 @@ export function TranscriptPreviewDialog({
             disabled={!transcriptRecordId || isLoading}
           >
             <CopyIcon className="size-4" />
-            Copy transcript
+            Sao chép bản gỡ băng
           </Button>
           {onOpenLabeling && (
             <Button

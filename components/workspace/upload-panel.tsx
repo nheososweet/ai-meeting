@@ -47,13 +47,13 @@ function UploadPanelView({
   return (
     <div className="mt-5 space-y-3">
       <label className="text-sm font-medium text-foreground">
-        Tải lên tệp WAV/MP3
+        Tải lên tệp MP3, WAV
       </label>
 
       <div
         className={`group cursor-pointer rounded-xl border border-dashed p-3 transition-all md:p-4 ${isDraggingUpload
-            ? "border-primary bg-primary/5 scale-[1.01]"
-            : "border-border/70 bg-secondary/50 hover:border-primary/50 hover:bg-muted/50"
+          ? "border-primary bg-primary/5 scale-[1.01]"
+          : "border-border/70 bg-secondary/50 hover:border-primary/50 hover:bg-muted/50"
           } ${busyProcessing ? "pointer-events-none opacity-70" : ""}`}
         onDragEnter={onDragEnter}
         onDragOver={onDragOver}
@@ -71,10 +71,10 @@ function UploadPanelView({
           </div>
           <div className="flex-1 space-y-0.5">
             <p className="text-sm font-semibold text-foreground">
-              Kéo thả file vào đây hoặc <span className="text-primary hover:underline">Chọn tệp từ máy</span>
+              Kéo thả tệp vào đây hoặc <span className="text-primary hover:underline">Chọn tệp từ máy</span>
             </p>
             <p className="text-xs text-muted-foreground">
-              Hỗ trợ WAV, MP3, WebM, OGG. Giới hạn 100 MB.
+              Hỗ trợ MP3, WAV. Giới hạn 200 MB.
             </p>
           </div>
 
@@ -82,7 +82,7 @@ function UploadPanelView({
             ref={fileInputRef}
             type="file"
             className="hidden"
-            accept="audio/wav,audio/mp3,audio/mpeg,audio/webm,audio/ogg"
+            accept=".mp3,.wav"
             onChange={onFileChange}
             disabled={busyProcessing}
           />

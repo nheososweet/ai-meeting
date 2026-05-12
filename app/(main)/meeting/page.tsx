@@ -110,14 +110,14 @@ function resolveMailTemplate(
 const initialMeeting: MeetingRecord = {
   ...sourceMeeting,
   title: "Phiên mới chưa xử lý",
-  fileName: "Chưa có file nguồn",
+  fileName: "Chưa có tệp nguồn",
   inputSource: "upload",
   processingStatus: "idle",
   emailStatus: "not_sent",
   rawTranscript:
-    "Transcript sẽ hiển thị sau khi bạn chọn file và hoàn tất xử lý AI.",
+    "Bản gỡ băng sẽ hiển thị sau khi bạn chọn tệp và hoàn tất xử lý AI.",
   refinedTranscript:
-    "Bản làm sạch sẽ hiển thị sau khi hệ thống xử lý xong transcript gốc.",
+    "Bản làm sạch sẽ hiển thị sau khi hệ thống xử lý xong bản gỡ băng gốc.",
   segments: [],
   minutes: "Biên bản điều hành sẽ được sinh sau khi xử lý hoàn tất.",
   speakerSummaries: [],
@@ -139,7 +139,7 @@ function TabEmptyState({ busyProcessing }: { busyProcessing: boolean }) {
   return (
     <div className="mt-10 flex flex-col items-center justify-center rounded-lg border border-dashed border-border/80 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
       <FolderOpenIcon className="mb-3 size-8 text-muted-foreground/50" />
-      <p>Chưa có dữ liệu. Vui lòng chọn file phù hợp để bắt đầu.</p>
+      <p>Chưa có dữ liệu. Vui lòng chọn tệp phù hợp để bắt đầu.</p>
     </div>
   );
 }
@@ -283,10 +283,10 @@ export default function MeetingPage() {
   const shouldShowRefinedDiarization = refinedSegments.length > 0;
 
   const availableTabs = [
-    { id: "transcript", label: "Transcript" },
-    { id: "diarization", label: "Theo người nói" },
-    { id: "summary", label: "Tóm tắt" },
-    { id: "minutes", label: "Biên bản" },
+    { id: "transcript", label: "Bản gỡ băng" },
+    { id: "diarization", label: "Phân vai người nói" },
+    { id: "summary", label: "Tóm tắt nội dung" },
+    { id: "minutes", label: "Biên bản điều hành" },
   ];
 
   const [activeTab, setActiveTab] = useState<string>("transcript");
@@ -325,15 +325,15 @@ export default function MeetingPage() {
     const transcript = activeMeeting.rawTranscript.trim();
 
     if (!transcript) {
-      showActionToast("Chưa có transcript để copy.");
+      showActionToast("Chưa có bản gỡ băng để sao chép.");
       return;
     }
 
     try {
       await navigator.clipboard.writeText(transcript);
-      showActionToast("Đã copy raw transcript.");
+      showActionToast("Đã sao chép bản gỡ băng gốc.");
     } catch {
-      showActionToast("Copy thất bại, vui lòng thử lại.");
+      showActionToast("Sao chép thất bại, vui lòng thử lại.");
     }
   }
 
@@ -341,15 +341,15 @@ export default function MeetingPage() {
     const transcript = (activeMeeting.refinedTranscript ?? "").trim();
 
     if (!transcript) {
-      showActionToast("Chưa có bản đã làm sạch để copy.");
+      showActionToast("Chưa có bản đã làm sạch để sao chép.");
       return;
     }
 
     try {
       await navigator.clipboard.writeText(transcript);
-      showActionToast("Đã copy bản đã làm sạch.");
+      showActionToast("Đã sao chép bản đã làm sạch.");
     } catch {
-      showActionToast("Copy thất bại, vui lòng thử lại.");
+      showActionToast("Sao chép thất bại, vui lòng thử lại.");
     }
   }
 
@@ -632,10 +632,10 @@ export default function MeetingPage() {
 
               <div className="flex items-center gap-2">
                 {activeTab === "transcript" && shouldShowRawTranscript && (
-                  <Button variant="ghost" size="sm" onClick={handleCopyRawTranscript} className="h-8 gap-1.5 text-[11px] font-semibold text-muted-foreground">Copy Raw</Button>
+                  <Button variant="ghost" size="sm" onClick={handleCopyRawTranscript} className="h-8 gap-1.5 text-[11px] font-semibold text-muted-foreground">Sao chép bản gốc</Button>
                 )}
                 {activeTab === "transcript" && shouldShowRefinedTranscript && (
-                  <Button variant="ghost" size="sm" onClick={handleCopyRefinedTranscript} className="h-8 gap-1.5 text-[11px] font-semibold text-primary">Copy Refined</Button>
+                  <Button variant="ghost" size="sm" onClick={handleCopyRefinedTranscript} className="h-8 gap-1.5 text-[11px] font-semibold text-primary">Sao chép bản làm sạch</Button>
                 )}
                 {activeTab === "transcript" && canTranslate && (shouldShowRawTranscript || shouldShowRefinedTranscript) && (
                   <TranslateDialog 
@@ -673,7 +673,7 @@ export default function MeetingPage() {
                           {shouldShowRefinedTranscript ? (
                             <div className="space-y-6 animate-in fade-in duration-700">
                               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
-                                <CheckCircle2Icon className="size-4" /> Bản đã làm sạch (Refined)
+                                <CheckCircle2Icon className="size-4" /> Bản đã làm sạch
                               </div>
                               <div className="prose prose-sm max-w-none text-foreground/90">
                                 {activeMeeting.refinedTranscript?.split("\n").map((line, i) => (
@@ -684,7 +684,7 @@ export default function MeetingPage() {
                           ) : (
                             <div className="space-y-6">
                               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                <CircleIcon className="size-4" /> Bản gốc (Raw Transcript)
+                                <CircleIcon className="size-4" /> Bản gỡ băng gốc
                               </div>
                               <div className="prose prose-sm max-w-none whitespace-pre-wrap text-foreground/80">
                                 {activeMeeting.rawTranscript}

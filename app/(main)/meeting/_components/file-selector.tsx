@@ -121,7 +121,7 @@ function FileDetailsDialog({
           <Button variant="outline" onClick={onClose}>Đóng</Button>
           <Button onClick={() => { onSelect(file); onClose(); }}>
             <CheckCircle2 className="size-4 mr-2" />
-            Chọn file này
+            Chọn tệp này
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -234,9 +234,9 @@ export function FileSelector({
                 </div>
                 <p className="text-sm font-semibold text-foreground/70">Danh sách trống</p>
                 <p className="text-[11px] opacity-60">
-                  {assigned_filter 
-                    ? "Chưa có file nào được gán cho bạn trong mục này." 
-                    : "Bạn chưa tải lên file nào trong mục này."}
+                  {assigned_filter
+                    ? "Chưa có tệp nào được gán cho bạn trong mục này."
+                    : "Bạn chưa tải lên tệp nào trong mục này."}
                 </p>
               </div>
             ) : (
@@ -328,7 +328,7 @@ export function FileSelector({
           {busyProcessing ? (
             <>
               <Loader2 className="mr-2 size-3 animate-spin" />
-              Đang xử lý pipeline...
+              Đang xử lý quy trình...
             </>
           ) : (
             <>Bắt đầu phân tích AI</>

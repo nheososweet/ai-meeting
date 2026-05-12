@@ -35,16 +35,16 @@ interface AssignFileDialogProps {
   isReadOnly?: boolean
 }
 
-export function AssignFileDialog({ 
-  open, 
-  onOpenChange, 
-  fileId, 
+export function AssignFileDialog({
+  open,
+  onOpenChange,
+  fileId,
   filename,
   initialData,
   isReadOnly = false,
 }: AssignFileDialogProps) {
   const { currentUser } = useAuth()
-  
+
   // Form State
   const [selectedUserId, setSelectedUserId] = useState<string>("")
   const [selectedGroups, setSelectedGroups] = useState<SelectionItem[]>([])
@@ -69,18 +69,18 @@ export function AssignFileDialog({
 
   const handleCompanyToggle = (company: SelectionItem) => {
     if (isReadOnly) return
-    setSelectedCompanies((prev) => 
-      prev.some(c => String(c.id) === String(company.id)) 
-        ? prev.filter((v) => String(v.id) !== String(company.id)) 
+    setSelectedCompanies((prev) =>
+      prev.some(c => String(c.id) === String(company.id))
+        ? prev.filter((v) => String(v.id) !== String(company.id))
         : [...prev, company]
     )
   }
 
   const handleGroupToggle = (group: SelectionItem) => {
     if (isReadOnly) return
-    setSelectedGroups((prev) => 
-      prev.some(g => String(g.id) === String(group.id)) 
-        ? prev.filter((v) => String(v.id) !== String(group.id)) 
+    setSelectedGroups((prev) =>
+      prev.some(g => String(g.id) === String(group.id))
+        ? prev.filter((v) => String(v.id) !== String(group.id))
         : [...prev, group]
     )
   }
@@ -113,9 +113,9 @@ export function AssignFileDialog({
             {isReadOnly ? "Chi tiết phân phối" : "Phân phối hồ sơ"}
           </DialogTitle>
           <DialogDescription className="line-clamp-1">
-            {isReadOnly 
-              ? `Xem danh sách nhân sự/tổ chức được cấp quyền cho file `
-              : `Giao quyền tiếp cận file `
+            {isReadOnly
+              ? `Xem danh sách nhân sự/tổ chức được cấp quyền cho tệp `
+              : `Giao quyền tiếp cận tệp `
             }
             <span className="font-semibold text-foreground italic">{filename}</span>
           </DialogDescription>

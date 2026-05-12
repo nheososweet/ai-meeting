@@ -21,7 +21,16 @@ import { type ActionToastVariant } from "@/app/(main)/history/_hooks/useHistoryT
 
 const uploadSchema = z.object({
   title: z.string().min(1, "Vui lòng nhập tiêu đề"),
-  file: z.any().refine((files) => files?.length === 1, "Vui lòng chọn 1 tệp audio"),
+  file: z
+    .any()
+    .refine((files) => files?.length === 1, "Vui lòng chọn 1 tệp âm thanh")
+    .refine((files) => {
+      if (!files?.[0]) return false;
+      const file = files[0] as File;
+      const validExtensions = ["mp3", "wav"];
+      const extension = file.name.split(".").pop()?.toLowerCase();
+      return extension && validExtensions.includes(extension);
+    }, "Chỉ hỗ trợ định dạng MP3, WAV"),
 });
 
 type UploadFormValues = z.infer<typeof uploadSchema>;
@@ -84,10 +93,13 @@ export function UploadFileDialog({ open, onOpenChange, showActionToast }: Upload
             <Input
               id="file"
               type="file"
-              accept="audio/*"
+              accept=".mp3,.wav"
               {...register("file")}
               className="cursor-pointer"
             />
+            <p className="text-[10px] text-muted-foreground italic">
+              * Chỉ hỗ trợ tệp định dạng .mp3, .wav (Tối đa 200MB)
+            </p>
             {errors.file && (
               <p className="text-xs text-destructive">
                 {errors.file.message?.toString()}

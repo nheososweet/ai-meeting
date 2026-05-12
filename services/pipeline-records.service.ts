@@ -444,7 +444,7 @@ export async function generateSummaryAndMinutes(input: {
         content: mergedTranscript,
       },
     ],
-    model: input.model ?? "qwen3.5-flash-2026-02-23",
+    model: input.model ?? "qwen-plus",
   };
 
   if (input.fileId) {

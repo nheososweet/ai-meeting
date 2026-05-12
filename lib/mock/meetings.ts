@@ -43,7 +43,7 @@ export const meetingRecords: MeetingRecord[] = [
         speaker: "Long",
         keyPoints: [
           "ASR đã đạt độ ổn định trên tập dữ liệu nội bộ.",
-          "Đề xuất ưu tiên tối ưu thời gian xử lý cho file dài.",
+          "Đề xuất ưu tiên tối ưu thời gian xử lý cho tệp dài.",
         ],
       },
       {

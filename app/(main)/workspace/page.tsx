@@ -112,9 +112,9 @@ const initialMeeting: MeetingRecord = {
   processingStatus: "idle",
   emailStatus: "not_sent",
   rawTranscript:
-    "Transcript sẽ hiển thị sau khi bạn tải tệp hoặc hoàn tất bản thu trực tiếp.",
+    "Bản gỡ băng sẽ hiển thị sau khi bạn tải tệp hoặc hoàn tất bản thu trực tiếp.",
   refinedTranscript:
-    "Bản làm sạch sẽ hiển thị sau khi hệ thống xử lý xong transcript gốc.",
+    "Bản làm sạch sẽ hiển thị sau khi hệ thống xử lý xong bản gỡ băng gốc.",
   segments: [],
   minutes: "Biên bản điều hành sẽ được sinh sau khi xử lý hoàn tất.",
   speakerSummaries: [],
@@ -315,7 +315,7 @@ export default function WorkspacePage() {
     const transcript = activeMeeting.rawTranscript.trim();
 
     if (!transcript) {
-      showActionToast("Chưa có transcript để copy.");
+      showActionToast("Chưa có bản gỡ băng để sao chép.");
       return;
     }
 
@@ -334,9 +334,9 @@ export default function WorkspacePage() {
         document.body.removeChild(textArea);
       }
 
-      showActionToast("Đã copy raw transcript.");
+      showActionToast("Đã sao chép bản gỡ băng gốc.");
     } catch {
-      showActionToast("Copy thất bại, vui lòng thử lại.");
+      showActionToast("Sao chép thất bại, vui lòng thử lại.");
     }
   }
 
@@ -344,7 +344,7 @@ export default function WorkspacePage() {
     const transcript = (activeMeeting.refinedTranscript ?? "").trim();
 
     if (!transcript) {
-      showActionToast("Chưa có bản đã làm sạch để copy.");
+      showActionToast("Chưa có bản đã làm sạch để sao chép.");
       return;
     }
 
@@ -363,9 +363,9 @@ export default function WorkspacePage() {
         document.body.removeChild(textArea);
       }
 
-      showActionToast("Đã copy bản đã làm sạch.");
+      showActionToast("Đã sao chép bản đã làm sạch.");
     } catch {
-      showActionToast("Copy thất bại, vui lòng thử lại.");
+      showActionToast("Sao chép thất bại, vui lòng thử lại.");
     }
   }
 
@@ -375,7 +375,7 @@ export default function WorkspacePage() {
     }
 
     if (busyProcessing) {
-      setNotice("Không thể đổi chế độ khi pipeline đang xử lý.");
+      setNotice("Không thể đổi chế độ khi quy trình đang xử lý.");
       return;
     }
 
@@ -421,7 +421,7 @@ export default function WorkspacePage() {
 
   function handleProcessSelectedFile() {
     if (!selectedFile || !selectedFileName) {
-      setNotice("Vui lòng chọn tệp audio trước khi xử lý.");
+      setNotice("Vui lòng chọn tệp âm thanh trước khi xử lý.");
       return;
     }
 
@@ -451,7 +451,7 @@ export default function WorkspacePage() {
     }
 
     showActionToast(
-      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt và không thao tác các nút khác để đảm bảo Pipeline hoạt động chính xác.",
+      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt và không thao tác các nút khác để đảm bảo quy trình hoạt động chính xác.",
       "info",
       15000,
     );
@@ -716,7 +716,7 @@ export default function WorkspacePage() {
           </div>
 
           <p className="mt-2 text-sm text-muted-foreground">
-            Tải file cuộc họp hoặc ghi âm trực tiếp để bắt đầu dịch băng và tổng
+            Tải tệp cuộc họp hoặc ghi âm trực tiếp để bắt đầu dịch băng và tổng
             hợp nội dung.
           </p>
 
@@ -884,11 +884,11 @@ export default function WorkspacePage() {
                 <article className="rounded-lg border border-border/70 bg-white p-4 shadow-sm">
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-sm font-semibold text-foreground">
-                      Transcript theo người nói
+                      Bản gỡ băng theo người nói
                     </h3>
                     <div className="flex items-center gap-1">
                       <span className="rounded-full border border-border/70 bg-background px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                        {activeMeeting.speakerCount} speaker
+                        {activeMeeting.speakerCount} người nói
                       </span>
                       <Dialog>
                         <DialogTrigger asChild>
@@ -897,7 +897,7 @@ export default function WorkspacePage() {
                             variant="ghost"
                             size="icon-sm"
                             className="text-muted-foreground hover:text-foreground"
-                            aria-label="Mở toàn màn hình transcript theo người nói"
+                            aria-label="Mở toàn màn hình bản gỡ băng theo người nói"
                             title="Mở toàn màn hình"
                           >
                             <Maximize2Icon className="size-4" />
@@ -911,7 +911,7 @@ export default function WorkspacePage() {
                           <ScrollArea className="min-h-0 flex-1 overflow-hidden">
                             <DialogHeader className="space-y-0 text-left">
                               <DialogTitle className="px-6 pt-6 text-base">
-                                Transcript theo người nói
+                                Bản gỡ băng theo người nói
                               </DialogTitle>
                               <DialogDescription className="px-6 pb-3 text-xs">
                                 Xem đầy đủ để đối sánh nội dung theo từng người
@@ -1073,7 +1073,7 @@ export default function WorkspacePage() {
               {shouldShowSpeakerSummary ? (
                 <article className="rounded-lg border border-border/70 bg-white p-4 shadow-sm">
                   <h3 className="text-sm font-semibold text-foreground">
-                    Tóm tắt theo người nói
+                    Tóm tắt nội dung theo người nói
                   </h3>
                   <ul className="mt-3 space-y-3 overflow-auto xl:max-h-[52dvh]">
                     {activeMeeting.speakerSummaries.map((summary) => (

@@ -5,12 +5,12 @@ import { useDebounce } from "@/hooks/use-debounce"
 import { usePaginationState } from "@/hooks/use-pagination"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { 
-  PlusIcon, 
-  ShieldIcon, 
-  Trash2Icon, 
-  Loader2Icon, 
-  SearchIcon, 
+import {
+  PlusIcon,
+  ShieldIcon,
+  Trash2Icon,
+  Loader2Icon,
+  SearchIcon,
   PencilIcon,
   FilterXIcon,
   LockIcon
@@ -46,7 +46,7 @@ export default function RolesPage() {
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [permDialogOpen, setPermDialogOpen] = useState(false)
-  
+
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
 
   // --- Search & Filter State ---
@@ -61,7 +61,7 @@ export default function RolesPage() {
     page_size: 20,
     search: debouncedSearch || undefined,
   })
-  
+
   const roles = rolesData?.data || []
   const meta = rolesData?.meta
 
@@ -93,7 +93,7 @@ export default function RolesPage() {
           <h2 className="text-base font-bold text-foreground">Danh sách Vai trò</h2>
           <p className="text-sm text-muted-foreground mt-0.5 truncate">Quản lý các nhóm quyền hạn được định nghĩa sẵn trong hệ thống.</p>
         </div>
-        
+
         {canManage && (
           <Button onClick={() => setCreateOpen(true)} size="sm" className="shrink-0">
             <PlusIcon className="mr-1.5 size-4" /> Thêm Vai trò
@@ -112,7 +112,7 @@ export default function RolesPage() {
             className="h-9 pl-8 pr-8"
           />
           {search && (
-            <button 
+            <button
               onClick={() => setSearch("")}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
@@ -122,9 +122,9 @@ export default function RolesPage() {
         </div>
 
         {search && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setSearch("")}
             className="h-9 text-xs text-muted-foreground hover:text-foreground"
           >
@@ -155,8 +155,8 @@ export default function RolesPage() {
                 </TableHeader>
                 <TableBody>
                   {roles.map((role) => {
-                    const isSystemRole = role.name === "admin" || role.name === "member"
-                    
+                    const isSystemRole = role.name === "admin"
+
                     return (
                       <TableRow key={role.id} className="group/row">
                         <TableCell className="font-mono text-xs text-muted-foreground">
@@ -200,7 +200,7 @@ export default function RolesPage() {
                                 <ShieldIcon className="mr-1.5 size-3.5" /> Phân quyền
                               </Button>
                             )}
-                            
+
                             {canManage && (
                               <>
                                 {role.name !== "admin" && (

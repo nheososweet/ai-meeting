@@ -32,7 +32,7 @@ export function UserView() {
         <StatsCard
           title="Chờ xử lý"
           value={stats.waitingFiles.toLocaleString()}
-          description="Hồ sơ đang đợi (waiting)"
+          description="Hồ sơ đang đợi"
           icon={ClockIcon}
           className="border-amber-100/50"
           isLoading={loading.waiting}
@@ -40,7 +40,7 @@ export function UserView() {
         <StatsCard
           title="Đã hoàn thành"
           value={stats.completedFiles.toLocaleString()}
-          description="Hồ sơ đã thành công (success)"
+          description="Hồ sơ đã thành công"
           icon={CheckCircle2Icon}
           className="border-emerald-100/50"
           isLoading={loading.completed}
@@ -92,7 +92,11 @@ export function UserView() {
                         {formatDate(record.createTime)}
                       </span>
                       <span className="flex items-center gap-1.5 uppercase tracking-tighter font-bold">
-                        {record.status}
+                        {record.status === "completed" ? "Hoàn thành" : 
+                         record.status === "failed" ? "Thất bại" : 
+                         record.status === "processing" ? "Đang xử lý" :
+                         record.status === "pending" ? "Đang chờ" :
+                         record.status === "uploaded" ? "Đã tải lên" : record.status}
                       </span>
                     </div>
                   </div>

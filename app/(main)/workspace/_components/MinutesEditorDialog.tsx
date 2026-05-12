@@ -92,7 +92,7 @@ export function MinutesEditorDialog({
                         className="inline-flex items-center gap-1 text-xs text-emerald-700 underline transition-colors hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
                       >
                         <ArrowUpRightIcon className="size-3" />
-                        Xem file biên bản
+                        Xem tệp biên bản
                       </a>
                     </div>
                   </div>

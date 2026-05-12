@@ -175,7 +175,7 @@ export function useWorkspacePipeline({
       clearTimer(uploadTimerRef);
       clearTimer(processingTimerRef);
       markPipelineAsError(
-        "Không tìm thấy đầu vào hợp lệ cho pipeline.",
+        "Không tìm thấy đầu vào hợp lệ cho quy trình.",
         "raw_transcript",
       );
       return;
@@ -186,7 +186,7 @@ export function useWorkspacePipeline({
       clearTimer(processingTimerRef);
       markPipelineAsError(
         source === "upload"
-          ? "Không tìm thấy file upload để gọi API dịch băng."
+          ? "Không tìm thấy tệp tải lên để gọi API dịch băng."
           : "Không tìm thấy bản thu để gọi API dịch băng.",
         "raw_transcript",
       );
@@ -207,11 +207,11 @@ export function useWorkspacePipeline({
       ...prev,
       title:
         source === "assigned"
-          ? `Xử lý file được gán: ${fileName}`
+          ? `Xử lý tệp được gán: ${fileName}`
           : source === "self_upload"
-            ? `Xử lý file tự tải: ${fileName}`
+            ? `Xử lý tệp tự tải: ${fileName}`
             : source === "file_select"
-              ? `Xử lý file: ${fileName}`
+              ? `Xử lý tệp: ${fileName}`
               : source === "upload"
                 ? `Phiên xử lý ${fileName}`
                 : "Phiên xử lý bản thu trực tiếp",
@@ -222,7 +222,7 @@ export function useWorkspacePipeline({
       segments: [],
       speakerSummaries: [],
       minutes: "Biên bản điều hành đang được tạo...",
-      rawTranscript: "Transcript thô đang được tạo từ audio...",
+      rawTranscript: "Bản gỡ băng gốc đang được tạo từ âm thanh...",
       refinedTranscript: "Bản làm sạch đang được chuẩn bị...",
       speakerCount: 0,
       mailTemplate: undefined,
@@ -254,7 +254,7 @@ export function useWorkspacePipeline({
         ...current,
         processingStatus: "processing",
       }));
-      setNotice("Đang xử lý nội dung audio...");
+      setNotice("Đang xử lý nội dung âm thanh...");
 
       const runPipelineStep = (
         stepId: PipelineStep["id"],
@@ -324,7 +324,7 @@ export function useWorkspacePipeline({
 
         void (async () => {
           let minutesTimer: ReturnType<typeof setInterval> | null = null;
-          
+
           try {
             let summaries: SpeakerSummary[] = buildSpeakerSummariesFromSegments(
               segments,
@@ -337,17 +337,17 @@ export function useWorkspacePipeline({
 
             const transcriptLinesForChat = segments.length
               ? segments.map(
-                  (segment) =>
-                    `${segment.speaker} (${segment.startSecond}s - ${segment.endSecond}s): ${segment.text}`,
-                )
+                (segment) =>
+                  `${segment.speaker} (${segment.startSecond}s - ${segment.endSecond}s): ${segment.text}`,
+              )
               : rawTranscriptText
-                  .split("\n")
-                  .map((line) => cleanTranscriptLine(line))
-                  .filter((line) => line.length > 0);
+                .split("\n")
+                .map((line) => cleanTranscriptLine(line))
+                .filter((line) => line.length > 0);
 
             const combinedResult = await summaryMinutesMutation.mutateAsync({
               transcriptLines: transcriptLinesForChat,
-              model: "qwen3.5-flash-2026-02-23",
+              model: "qwen-plus",
               fileId: recordId,
             });
 
@@ -490,7 +490,7 @@ export function useWorkspacePipeline({
         });
       };
 
-      setNotice("Đang chuyển file ghi âm thành văn bản...");
+      setNotice("Đang chuyển tệp âm thanh thành văn bản...");
       updatePipelineStep("raw_transcript", (step) => ({
         ...step,
         status: "running",
@@ -514,21 +514,21 @@ export function useWorkspacePipeline({
 
       void (async () => {
         try {
-          const apiResult = fileId 
+          const apiResult = fileId
             ? await (async () => {
-                if (!diarizeTranscribeByFileIdMutation) throw new Error("FileId mutation missing");
-                return await diarizeTranscribeByFileIdMutation.mutateAsync({
-                  fileId,
-                  language: "Vietnamese",
-                });
-              })()
+              if (!diarizeTranscribeByFileIdMutation) throw new Error("FileId mutation missing");
+              return await diarizeTranscribeByFileIdMutation.mutateAsync({
+                fileId,
+                language: "Vietnamese",
+              });
+            })()
             : await (async () => {
-                if (!diarizeTranscribeMutation) throw new Error("Diarize mutation missing");
-                return await diarizeTranscribeMutation.mutateAsync({
-                  file: sourceAudioFile!,
-                  language: "Vietnamese",
-                });
-              })();
+              if (!diarizeTranscribeMutation) throw new Error("Diarize mutation missing");
+              return await diarizeTranscribeMutation.mutateAsync({
+                file: sourceAudioFile!,
+                language: "Vietnamese",
+              });
+            })();
 
           const transcriptLines = apiResult.rawTranscription
             .map((line) => cleanTranscriptLine(line))
@@ -557,11 +557,11 @@ export function useWorkspacePipeline({
             ...current,
             rawTranscript:
               mergedTranscript ||
-              "Không có transcript text từ API cho phiên hiện tại.",
+              "Không có văn bản gỡ băng từ API cho phiên hiện tại.",
             refinedTranscript:
               mergedRefinedTranscript ||
               mergedTranscript ||
-              "Không có bản refined từ API cho phiên hiện tại.",
+              "Không có bản làm sạch từ API cho phiên hiện tại.",
             speakerCount,
             durationSecond: Math.max(durationSecond, current.durationSecond),
             audioUrl: apiResult.audioUrl,
@@ -590,7 +590,7 @@ export function useWorkspacePipeline({
               : "Không thể gọi API diarize/transcribe.";
 
           markPipelineAsError(
-            `Lỗi tạo transcript thô: ${message}`,
+            `Lỗi tạo bản gỡ băng gốc: ${message}`,
             "raw_transcript",
           );
         }
@@ -615,7 +615,7 @@ export function useWorkspacePipeline({
 
     if (source === "upload" || source === "assigned" || source === "self_upload") {
       if (!selectedFile && !activeMeeting.apiRecordId) {
-        setNotice("Không tìm thấy tệp hoặc ID phiên họp để thử lại pipeline.");
+        setNotice("Không tìm thấy tệp hoặc ID phiên họp để thử lại quy trình.");
         return;
       }
 
@@ -623,7 +623,7 @@ export function useWorkspacePipeline({
       const retryDuration =
         selectedFileDurationSecond ?? Math.max(activeMeeting.durationSecond, 1);
 
-      setNotice("Đang thử lại pipeline từ đầu...");
+      setNotice("Đang thử lại quy trình từ đầu...");
       startProcessing({
         source: source as AudioInputSource,
         fileName: retryFileName,
@@ -635,7 +635,7 @@ export function useWorkspacePipeline({
     }
 
     if (!recordingFile) {
-      setNotice("Không tìm thấy bản thu hiện tại để thử lại pipeline.");
+      setNotice("Không tìm thấy bản thu hiện tại để thử lại quy trình.");
       return;
     }
 
@@ -644,7 +644,7 @@ export function useWorkspacePipeline({
       1,
     );
 
-    setNotice("Đang thử lại pipeline từ đầu...");
+    setNotice("Đang thử lại quy trình từ đầu...");
     startProcessing({
       source: "recording",
       fileName: recordingFile.name,

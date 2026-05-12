@@ -60,7 +60,7 @@ export function TranslateDialog({ initialText, trigger }: TranslateDialogProps) 
         {trigger || (
           <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-[11px] font-semibold text-emerald-600 hover:bg-emerald-50">
             <LanguagesIcon className="size-3.5" />
-            Dịch Transcript
+            Dịch bản gỡ băng
           </Button>
         )}
       </div>
@@ -73,10 +73,10 @@ export function TranslateDialog({ initialText, trigger }: TranslateDialogProps) 
           <DialogHeader className="space-y-0 text-left shrink-0">
             <DialogTitle className="px-6 pt-6 text-base flex items-center gap-2">
               <LanguagesIcon className="size-4 text-primary" />
-              Dịch thuật Transcript
+              Dịch thuật bản gỡ băng
             </DialogTitle>
             <DialogDescription className="px-6 pb-3 text-xs">
-              Sử dụng AI để dịch văn bản transcript sang ngôn ngữ đích.
+              Sử dụng AI để dịch văn bản gỡ băng sang ngôn ngữ đích.
             </DialogDescription>
           </DialogHeader>
 

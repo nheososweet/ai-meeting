@@ -34,7 +34,7 @@ export function useHistoryTranscriptPreview({
     const normalizedText = text.trim();
 
     if (!normalizedText) {
-      showActionToast("Không có nội dung để copy.");
+      showActionToast("Không có nội dung để sao chép.");
       return;
     }
 

@@ -251,169 +251,169 @@ export default function UsersPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-background sticky top-0">
-                      <TableHead className="w-[80px]">ID</TableHead>
-                      <TableHead>Tài khoản</TableHead>
-                      <TableHead>Vai trò & Phạm vi</TableHead>
-                      <TableHead>Trạng thái</TableHead>
-                      <TableHead className="hidden lg:table-cell">Tổ chức / Nhóm</TableHead>
-                      <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
-                      <TableHead className="text-right">Thao tác</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id} className="group/row">
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          #{user.id}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-sm text-foreground/90">{user.name}</span>
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <MailIcon className="size-3" /> {user.email}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1.5">
-                            <Badge variant={(typeof user.role === 'object' ? user.role.name : user.role) === "admin" ? "default" : "secondary"} className="h-5 text-[10px] uppercase tracking-wider px-1.5">
-                              {typeof user.role === 'object' ? user.role.name : user.role}
-                            </Badge>
-                            {(typeof user.role === 'object' ? user.role.name : user.role) !== "member" && (
-                              <Badge variant="outline" className={cn(
-                                "h-5 text-[10px] uppercase tracking-wider px-1.5",
-                                user.scope === "global" ? "border-amber-500/50 text-amber-600 bg-amber-500/5" :
-                                  user.scope === "company" ? "border-blue-500/50 text-blue-600 bg-blue-500/5" :
-                                    "border-green-500/50 text-green-600 bg-green-500/5"
-                              )}>
-                                {user.scope === "global" && <GlobeIcon className="mr-1 size-2.5" />}
-                                {user.scope}
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={user.is_active ? "outline" : "destructive"} className={cn(
-                            "h-5 text-[10px] uppercase tracking-wider px-1.5",
-                            user.is_active ? "border-emerald-500/50 text-emerald-600 bg-emerald-500/5" : "border-red-500/50 text-red-600 bg-red-500/5"
-                          )}>
-                            <span className={cn("mr-1.5 size-1.5 rounded-full", user.is_active ? "bg-emerald-500" : "bg-red-500")} />
-                            {user.is_active ? "Hoạt động" : "Bị khóa"}
+                    <TableHead className="w-[80px]">ID</TableHead>
+                    <TableHead>Tài khoản</TableHead>
+                    <TableHead>Vai trò & Phạm vi</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead className="hidden lg:table-cell">Tổ chức / Nhóm</TableHead>
+                    <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id} className="group/row">
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        #{user.id}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-sm text-foreground/90">{user.name}</span>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <MailIcon className="size-3" /> {user.email}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge variant={(typeof user.role === 'object' ? user.role.name : user.role) === "admin" ? "default" : "secondary"} className="h-5 text-[10px] uppercase tracking-wider px-1.5">
+                            {typeof user.role === 'object' ? user.role.name : user.role}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          <div className="flex flex-col gap-1 max-w-[200px]">
-                            {user.company ? (
-                              <div className="flex items-center gap-1.5 text-xs text-foreground/80 font-medium truncate">
-                                <BuildingIcon className="size-3 shrink-0 text-primary/60" />
-                                <span className="truncate">{user.company.name}</span>
-                              </div>
-                            ) : user.scope === "global" ? (
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60 italic">
-                                <GlobeIcon className="size-3 shrink-0" />
-                                <span>Hệ thống</span>
-                              </div>
-                            ) : (
-                              <div className="text-xs text-muted-foreground/40 italic">N/A</div>
+                          {(typeof user.role === 'object' ? user.role.name : user.role) === "admin" && (
+                            <Badge variant="outline" className={cn(
+                              "h-5 text-[10px] uppercase tracking-wider px-1.5",
+                              user.scope === "global" ? "border-amber-500/50 text-amber-600 bg-amber-500/5" :
+                                user.scope === "company" ? "border-blue-500/50 text-blue-600 bg-blue-500/5" :
+                                  "border-green-500/50 text-green-600 bg-green-500/5"
+                            )}>
+                              {user.scope === "global" && <GlobeIcon className="mr-1 size-2.5" />}
+                              {user.scope}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.is_active ? "outline" : "destructive"} className={cn(
+                          "h-5 text-[10px] uppercase tracking-wider px-1.5",
+                          user.is_active ? "border-emerald-500/50 text-emerald-600 bg-emerald-500/5" : "border-red-500/50 text-red-600 bg-red-500/5"
+                        )}>
+                          <span className={cn("mr-1.5 size-1.5 rounded-full", user.is_active ? "bg-emerald-500" : "bg-red-500")} />
+                          {user.is_active ? "Hoạt động" : "Bị khóa"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <div className="flex flex-col gap-1 max-w-[200px]">
+                          {user.company ? (
+                            <div className="flex items-center gap-1.5 text-xs text-foreground/80 font-medium truncate">
+                              <BuildingIcon className="size-3 shrink-0 text-primary/60" />
+                              <span className="truncate">{user.company.name}</span>
+                            </div>
+                          ) : user.scope === "global" ? (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60 italic">
+                              <GlobeIcon className="size-3 shrink-0" />
+                              <span>Hệ thống</span>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-muted-foreground/40 italic">N/A</div>
+                          )}
+
+                          {user.group && (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate ml-4">
+                              <UsersIcon className="size-3 shrink-0 opacity-70" />
+                              <span className="truncate">{user.group.name}</span>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground text-xs">
+                        {formatDate(user.created_at)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <TooltipProvider>
+                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                            {hasPermission("assign_permissions") && user.scope !== "global" && user.id !== currentUser?.id && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 text-xs hover:bg-primary/10 hover:text-primary"
+                                    onClick={() => {
+                                      setSelectedUser(user)
+                                      setPermDialogOpen(true)
+                                    }}
+                                  >
+                                    <ShieldIcon className="mr-1.5 size-3.5" /> Phân quyền
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Gán quyền trực tiếp cho tài khoản</TooltipContent>
+                              </Tooltip>
                             )}
 
-                            {user.group && (
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate ml-4">
-                                <UsersIcon className="size-3 shrink-0 opacity-70" />
-                                <span className="truncate">{user.group.name}</span>
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground text-xs">
-                          {formatDate(user.created_at)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <TooltipProvider>
-                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                              {hasPermission("assign_permissions") && user.scope !== "global" && user.id !== currentUser?.id && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-8 text-xs hover:bg-primary/10 hover:text-primary"
-                                      onClick={() => {
-                                        setSelectedUser(user)
-                                        setPermDialogOpen(true)
-                                      }}
-                                    >
-                                      <ShieldIcon className="mr-1.5 size-3.5" /> Phân quyền
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Gán quyền trực tiếp cho tài khoản</TooltipContent>
-                                </Tooltip>
-                              )}
-
-                              {canManage && user.scope !== "global" && (
-                                <>
-                                  {user.id !== currentUser?.id && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className={cn(
-                                            "size-8",
-                                            user.is_active ? "text-amber-500 hover:text-amber-600 hover:bg-amber-50" : "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"
-                                          )}
-                                          onClick={() => handleToggleStatus(user)}
-                                          disabled={updateMutation.isPending}
-                                        >
-                                          {user.is_active ? <UserXIcon className="size-3.5" /> : <UserCheckIcon className="size-3.5" />}
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>{user.is_active ? "Vô hiệu hóa tài khoản" : "Kích hoạt tài khoản"}</TooltipContent>
-                                    </Tooltip>
-                                  )}
-
+                            {canManage && user.scope !== "global" && (
+                              <>
+                                {user.id !== currentUser?.id && (
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                        onClick={() => {
-                                          setSelectedUser(user)
-                                          setEditOpen(true)
-                                        }}
+                                        className={cn(
+                                          "size-8",
+                                          user.is_active ? "text-amber-500 hover:text-amber-600 hover:bg-amber-50" : "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"
+                                        )}
+                                        onClick={() => handleToggleStatus(user)}
+                                        disabled={updateMutation.isPending}
                                       >
-                                        <PencilIcon className="size-3.5" />
+                                        {user.is_active ? <UserXIcon className="size-3.5" /> : <UserCheckIcon className="size-3.5" />}
                                       </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent>Chỉnh sửa thông tin</TooltipContent>
+                                    <TooltipContent>{user.is_active ? "Vô hiệu hóa tài khoản" : "Kích hoạt tài khoản"}</TooltipContent>
                                   </Tooltip>
+                                )}
 
-                                  {user.id !== currentUser?.id && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                          onClick={() => {
-                                            setSelectedUser(user)
-                                            setDeleteOpen(true)
-                                          }}
-                                        >
-                                          <Trash2Icon className="size-3.5" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>Xóa tài khoản vĩnh viễn</TooltipContent>
-                                    </Tooltip>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </TooltipProvider>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                      onClick={() => {
+                                        setSelectedUser(user)
+                                        setEditOpen(true)
+                                      }}
+                                    >
+                                      <PencilIcon className="size-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Chỉnh sửa thông tin</TooltipContent>
+                                </Tooltip>
+
+                                {user.id !== currentUser?.id && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                        onClick={() => {
+                                          setSelectedUser(user)
+                                          setDeleteOpen(true)
+                                        }}
+                                      >
+                                        <Trash2Icon className="size-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Xóa tài khoản vĩnh viễn</TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </TooltipProvider>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>

@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RecordingPanel } from "@/components/workspace/recording-panel";
 import { EmailDialog } from "@/app/(main)/workspace/_components/EmailDialog";
 import { MinutesEditorDialog } from "@/app/(main)/workspace/_components/MinutesEditorDialog";
 import { PipelineProgressCard } from "@/app/(main)/workspace/_components/PipelineProgressCard";
@@ -40,7 +39,6 @@ import {
   minutesDraftSchema,
   recipientEmailsSchema,
 } from "@/app/(main)/workspace/_lib/validation";
-import { useWorkspaceRecording } from "@/app/(main)/workspace/_hooks/useWorkspaceRecording";
 import { useWorkspacePipeline } from "@/app/(main)/workspace/_hooks/useWorkspacePipeline";
 import { useWorkspaceToast } from "@/app/(main)/workspace/_hooks/useWorkspaceToast";
 import { useDiarizeTranscribeByFileIdMutation } from "@/hooks/services/use-diarize-transcribe-by-file-id-mutation";
@@ -55,7 +53,7 @@ import type {
   MeetingRecord,
   TranscriptSegment,
 } from "@/lib/types/meeting";
-import { PermissionGuard } from "@/components/iam/shared/permission-guard";
+
 import { FileSelector } from "./_components/file-selector";
 import { FileRecord } from "@/lib/types/files";
 import { cn } from "@/lib/utils";
@@ -141,7 +139,7 @@ function TabEmptyState({ busyProcessing }: { busyProcessing: boolean }) {
   return (
     <div className="mt-10 flex flex-col items-center justify-center rounded-lg border border-dashed border-border/80 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
       <FolderOpenIcon className="mb-3 size-8 text-muted-foreground/50" />
-      <p>Chưa có dữ liệu. Vui lòng chọn file được gán hoặc bắt đầu thu âm.</p>
+      <p>Chưa có dữ liệu. Vui lòng chọn file phù hợp để bắt đầu.</p>
     </div>
   );
 }
@@ -156,14 +154,14 @@ export default function MeetingPage() {
   const canSendMail = hasPermission("send_mail");
   const canTranslate = hasPermission("translate");
 
-  const [inputMode, setInputMode] = useState<AudioInputSource>("upload");
+  const [inputMode, setInputMode] = useState<AudioInputSource>("assigned");
   const [selectedFileRecord, setSelectedFileRecord] = useState<FileRecord | null>(null);
   const [activeMeeting, setActiveMeeting] =
     useState<MeetingRecord>(initialMeeting);
   const [, setUploadProgress] = useState(0);
   const [, setProcessingProgress] = useState(0);
   const [notice, setNotice] = useState(
-    "Sẵn sàng nhận tệp hoặc bắt đầu thu âm trực tiếp.",
+    "Sẵn sàng nhận tệp để bắt đầu xử lý.",
   );
 
   const [emailRecipientsInput, setEmailRecipientsInput] = useState("");
@@ -214,25 +212,6 @@ export default function MeetingPage() {
     updateReportMutation,
   });
 
-  const {
-    isRecording,
-    recordingElapsedMs,
-    recordingSecond,
-    recordingPreviewUrl,
-    recordingFile,
-    clearRecordingState,
-    handleToggleRecording,
-    handleClearRecording,
-  } = useWorkspaceRecording({
-    busyProcessing,
-    initialMeeting,
-    setInputMode,
-    setActiveMeeting,
-    onClearUploadState: () => setSelectedFileRecord(null),
-    onResetPipelineSteps: resetPipelineSteps,
-    onSetNotice: setNotice,
-  });
-
   const status = statusConfig(activeMeeting.processingStatus);
   const stageProgress = useMemo(() => {
     if (activeMeeting.processingStatus === "completed") {
@@ -264,11 +243,7 @@ export default function MeetingPage() {
   const shouldShowDiarization = activeMeeting.segments.length > 0;
   const shouldShowSpeakerSummary = activeMeeting.speakerSummaries.length > 0;
   const canRetryPipeline = Boolean(failedStepId) && !busyProcessing;
-  const recordingDurationLabel = formatDuration(
-    isRecording
-      ? Math.max(1, Math.round(recordingElapsedMs / 1000))
-      : recordingSecond,
-  );
+  const recordingDurationLabel = "";
 
   // Sync selected file status after pipeline completes
   useEffect(() => {
@@ -341,8 +316,8 @@ export default function MeetingPage() {
       selectedFile: null,
       selectedFileName: activeMeeting.fileName,
       selectedFileDurationSecond: activeMeeting.durationSecond,
-      recordingFile,
-      recordingSecond,
+      recordingFile: null,
+      recordingSecond: 0,
     });
   }
 
@@ -385,43 +360,8 @@ export default function MeetingPage() {
       return;
     }
 
-    if (mode === "upload") {
-      clearRecordingState();
-      setActiveMeeting((prev) => ({
-        ...prev,
-        title: "Phiên mới chưa xử lý",
-        fileName: "Chưa có file nguồn",
-        inputSource: "upload",
-        processingStatus: "idle",
-        rawTranscript: initialMeeting.rawTranscript,
-        refinedTranscript: initialMeeting.refinedTranscript,
-        segments: [],
-        speakerSummaries: [],
-        minutes: initialMeeting.minutes,
-        speakerCount: 0,
-        durationSecond: 0,
-        mailTemplate: buildDefaultMailTemplate(""),
-      }));
-      setInputMode("upload");
-    } else {
-      setSelectedFileRecord(null);
-      setActiveMeeting((prev) => ({
-        ...prev,
-        title: "Bản thu sẵn sàng",
-        fileName: "Chưa có bản ghi",
-        inputSource: "recording",
-        processingStatus: "idle",
-        rawTranscript: initialMeeting.rawTranscript,
-        refinedTranscript: initialMeeting.refinedTranscript,
-        segments: [],
-        speakerSummaries: [],
-        minutes: initialMeeting.minutes,
-        speakerCount: 0,
-        durationSecond: 0,
-        mailTemplate: buildDefaultMailTemplate(""),
-      }));
-      setInputMode("recording");
-    }
+    setSelectedFileRecord(null);
+    setInputMode(mode);
   }
 
   function handleProcessSelectedFile() {
@@ -437,30 +377,11 @@ export default function MeetingPage() {
     );
 
     startProcessing({
-      source: "file_select",
+      source: inputMode === "assigned" ? "assigned" : "self_upload",
       fileName: selectedFileRecord.title || selectedFileRecord.filename,
       durationSecond: 0,
       sourceAudioFile: null,
       fileId: selectedFileRecord.id,
-    });
-  }
-
-  function handleProcessRecording() {
-    if (recordingSecond === 0 || !recordingPreviewUrl || !recordingFile) {
-      setNotice("Bản thu quá ngắn. Vui lòng thu âm lại ít nhất vài giây.");
-      return;
-    }
-
-    showActionToast(
-      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt để đảm bảo Pipeline hoạt động chính xác.",
-      "info",
-      15000,
-    );
-    startProcessing({
-      source: "recording",
-      fileName: activeMeeting.fileName,
-      durationSecond: recordingSecond,
-      sourceAudioFile: recordingFile,
     });
   }
 
@@ -620,7 +541,7 @@ export default function MeetingPage() {
   }
 
   return (
-    <PermissionGuard permission="process_pipeline">
+    <>
       <div className="flex flex-1 flex-col gap-4">
         <Collapsible open={isInputOpen} onOpenChange={setIsInputOpen}>
           <section className="rounded-lg border border-border/80 bg-card shadow-sm">
@@ -654,44 +575,33 @@ export default function MeetingPage() {
                   <div className="flex-1 space-y-6">
                     <div className="flex items-center gap-2">
                       <Button
-                        variant={inputMode === "upload" ? "default" : "outline"}
+                        variant={inputMode === "assigned" ? "default" : "outline"}
                         size="sm"
-                        onClick={() => handleSwitchMode("upload")}
+                        onClick={() => handleSwitchMode("assigned")}
                         className="h-8 rounded-full px-4 text-xs font-semibold"
                       >
                         Chọn tệp đã giao
                       </Button>
                       <Button
-                        variant={inputMode === "recording" ? "default" : "outline"}
+                        variant={inputMode === "self_upload" ? "default" : "outline"}
                         size="sm"
-                        onClick={() => handleSwitchMode("recording")}
+                        onClick={() => handleSwitchMode("self_upload")}
                         className="h-8 rounded-full px-4 text-xs font-semibold"
                       >
-                        Thu âm trực tiếp
+                        Tệp đã tải lên
                       </Button>
                     </div>
 
-                    {inputMode === "upload" ? (
-                      <div className="min-h-[400px]">
-                        <FileSelector
-                          selectedFileRecord={selectedFileRecord}
-                          onFileSelect={setSelectedFileRecord}
-                          onProcessFile={handleProcessSelectedFile}
-                          busyProcessing={busyProcessing}
-                        />
-                      </div>
-                    ) : (
-                      <RecordingPanel
-                        isRecording={isRecording}
-                        recordingSecond={recordingSecond}
-                        recordingPreviewUrl={recordingPreviewUrl}
-                        recordingDurationLabel={recordingDurationLabel}
-                        onToggleRecording={handleToggleRecording}
-                        onClearRecording={handleClearRecording}
-                        onProcessRecording={handleProcessRecording}
+                    <div className="min-h-[400px]">
+                      <FileSelector
+                        selectedFileRecord={selectedFileRecord}
+                        onFileSelect={setSelectedFileRecord}
+                        onProcessFile={handleProcessSelectedFile}
                         busyProcessing={busyProcessing}
+                        assigned_filter={inputMode === "assigned"}
+                        self_upload={inputMode === "self_upload"}
                       />
-                    )}
+                    </div>
                   </div>
 
                   <div className="w-full shrink-0 lg:w-80">
@@ -865,6 +775,6 @@ export default function MeetingPage() {
 
 
       </div>
-    </PermissionGuard>
+    </>
   );
 }

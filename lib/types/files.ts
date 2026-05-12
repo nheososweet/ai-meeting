@@ -77,4 +77,5 @@ export interface FilesQueryParams {
   status_filter?: FileRecordStatus | string | null;
   search?: string | null;
   assigned_filter?: boolean | null;
+  self_upload?: boolean | null;
 }

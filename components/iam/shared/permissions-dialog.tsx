@@ -125,7 +125,7 @@ export function PermissionsDialog({
 
   const permissionsList = useMemo(() => {
     const list = Array.isArray(allPerms) ? allPerms : []
-    const hiddenPerms = ["chat", "update_report", "transcribe"]
+    const hiddenPerms = ["chat", "update_report", "transcribe", "manage_companies"]
     
     return list.filter((p) => {
       const permId = getPermId(p)

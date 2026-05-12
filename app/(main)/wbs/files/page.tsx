@@ -22,6 +22,10 @@ import { PERMISSIONS } from "@/lib/types/iam"
 import { mockFiles, mockProjects } from "@/lib/mock/wbs"
 import { mockUsers } from "@/lib/mock/iam"
 import type { WbsFile } from "@/lib/types/wbs"
+import { DataTablePagination, type PaginationMeta } from "@/components/ui/data-table-pagination"
+import { usePaginationState } from "@/hooks/use-pagination"
+
+const PAGE_SIZE = 20
 
 export default function FilesPage() {
   const { hasPermission } = useAuth()
@@ -33,6 +37,8 @@ export default function FilesPage() {
   const [deleteFile, setDeleteFile] = useState<WbsFile | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
+  const { page, setPage } = usePaginationState([search], PAGE_SIZE)
+
   // Filtering
   const filtered = useMemo(() => {
     let result = files
@@ -42,6 +48,20 @@ export default function FilesPage() {
     }
     return result
   }, [files, search])
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
+  const clientMeta: PaginationMeta = {
+    page: safePage,
+    page_size: PAGE_SIZE,
+    total_items: filtered.length,
+    total_pages: totalPages,
+    has_next: safePage < totalPages,
+    has_prev: safePage > 1,
+  }
 
   // Helpers
   function getProjectName(projectId: string) {
@@ -136,11 +156,10 @@ export default function FilesPage() {
           {filtered.length === 0 ? (
             <EmptyState emptyText="Không tìm thấy tệp tin nào." />
           ) : (
-            <div className="flex flex-1 min-h-0 flex-col overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm">
-              <div className="flex-1 overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
+            <div className="flex-1 min-h-0 [&>div]:h-full [&>div]:overflow-auto [&>div]:rounded-md [&>div]:border">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-background sticky top-0">
                       <TableHead className="w-[300px]">Tên tệp</TableHead>
                       <TableHead className="w-[180px]">Dự án</TableHead>
                       <TableHead className="w-[100px] text-right">Kích thước</TableHead>
@@ -150,7 +169,7 @@ export default function FilesPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.map((file) => (
+                    {paginated.map((file) => (
                       <TableRow key={file.id}>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -196,9 +215,8 @@ export default function FilesPage() {
                         </TableCell>
                       </TableRow>
                     ))}
-                  </TableBody>
-                </Table>
-              </div>
+                </TableBody>
+              </Table>
             </div>
           )}
         </TabsContent>

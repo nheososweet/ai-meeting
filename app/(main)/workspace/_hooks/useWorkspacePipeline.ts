@@ -206,13 +206,17 @@ export function useWorkspacePipeline({
     setActiveMeeting((prev) => ({
       ...prev,
       title:
-        source === "upload"
-          ? `Phiên xử lý ${fileName}`
-          : source === "file_select"
-            ? `Xử lý file: ${fileName}`
-            : "Phiên xử lý bản thu trực tiếp",
+        source === "assigned"
+          ? `Xử lý file được gán: ${fileName}`
+          : source === "self_upload"
+            ? `Xử lý file tự tải: ${fileName}`
+            : source === "file_select"
+              ? `Xử lý file: ${fileName}`
+              : source === "upload"
+                ? `Phiên xử lý ${fileName}`
+                : "Phiên xử lý bản thu trực tiếp",
       fileName,
-      inputSource: source === "file_select" ? "upload" : source,
+      inputSource: source === "file_select" ? "assigned" : source,
       processingStatus: "processing",
       emailStatus: "not_sent",
       segments: [],
@@ -609,22 +613,23 @@ export function useWorkspacePipeline({
 
     const source = activeMeeting.inputSource;
 
-    if (source === "upload") {
-      if (!selectedFile) {
-        setNotice("Không tìm thấy tệp upload hiện tại để thử lại pipeline.");
+    if (source === "upload" || source === "assigned" || source === "self_upload") {
+      if (!selectedFile && !activeMeeting.apiRecordId) {
+        setNotice("Không tìm thấy tệp hoặc ID phiên họp để thử lại pipeline.");
         return;
       }
 
-      const retryFileName = selectedFileName ?? selectedFile.name;
+      const retryFileName = selectedFileName ?? activeMeeting.fileName;
       const retryDuration =
         selectedFileDurationSecond ?? Math.max(activeMeeting.durationSecond, 1);
 
       setNotice("Đang thử lại pipeline từ đầu...");
       startProcessing({
-        source: "upload",
+        source: source as AudioInputSource,
         fileName: retryFileName,
         durationSecond: retryDuration,
         sourceAudioFile: selectedFile,
+        fileId: activeMeeting.apiRecordId,
       });
       return;
     }

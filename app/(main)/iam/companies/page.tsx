@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useDebounce } from "@/hooks/use-debounce"
+import { usePaginationState } from "@/hooks/use-pagination"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,21 +24,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
+import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { cn, formatDate } from "@/lib/utils"
 import type { Company } from "@/lib/types/iam"
 import { useAuth } from "@/lib/auth/auth-context"
-import { EmptyState } from "@/components/iam/shared/empty-state"
+import { AccessDenied403 } from "@/components/iam/shared/access-denied"
 import { PermissionsDialog } from "@/components/iam/shared/permissions-dialog"
 import { ConfirmDialog } from "@/components/iam/shared/confirm-dialog"
+import { EmptyState } from "@/components/iam/shared/empty-state"
 import {
   useCompanies,
   useDeleteCompany,
@@ -51,10 +45,14 @@ import { CreateCompanyDialog, EditCompanyDialog } from "./_components/company-di
 // ══════════════════════════════════════════════════════════
 
 export default function CompaniesPage() {
-  const { hasPermission } = useAuth()
+  const { hasPermission, hasScope } = useAuth()
   
   // Checking permission
-  const canManage = hasPermission("manage_companies")
+  const canManage = hasPermission("manage_companies") && hasScope("global")
+
+  if (!canManage) {
+    return <AccessDenied403 />
+  }
 
   // State
   const [createOpen, setCreateOpen] = useState(false)
@@ -66,17 +64,14 @@ export default function CompaniesPage() {
 
   // Search & Pagination State
   const [search, setSearch] = useState("")
-  const [page, setPage] = useState(1)
   const debouncedSearch = useDebounce(search, 500)
 
-  // Reset to page 1 when searching
-  useEffect(() => {
-    setPage(1)
-  }, [debouncedSearch])
+  const { page, setPage, pageSize } = usePaginationState([debouncedSearch])
 
   // Hooks
-  const { data, isLoading, error } = useCompanies({ 
+  const { data, isLoading, isFetching, error } = useCompanies({ 
     page, 
+    page_size: pageSize,
     search: debouncedSearch || undefined 
   })
   
@@ -142,7 +137,7 @@ export default function CompaniesPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {isLoading ? (
           <div className="flex h-40 items-center justify-center">
             <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
@@ -154,152 +149,93 @@ export default function CompaniesPage() {
         ) : companies.length === 0 ? (
           <EmptyState emptyText={search ? `Không tìm thấy tổ chức nào khớp với "${search}"` : "Chưa có tổ chức nào trong hệ thống."} />
         ) : (
-          <div className="flex flex-col gap-4">
-            <div className="rounded-md border border-border/50 overflow-hidden">
+          <>
+            <div className="flex-1 min-h-0 p-5 pb-0 [&>div]:h-full [&>div]:overflow-auto [&>div]:rounded-md [&>div]:border">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/30 hover:bg-muted/30">
-                    <TableHead className="w-[80px]">ID</TableHead>
-                    <TableHead>Tên Tổ chức</TableHead>
-                    <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
-                    <TableHead className="text-right">Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {companies.map((company) => (
-                    <TableRow key={company.id} className="group">
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        #{company.id}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary/70 group-hover:bg-primary/10 transition-colors">
-                            <BuildingIcon className="size-4" />
-                          </div>
-                          <span className="font-semibold text-sm text-foreground/90">{company.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground text-xs">
-                        {formatDate(company.created_at)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {hasPermission("assign_permissions") && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 text-xs hover:bg-primary/10 hover:text-primary"
-                              onClick={() => {
-                                setSelectedCompany(company)
-                                setPermDialogOpen(true)
-                              }}
-                            >
-                              <ShieldIcon className="mr-1.5 size-3.5" /> Phân quyền
-                            </Button>
-                          )}
-                          
-                          {canManage && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                onClick={() => {
-                                  setSelectedCompany(company)
-                                  setEditOpen(true)
-                                }}
-                              >
-                                <PencilIcon className="size-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => {
-                                  setSelectedCompany(company)
-                                  setDeleteOpen(true)
-                                }}
-                              >
-                                <Trash2Icon className="size-3.5" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
+                  <TableRow className="bg-background sticky top-0">
+                      <TableHead className="w-[80px]">ID</TableHead>
+                      <TableHead>Tên Tổ chức</TableHead>
+                      <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
+                      <TableHead className="text-right">Thao tác</TableHead>
                     </TableRow>
-                  ))}
+                  </TableHeader>
+                  <TableBody>
+                    {companies.map((company) => (
+                      <TableRow key={company.id} className="group">
+                        <TableCell className="font-mono text-xs text-muted-foreground">
+                          #{company.id}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary/70 group-hover:bg-primary/10 transition-colors">
+                              <BuildingIcon className="size-4" />
+                            </div>
+                            <span className="font-semibold text-sm text-foreground/90">{company.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground text-xs">
+                          {formatDate(company.created_at)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {hasPermission("assign_permissions") && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 text-xs hover:bg-primary/10 hover:text-primary"
+                                onClick={() => {
+                                  setSelectedCompany(company)
+                                  setPermDialogOpen(true)
+                                }}
+                              >
+                                <ShieldIcon className="mr-1.5 size-3.5" /> Phân quyền
+                              </Button>
+                            )}
+                            
+                            {canManage && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                  onClick={() => {
+                                    setSelectedCompany(company)
+                                    setEditOpen(true)
+                                  }}
+                                >
+                                  <PencilIcon className="size-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => {
+                                    setSelectedCompany(company)
+                                    setDeleteOpen(true)
+                                  }}
+                                >
+                                  <Trash2Icon className="size-3.5" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </div>
 
-            {/* Pagination Controls */}
-            {meta && meta.total_pages > 1 && (
-              <div className="flex items-center justify-between py-2">
-                <div className="text-xs text-muted-foreground">
-                  Hiển thị <span className="font-medium text-foreground">{(meta.page - 1) * meta.page_size + 1}</span> - <span className="font-medium text-foreground">{Math.min(meta.page * meta.page_size, meta.total_items)}</span> trong <span className="font-medium text-foreground">{meta.total_items}</span> tổ chức
-                </div>
-                
-                <Pagination className="w-auto mx-0">
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={(e) => {
-                          e.preventDefault()
-                          if (meta.has_prev) setPage(p => p - 1)
-                        }}
-                        className={cn("cursor-pointer", !meta.has_prev && "pointer-events-none opacity-50")}
-                        text="Trước"
-                      />
-                    </PaginationItem>
-                    
-                    {/* Simple page numbers logic */}
-                    {Array.from({ length: meta.total_pages }, (_, i) => i + 1).map((p) => {
-                      // Only show current, first, last, and neighbors
-                      if (
-                        p === 1 || 
-                        p === meta.total_pages || 
-                        (p >= meta.page - 1 && p <= meta.page + 1)
-                      ) {
-                        return (
-                          <PaginationItem key={p}>
-                            <PaginationLink 
-                              isActive={p === meta.page}
-                              onClick={(e) => {
-                                e.preventDefault()
-                                setPage(p)
-                              }}
-                              className="cursor-pointer"
-                            >
-                              {p}
-                            </PaginationLink>
-                          </PaginationItem>
-                        )
-                      }
-                      if (p === meta.page - 2 || p === meta.page + 2) {
-                        return (
-                          <PaginationItem key={p}>
-                            <PaginationEllipsis />
-                          </PaginationItem>
-                        )
-                      }
-                      return null
-                    })}
-
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={(e) => {
-                          e.preventDefault()
-                          if (meta.has_next) setPage(p => p + 1)
-                        }}
-                        className={cn("cursor-pointer", !meta.has_next && "pointer-events-none opacity-50")}
-                        text="Sau"
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
-          </div>
+            <div className="shrink-0 p-5 pt-4 border-t border-border/40">
+              <DataTablePagination
+                meta={meta!}
+                onPageChange={setPage}
+                itemLabel="tổ chức"
+                isFetching={isFetching}
+              />
+            </div>
+          </>
         )}
       </div>
 

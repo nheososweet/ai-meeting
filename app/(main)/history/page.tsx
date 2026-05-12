@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { 
-  Loader2Icon, 
-  AudioLinesIcon, 
-  FileTextIcon, 
-  FileCheckIcon, 
-  MailIcon, 
+import { usePaginationState } from "@/hooks/use-pagination";
+import {
+  Loader2Icon,
+  AudioLinesIcon,
+  FileTextIcon,
+  FileCheckIcon,
+  MailIcon,
   PlayIcon,
   SearchIcon,
   ClockIcon,
@@ -67,6 +68,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -111,8 +113,6 @@ export default function HistoryPage() {
   const [previewReportRecordId, setPreviewReportRecordId] = useState<number | null>(null);
   const [isLabelingDialogOpen, setIsLabelingDialogOpen] = useState(false);
 
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(15);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
 
@@ -120,8 +120,10 @@ export default function HistoryPage() {
   const [statusStep, setStatusStep] = useState<string>("transcribe");
   const [statusValue, setStatusValue] = useState<string>("success");
 
+  const { page, setPage, pageSize } = usePaginationState([debouncedSearch, statusStep, statusValue], 20);
+
   // Connect to the Files API with granular filters
-  const { data, isLoading, isError } = useFilesQuery({
+  const { data, isLoading, isFetching, isError } = useFilesQuery({
     page,
     page_size: pageSize,
     status_step: statusStep,
@@ -186,9 +188,9 @@ export default function HistoryPage() {
   const activeReportFileName =
     activeReportRecord?.reportUrl && activeReportRecord.filename
       ? resolveReportFilename(
-          activeReportRecord.filename,
-          activeReportRecord.reportUrl,
-        )
+        activeReportRecord.filename,
+        activeReportRecord.reportUrl,
+      )
       : undefined;
 
   const activeTranscriptContent = useMemo(() => {
@@ -214,10 +216,10 @@ export default function HistoryPage() {
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-bold text-foreground">Lịch sử họp</h2>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <Select value={statusStep} onValueChange={(val) => { setStatusStep(val); setPage(1); }}>
+              <Select value={statusStep} onValueChange={(val) => { setStatusStep(val); }}>
                 <SelectTrigger className="h-9 w-[160px] text-xs font-medium bg-muted/20">
                   <SelectValue placeholder="Bước xử lý" />
                 </SelectTrigger>
@@ -228,7 +230,7 @@ export default function HistoryPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={statusValue} onValueChange={(val) => { setStatusValue(val); setPage(1); }}>
+              <Select value={statusValue} onValueChange={(val) => { setStatusValue(val); }}>
                 <SelectTrigger className="h-9 w-[130px] text-xs font-medium bg-muted/20">
                   <SelectValue placeholder="Trạng thái" />
                 </SelectTrigger>
@@ -252,7 +254,7 @@ export default function HistoryPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 bg-muted/5">
+        <div className="flex-1 overflow-hidden flex flex-col bg-muted/5">
           {isLoading ? (
             <div className="flex h-60 items-center justify-center">
               <div className="flex flex-col items-center gap-2">
@@ -269,11 +271,11 @@ export default function HistoryPage() {
               emptyText={search ? "Không tìm thấy kết quả phù hợp." : "Chưa có lịch sử cuộc họp."}
             />
           ) : (
-            <div className="flex flex-col gap-4">
-              <div className="rounded-md border border-border/40 bg-card overflow-hidden shadow-sm">
+            <>
+              <div className="flex-1 min-h-0 p-5 pb-0 [&>div]:h-full [&>div]:overflow-auto [&>div]:rounded-md [&>div]:border">
                 <Table>
-                  <TableHeader className="bg-muted/30">
-                    <TableRow className="hover:bg-transparent">
+                  <TableHeader>
+                    <TableRow className="bg-background sticky top-0">
                       <TableHead className="w-[70px] text-[11px] font-bold uppercase tracking-wider pl-5">ID</TableHead>
                       <TableHead className="text-[11px] font-bold uppercase tracking-wider">Cuộc họp</TableHead>
                       <TableHead className="hidden lg:table-cell text-[11px] font-bold uppercase tracking-wider">Người xử lý</TableHead>
@@ -434,64 +436,15 @@ export default function HistoryPage() {
                 </Table>
               </div>
 
-              {/* Pagination Controls */}
-              {meta && meta.total_pages > 1 && (
-                <div className="flex items-center justify-between py-2">
-                  <div className="text-[11px] text-muted-foreground">
-                    Hiển thị <span className="font-medium text-foreground">{(meta.page - 1) * meta.page_size + 1}</span> - <span className="font-medium text-foreground">{Math.min(meta.page * meta.page_size, meta.total_items)}</span> trong <span className="font-medium text-foreground">{meta.total_items}</span> bản ghi
-                  </div>
-                  
-                  <Pagination className="w-auto mx-0">
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (meta.has_prev) setPage(p => p - 1);
-                          }}
-                          className={cn("cursor-pointer h-8 text-[11px]", !meta.has_prev && "pointer-events-none opacity-50")}
-                          text="Trước"
-                        />
-                      </PaginationItem>
-                      
-                      {Array.from({ length: meta.total_pages }, (_, i) => i + 1).map((p) => {
-                        if (p === 1 || p === meta.total_pages || (p >= meta.page - 1 && p <= meta.page + 1)) {
-                          return (
-                            <PaginationItem key={p}>
-                              <PaginationLink 
-                                isActive={p === meta.page}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setPage(p);
-                                }}
-                                className="cursor-pointer h-8 w-8 text-[11px]"
-                              >
-                                {p}
-                              </PaginationLink>
-                            </PaginationItem>
-                          );
-                        }
-                        if (p === meta.page - 2 || p === meta.page + 2) {
-                          return <PaginationItem key={p} className="h-8 w-8"><PaginationEllipsis /></PaginationItem>;
-                        }
-                        return null;
-                      })}
-
-                      <PaginationItem>
-                        <PaginationNext 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (meta.has_next) setPage(p => p + 1);
-                          }}
-                          className={cn("cursor-pointer h-8 text-[11px]", !meta.has_next && "pointer-events-none opacity-50")}
-                          text="Sau"
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </div>
+              <div className="shrink-0 p-5 pt-4 border-t border-border/40">
+                <DataTablePagination
+                  meta={meta!}
+                  onPageChange={setPage}
+                  itemLabel="bản ghi"
+                  isFetching={isFetching}
+                />
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -563,13 +516,12 @@ export default function HistoryPage() {
 
       {actionToast ? (
         <div
-          className={`pointer-events-none fixed right-4 bottom-4 z-50 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur ${
-            actionToast.variant === "success"
+          className={`pointer-events-none fixed right-4 bottom-4 z-50 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur ${actionToast.variant === "success"
               ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
               : actionToast.variant === "error"
                 ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
                 : "border-border/70 bg-background/95 text-foreground"
-          }`}
+            }`}
         >
           {actionToast.message}
         </div>
@@ -630,13 +582,13 @@ function AudioPreviewDialog({ file, isOpen, onClose }: { file: FileRecord | null
               {file.filename}
             </p>
           </div>
-          
-          <button 
+
+          {/* <button 
             onClick={onClose}
             className="absolute right-4 top-4 p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
           >
             <ChevronDownIcon className="size-5 rotate-90" />
-          </button>
+          </button> */}
 
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-blue-500/20 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
@@ -649,10 +601,10 @@ function AudioPreviewDialog({ file, isOpen, onClose }: { file: FileRecord | null
 
           <div className="flex items-center justify-between pt-2 border-t border-border/40">
             <div className="flex items-center gap-2">
-               <div className="size-8 rounded-full bg-blue-50 flex items-center justify-center">
-                  <PlayIcon className="size-3 text-blue-600 fill-current" />
-               </div>
-               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Đang nghe thử</span>
+              <div className="size-8 rounded-full bg-blue-50 flex items-center justify-center">
+                <PlayIcon className="size-3 text-blue-600 fill-current" />
+              </div>
+              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Đang nghe thử</span>
             </div>
             <Button variant="ghost" size="sm" onClick={onClose} className="text-xs font-bold hover:bg-rose-50 hover:text-rose-600 rounded-full h-8">
               Kết thúc

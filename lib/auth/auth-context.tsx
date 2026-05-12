@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["auth", "me"],
     queryFn: fetchMe,
     retry: false,
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    staleTime: 0, // Always consider data stale to trigger refetch on reload
     refetchOnWindowFocus: false, // Disable refetch when switching back to the tab
     enabled: hasToken, // Only fetch if token exists
     initialData: cachedUser ?? undefined,

@@ -34,7 +34,6 @@ const appNav = {
       title: "Trình biên tập cuộc họp",
       href: "/meeting",
       icon: MicIcon,
-      requiredPerms: ["process_pipeline"],
     },
     {
       title: "Lịch sử cuộc họp",

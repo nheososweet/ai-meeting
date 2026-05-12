@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from "@tanstack/react-query"
 import { iamService, type CreateRolePayload, type UpdateRolePayload } from "@/services/iam.service"
 import { toast } from "react-toastify"
 import { parseApiError } from "@/lib/api-error"
@@ -14,6 +14,7 @@ export function useRoles(params?: {
   return useQuery({
     queryKey: ["iam", "roles", params],
     queryFn: () => iamService.getRoles(params),
+    placeholderData: keepPreviousData,
   })
 }
 

@@ -1,4 +1,4 @@
-export type AudioInputSource = "upload" | "recording"
+export type AudioInputSource = "upload" | "recording" | "assigned" | "self_upload"
 
 export type ProcessingStatus =
   | "idle"

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useDebounce } from "@/hooks/use-debounce"
+import { usePaginationState } from "@/hooks/use-pagination"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
@@ -22,15 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
+import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { cn, formatDate } from "@/lib/utils"
 
 import { useAuth } from "@/lib/auth/auth-context"
@@ -58,18 +51,14 @@ export default function RolesPage() {
 
   // --- Search & Filter State ---
   const [search, setSearch] = useState("")
-  const [page, setPage] = useState(1)
   const debouncedSearch = useDebounce(search, 500)
 
-  // Reset page when search changes
-  useEffect(() => {
-    setPage(1)
-  }, [debouncedSearch])
+  const { page, setPage } = usePaginationState([debouncedSearch], 20)
 
   // --- Data Fetching ---
-  const { data: rolesData, isLoading: isLoadingRoles } = useRoles({
+  const { data: rolesData, isLoading: isLoadingRoles, isFetching } = useRoles({
     page,
-    page_size: 10,
+    page_size: 20,
     search: debouncedSearch || undefined,
   })
   
@@ -144,7 +133,7 @@ export default function RolesPage() {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {isLoadingRoles ? (
           <div className="flex h-40 items-center justify-center">
             <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
@@ -152,11 +141,11 @@ export default function RolesPage() {
         ) : roles.length === 0 ? (
           <EmptyState emptyText={search ? "Không tìm thấy vai trò nào khớp với tìm kiếm." : "Chưa có vai trò nào được định nghĩa."} />
         ) : (
-          <div className="flex flex-col gap-4">
-            <div className="rounded-md border border-border/50 overflow-hidden">
+          <>
+            <div className="flex-1 min-h-0 p-5 pb-0 [&>div]:h-full [&>div]:overflow-auto [&>div]:rounded-md [&>div]:border">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/30 hover:bg-muted/30">
+                  <TableRow className="bg-background sticky top-0">
                     <TableHead className="w-[80px]">ID</TableHead>
                     <TableHead>Tên Vai trò</TableHead>
                     <TableHead>Mô tả</TableHead>
@@ -252,62 +241,15 @@ export default function RolesPage() {
               </Table>
             </div>
 
-            {/* Pagination Controls */}
-            {meta && meta.total_pages > 1 && (
-              <div className="flex items-center justify-between py-2">
-                <div className="text-xs text-muted-foreground">
-                  Hiển thị <span className="font-medium text-foreground">{(meta.page - 1) * meta.page_size + 1}</span> - <span className="font-medium text-foreground">{Math.min(meta.page * meta.page_size, meta.total_items)}</span> trong <span className="font-medium text-foreground">{meta.total_items}</span> vai trò
-                </div>
-                
-                <Pagination className="w-auto mx-0">
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={(e) => {
-                          e.preventDefault()
-                          if (meta.has_prev) setPage(p => p - 1)
-                        }}
-                        className={cn("cursor-pointer", !meta.has_prev && "pointer-events-none opacity-50")}
-                      />
-                    </PaginationItem>
-                    
-                    {Array.from({ length: meta.total_pages }, (_, i) => i + 1).map((p) => {
-                      if (p === 1 || p === meta.total_pages || (p >= meta.page - 1 && p <= meta.page + 1)) {
-                        return (
-                          <PaginationItem key={p}>
-                            <PaginationLink 
-                              isActive={p === meta.page}
-                              onClick={(e) => {
-                                e.preventDefault()
-                                setPage(p)
-                              }}
-                              className="cursor-pointer"
-                            >
-                              {p}
-                            </PaginationLink>
-                          </PaginationItem>
-                        )
-                      }
-                      if (p === meta.page - 2 || p === meta.page + 2) {
-                        return <PaginationItem key={p}><PaginationEllipsis /></PaginationItem>
-                      }
-                      return null
-                    })}
-
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={(e) => {
-                          e.preventDefault()
-                          if (meta.has_next) setPage(p => p + 1)
-                        }}
-                        className={cn("cursor-pointer", !meta.has_next && "pointer-events-none opacity-50")}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
-          </div>
+            <div className="shrink-0 p-5 pt-4 border-t border-border/40">
+              <DataTablePagination
+                meta={meta!}
+                onPageChange={setPage}
+                itemLabel="vai trò"
+                isFetching={isFetching}
+              />
+            </div>
+          </>
         )}
       </div>
 

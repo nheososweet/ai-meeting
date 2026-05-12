@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery, keepPreviousData } from "@tanstack/react-query";
 import { filesService } from "@/services/files.service";
 import { type FilesQueryParams } from "@/lib/types/files";
 
@@ -9,6 +9,7 @@ export function useFilesQuery(params?: FilesQueryParams) {
   return useQuery({
     queryKey: ["files", params],
     queryFn: () => filesService.getFiles(params),
+    placeholderData: keepPreviousData,
   });
 }
 

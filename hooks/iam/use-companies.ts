@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from "@tanstack/react-query"
 import { iamService } from "@/services/iam.service"
 import { toast } from "react-toastify"
 import { parseApiError } from "@/lib/api-error"
@@ -6,10 +6,11 @@ import { parseApiError } from "@/lib/api-error"
 /**
  * Hook để lấy danh sách tổ chức/công ty
  */
-export function useCompanies(params?: { page?: number; search?: string }) {
+export function useCompanies(params?: { page?: number; page_size?: number; search?: string }) {
   return useQuery({
     queryKey: ["iam", "companies", params],
     queryFn: () => iamService.getCompanies(params),
+    placeholderData: keepPreviousData,
   })
 }
 

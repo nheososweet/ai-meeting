@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
+import { usePaginationState } from "@/hooks/use-pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -61,6 +62,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import {
   Dialog,
   DialogContent,
@@ -108,16 +110,12 @@ export default function MeetingRecordsPage() {
   const [search, setSearch] = useState("");
   const [statusStep, setStatusStep] = useState<string>("upload");
   const [statusValue, setStatusValue] = useState<string>("success");
-  const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search, 500);
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, statusStep, statusValue]);
+  const { page, setPage } = usePaginationState([debouncedSearch, statusStep, statusValue]);
 
   // Hooks
-  const { data, isLoading, error } = useFilesQuery({
+  const { data, isLoading, isFetching, error } = useFilesQuery({
     page,
     page_size: 20,
     search: debouncedSearch || undefined,
@@ -190,7 +188,7 @@ export default function MeetingRecordsPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {isLoading ? (
           <div className="flex h-40 items-center justify-center">
             <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
@@ -208,292 +206,237 @@ export default function MeetingRecordsPage() {
             }
           />
         ) : (
-          <div className="flex flex-col gap-4">
-            <div className="rounded-md border border-border/50 overflow-hidden">
-              <Table>
-                <TableHeader className="bg-muted/30">
-                  <TableRow>
-                    <TableHead className="w-[80px]">ID</TableHead>
-                    <TableHead>Bản ghi</TableHead>
-                    <TableHead className="text-[11px] font-bold uppercase tracking-wider">Tiến độ</TableHead>
-                    <TableHead className="hidden lg:table-cell">Người được gán</TableHead>
-                    <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
-                    <TableHead className="text-right">Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {records.map((record) => {
-                    const isCompleted = record.status === "completed";
+          <>
+            <div className="flex-1 overflow-auto p-5 pb-0">
+              <div className="rounded-md border border-border/50 overflow-hidden relative">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-background sticky top-0 z-10 hover:bg-background shadow-[0_1px_0_0_rgba(0,0,0,0.05)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.05)]">
+                      <TableHead className="w-[80px]">ID</TableHead>
+                      <TableHead>Bản ghi</TableHead>
+                      <TableHead className="text-[11px] font-bold uppercase tracking-wider">Tiến độ</TableHead>
+                      <TableHead className="hidden lg:table-cell">Người được gán</TableHead>
+                      <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
+                      <TableHead className="text-right">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {records.map((record) => {
+                      const isCompleted = record.status === "completed";
 
-                    return (
-                      <TableRow key={record.id} className="group transition-colors hover:bg-muted/20">
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          #{record.id}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col gap-0.5">
-                            <div className="flex items-center gap-2">
-                              <AudioLinesIcon className="size-3.5 text-primary/70" />
-                              <span className="font-semibold text-sm text-foreground/90">
-                                {record.title || "Chưa có tiêu đề"}
+                      return (
+                        <TableRow key={record.id} className="group transition-colors hover:bg-muted/20">
+                          <TableCell className="font-mono text-xs text-muted-foreground">
+                            #{record.id}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-0.5">
+                              <div className="flex items-center gap-2">
+                                <AudioLinesIcon className="size-3.5 text-primary/70" />
+                                <span className="font-semibold text-sm text-foreground/90">
+                                  {record.title || "Chưa có tiêu đề"}
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-muted-foreground pl-5 truncate max-w-[300px]">
+                                {record.filename}
                               </span>
                             </div>
-                            <span className="text-[11px] text-muted-foreground pl-5 truncate max-w-[300px]">
-                              {record.filename}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <StatusIndicator record={record} />
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          <TooltipProvider>
-                            <div className="flex items-center gap-2">
-                              {(() => {
-                                const totalAssignees =
-                                  record.assignedToUsers.length +
-                                  record.assignedToGroups.length +
-                                  record.assignedToCompanies.length;
-
-                                if (totalAssignees === 0) {
-                                  return <span className="text-xs text-muted-foreground italic">Chưa phân bổ</span>;
-                                }
-
-                                const displayLimit = 3;
-                                const allAssignees = [
-                                  ...record.assignedToUsers.map(u => ({ id: u.id, name: u.name, type: 'user' })),
-                                  ...record.assignedToGroups.map(g => ({ id: g.id, name: g.name, type: 'group' })),
-                                  ...record.assignedToCompanies.map(c => ({ id: c.id, name: c.name, type: 'company' }))
-                                ];
-
-                                return (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div className="flex items-center cursor-help">
-                                        <AvatarGroup data-size="sm">
-                                          {allAssignees.slice(0, displayLimit).map((assignee, idx) => (
-                                            <Avatar key={`${assignee.type}-${assignee.id}`} size="sm">
-                                              <AvatarFallback className={cn(
-                                                "text-[10px]",
-                                                assignee.type === 'company' ? "bg-blue-100 text-blue-600" :
-                                                  assignee.type === 'group' ? "bg-amber-100 text-amber-600" :
-                                                    "bg-primary/10 text-primary"
-                                              )}>
-                                                {assignee.type === 'user' && <UserIcon className="size-3" />}
-                                                {assignee.type === 'group' && <UsersIcon className="size-3" />}
-                                                {assignee.type === 'company' && <Building2Icon className="size-3" />}
-                                              </AvatarFallback>
-                                            </Avatar>
-                                          ))}
-                                          {totalAssignees > displayLimit && (
-                                            <AvatarGroupCount>
-                                              +{totalAssignees - displayLimit}
-                                            </AvatarGroupCount>
-                                          )}
-                                        </AvatarGroup>
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" className="max-w-[300px] p-3">
-                                      <div className="flex flex-col gap-2">
-                                        <p className="text-xs font-semibold border-b pb-1 mb-1">Danh sách phân bổ</p>
-                                        <div className="flex flex-col gap-1.5">
-                                          {record.assignedToCompanies.length > 0 && (
-                                            <div className="flex flex-col gap-1">
-                                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Công ty</p>
-                                              {record.assignedToCompanies.map(c => (
-                                                <div key={c.id} className="flex items-center gap-1.5 text-xs">
-                                                  <Building2Icon className="size-3 text-blue-500" />
-                                                  <span>{c.name}</span>
-                                                </div>
-                                              ))}
-                                            </div>
-                                          )}
-                                          {record.assignedToGroups.length > 0 && (
-                                            <div className="flex flex-col gap-1">
-                                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Phòng ban/Nhóm</p>
-                                              {record.assignedToGroups.map(g => (
-                                                <div key={g.id} className="flex items-center gap-1.5 text-xs">
-                                                  <UsersIcon className="size-3 text-amber-500" />
-                                                  <span>{g.name}</span>
-                                                </div>
-                                              ))}
-                                            </div>
-                                          )}
-                                          {record.assignedToUsers.length > 0 && (
-                                            <div className="flex flex-col gap-1">
-                                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Cá nhân</p>
-                                              {record.assignedToUsers.map(u => (
-                                                <div key={u.id} className="flex items-center gap-1.5 text-xs">
-                                                  <UserIcon className="size-3 text-primary" />
-                                                  <span>{u.name}</span>
-                                                </div>
-                                              ))}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                );
-                              })()}
-                            </div>
-                          </TooltipProvider>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground text-xs">
-                          {formatDate(record.createTime)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          </TableCell>
+                          <TableCell>
+                            <StatusIndicator record={record} />
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                    onClick={() => setPreviewRecord(record)}
-                                  >
-                                    <PlayIcon className="size-3.5 fill-current" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Nghe thử</TooltipContent>
-                              </Tooltip>
+                              <div className="flex items-center gap-2">
+                                {(() => {
+                                  const totalAssignees =
+                                    record.assignedToUsers.length +
+                                    record.assignedToGroups.length +
+                                    record.assignedToCompanies.length;
 
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                    asChild
-                                  >
-                                    <a href={buildDownloadUrl(record.audioUrl)} download={record.filename}>
-                                      <DownloadIcon className="size-3.5" />
-                                    </a>
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Tải xuống audio</TooltipContent>
-                              </Tooltip>
+                                  if (totalAssignees === 0) {
+                                    return <span className="text-[10px] italic text-muted-foreground">Chưa phân bổ</span>;
+                                  }
 
-                              {canManage && (
+                                  const displayLimit = 3;
+                                  const allAssignees = [
+                                    ...record.assignedToUsers.map(u => ({ id: u.id, name: u.name, type: 'user' })),
+                                    ...record.assignedToGroups.map(g => ({ id: g.id, name: g.name, type: 'group' })),
+                                    ...record.assignedToCompanies.map(c => ({ id: c.id, name: c.name, type: 'company' }))
+                                  ];
+
+                                  return (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className="flex items-center cursor-help">
+                                          <AvatarGroup>
+                                            {allAssignees.slice(0, displayLimit).map((assignee) => (
+                                              <Avatar key={`${assignee.type}-${assignee.id}`} className="size-6 border-2 border-background">
+                                                <AvatarFallback className={cn(
+                                                  "text-[10px] font-bold uppercase",
+                                                  assignee.type === 'company' ? "bg-blue-100 text-blue-700" :
+                                                    assignee.type === 'group' ? "bg-amber-100 text-amber-700" :
+                                                      "bg-primary/10 text-primary"
+                                                )}>
+                                                  {assignee.name.charAt(0)}
+                                                </AvatarFallback>
+                                              </Avatar>
+                                            ))}
+                                            {totalAssignees > displayLimit && (
+                                              <AvatarGroupCount>+{totalAssignees - displayLimit}</AvatarGroupCount>
+                                            )}
+                                          </AvatarGroup>
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="max-w-[300px] p-3">
+                                        <div className="flex flex-col gap-2">
+                                          <p className="text-xs font-semibold border-b pb-1 mb-1">Danh sách phân bổ</p>
+                                          <div className="flex flex-col gap-1.5">
+                                            {record.assignedToCompanies.length > 0 && (
+                                              <div className="flex flex-col gap-1">
+                                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Công ty</p>
+                                                {record.assignedToCompanies.map(c => (
+                                                  <div key={c.id} className="flex items-center gap-1.5 text-xs">
+                                                    <Building2Icon className="size-3 text-blue-500" />
+                                                    <span>{c.name}</span>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
+                                            {record.assignedToGroups.length > 0 && (
+                                              <div className="flex flex-col gap-1">
+                                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Phòng ban/Nhóm</p>
+                                                {record.assignedToGroups.map(g => (
+                                                  <div key={g.id} className="flex items-center gap-1.5 text-xs">
+                                                    <UsersIcon className="size-3 text-amber-500" />
+                                                    <span>{g.name}</span>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
+                                            {record.assignedToUsers.length > 0 && (
+                                              <div className="flex flex-col gap-1">
+                                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Cá nhân</p>
+                                                {record.assignedToUsers.map(u => (
+                                                  <div key={u.id} className="flex items-center gap-1.5 text-xs">
+                                                    <UserIcon className="size-3 text-primary" />
+                                                    <span>{u.name}</span>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  );
+                                })()}
+                              </div>
+                            </TooltipProvider>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-muted-foreground text-[11px]">
+                            {formatDate(record.createTime)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <span className="inline-block">
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        disabled={isCompleted}
-                                        className={cn(
-                                          "size-8",
-                                          isCompleted
-                                            ? "text-muted-foreground/40 cursor-not-allowed"
-                                            : "text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
-                                        )}
-                                        onClick={() => {
-                                          setSelectedRecord(record);
-                                          setAssignDialogOpen(true);
-                                        }}
-                                      >
-                                        <UserPlusIcon className="size-3.5" />
-                                      </Button>
-                                    </span>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                      onClick={() => {
+                                        setPreviewRecord(record);
+                                      }}
+                                    >
+                                      <PlayIcon className="size-3.5 fill-current" />
+                                    </Button>
                                   </TooltipTrigger>
-                                  <TooltipContent>
-                                    {isCompleted ? "File đã xử lý xong, không thể giao việc" : "Giao hồ sơ"}
-                                  </TooltipContent>
+                                  <TooltipContent>Nghe thử</TooltipContent>
                                 </Tooltip>
-                              )}
-                            </TooltipProvider>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+
+                                {/* <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                      onClick={() => {
+                                        // TODO: Có thể mở xem chi tiết transcript ở đây nếu cần
+                                        setPreviewRecord(record);
+                                      }}
+                                    >
+                                      <FileSearchIcon className="size-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Xem chi tiết</TooltipContent>
+                                </Tooltip> */}
+
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                      asChild
+                                    >
+                                      <a href={buildDownloadUrl(record.audioUrl)} download>
+                                        <DownloadIcon className="size-3.5" />
+                                      </a>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Tải audio gốc</TooltipContent>
+                                </Tooltip>
+
+                                {canManage && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="inline-block">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          disabled={isCompleted}
+                                          className={cn(
+                                            "size-8",
+                                            isCompleted
+                                              ? "text-muted-foreground/40 cursor-not-allowed"
+                                              : "text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
+                                          )}
+                                          onClick={() => {
+                                            setSelectedRecord(record);
+                                            setAssignDialogOpen(true);
+                                          }}
+                                        >
+                                          <UserPlusIcon className="size-3.5" />
+                                        </Button>
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      {isCompleted ? "File đã xử lý xong, không thể giao việc" : "Giao hồ sơ"}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </TooltipProvider>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
 
-            {/* Pagination */}
-            {meta && meta.total_pages > 1 && (
-              <div className="flex items-center justify-between py-2">
-                <div className="text-xs text-muted-foreground">
-                  Hiển thị{" "}
-                  <span className="font-medium text-foreground">
-                    {(meta.page - 1) * meta.page_size + 1}
-                  </span>{" "}
-                  -{" "}
-                  <span className="font-medium text-foreground">
-                    {Math.min(meta.page * meta.page_size, meta.total_items)}
-                  </span>{" "}
-                  trong <span className="font-medium text-foreground">{meta.total_items}</span> bản
-                  ghi
-                </div>
-
-                <Pagination className="w-auto mx-0">
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (meta.has_prev) setPage((p) => p - 1);
-                        }}
-                        className={cn(
-                          "cursor-pointer",
-                          !meta.has_prev && "pointer-events-none opacity-50"
-                        )}
-                        text="Trước"
-                      />
-                    </PaginationItem>
-
-                    {Array.from({ length: meta.total_pages }, (_, i) => i + 1).map((p) => {
-                      if (
-                        p === 1 ||
-                        p === meta.total_pages ||
-                        (p >= meta.page - 1 && p <= meta.page + 1)
-                      ) {
-                        return (
-                          <PaginationItem key={p}>
-                            <PaginationLink
-                              isActive={p === meta.page}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setPage(p);
-                              }}
-                              className="cursor-pointer"
-                            >
-                              {p}
-                            </PaginationLink>
-                          </PaginationItem>
-                        );
-                      }
-                      if (p === meta.page - 2 || p === meta.page + 2) {
-                        return (
-                          <PaginationItem key={p}>
-                            <PaginationEllipsis />
-                          </PaginationItem>
-                        );
-                      }
-                      return null;
-                    })}
-
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (meta.has_next) setPage((p) => p + 1);
-                        }}
-                        className={cn(
-                          "cursor-pointer",
-                          !meta.has_next && "pointer-events-none opacity-50"
-                        )}
-                        text="Sau"
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
-          </div>
+            <div className="shrink-0 p-5 pt-4 border-t border-border/40">
+              <DataTablePagination
+                meta={meta!}
+                onPageChange={setPage}
+                itemLabel="bản ghi"
+                isFetching={isFetching}
+              />
+            </div>
+          </>
         )}
       </div>
 

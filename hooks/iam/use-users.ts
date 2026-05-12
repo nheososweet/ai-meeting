@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from "@tanstack/react-query"
 import { iamService, type CreateUserPayload } from "@/services/iam.service"
 import { toast } from "react-toastify"
 import { parseApiError } from "@/lib/api-error"
@@ -8,6 +8,7 @@ import { parseApiError } from "@/lib/api-error"
  */
 export function useUsers(params?: {
   page?: number
+  page_size?: number
   search?: string
   search_companyid?: number
   search_groupid?: number
@@ -16,6 +17,7 @@ export function useUsers(params?: {
   return useQuery({
     queryKey: ["iam", "users", params],
     queryFn: () => iamService.getUsers(params),
+    placeholderData: keepPreviousData,
   })
 }
 

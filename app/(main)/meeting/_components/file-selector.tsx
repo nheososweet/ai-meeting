@@ -37,6 +37,8 @@ interface FileSelectorProps {
   onFileSelect: (file: FileRecord) => void;
   onProcessFile: () => void;
   busyProcessing: boolean;
+  assigned_filter?: boolean;
+  self_upload?: boolean;
 }
 
 /**
@@ -132,6 +134,8 @@ export function FileSelector({
   onFileSelect,
   onProcessFile,
   busyProcessing,
+  assigned_filter,
+  self_upload,
 }: FileSelectorProps) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
@@ -149,7 +153,8 @@ export function FileSelector({
     isError,
     refetch
   } = useFilesInfiniteQuery({
-    assigned_filter: true,
+    assigned_filter,
+    self_upload,
     status_step: "transcribe",
     status_value: statusTab,
     search: debouncedSearch || undefined,
@@ -228,7 +233,11 @@ export function FileSelector({
                   <FileAudio className="size-6 opacity-30" />
                 </div>
                 <p className="text-sm font-semibold text-foreground/70">Danh sách trống</p>
-                <p className="text-[11px] opacity-60">Chưa có file nào được gán cho bạn trong mục này.</p>
+                <p className="text-[11px] opacity-60">
+                  {assigned_filter 
+                    ? "Chưa có file nào được gán cho bạn trong mục này." 
+                    : "Bạn chưa tải lên file nào trong mục này."}
+                </p>
               </div>
             ) : (
               <>

@@ -1,7 +1,7 @@
-import { 
-  ClipboardListIcon, 
-  ClockIcon, 
-  CheckCircle2Icon, 
+import {
+  ClipboardListIcon,
+  ClockIcon,
+  CheckCircle2Icon,
   PlayIcon,
   MicIcon,
   Loader2Icon,
@@ -78,7 +78,7 @@ export function UserView() {
                   <div className={cn(
                     "size-10 rounded-xl flex items-center justify-center shrink-0 transition-colors",
                     record.status === "completed" ? "bg-emerald-50 text-emerald-600" :
-                    record.status === "failed" ? "bg-rose-50 text-rose-600" : "bg-primary/5 text-primary"
+                      record.status === "failed" ? "bg-rose-50 text-rose-600" : "bg-primary/5 text-primary"
                   )}>
                     <MicIcon className="size-5" />
                   </div>
@@ -88,7 +88,7 @@ export function UserView() {
                     </h4>
                     <div className="flex items-center gap-4 mt-1 text-[11px] text-muted-foreground font-medium">
                       <span className="flex items-center gap-1.5">
-                        <CalendarIcon className="size-3" /> 
+                        <CalendarIcon className="size-3" />
                         {formatDate(record.createTime)}
                       </span>
                       <span className="flex items-center gap-1.5 uppercase tracking-tighter font-bold">
@@ -96,9 +96,9 @@ export function UserView() {
                       </span>
                     </div>
                   </div>
-                  <Button size="icon" variant="ghost" className="size-9 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* <Button size="icon" variant="ghost" className="size-9 opacity-0 group-hover:opacity-100 transition-opacity">
                     <PlayIcon className="size-4 fill-current" />
-                  </Button>
+                  </Button> */}
                 </div>
               ))
             )}
@@ -126,9 +126,9 @@ export function UserView() {
                   )}
                 </div>
                 <div className="h-2 w-full bg-white/20 rounded-full">
-                  <div 
-                    className="h-full bg-white rounded-full transition-all duration-1000" 
-                    style={{ width: `${stats.totalFiles > 0 ? (stats.completedFiles / stats.totalFiles) * 100 : 0}%` }} 
+                  <div
+                    className="h-full bg-white rounded-full transition-all duration-1000"
+                    style={{ width: `${stats.totalFiles > 0 ? (stats.completedFiles / stats.totalFiles) * 100 : 0}%` }}
                   />
                 </div>
               </div>

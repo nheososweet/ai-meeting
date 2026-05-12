@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 import {
   getRecords,
@@ -10,5 +10,6 @@ export function useRecordsQuery(params?: { page?: number; size?: number }) {
   return useQuery<PaginatedResponse<PipelineRecord>, Error>({
     queryKey: ["records", params],
     queryFn: () => getRecords(params),
+    placeholderData: keepPreviousData,
   });
 }

@@ -627,13 +627,20 @@ export default function MeetingPage() {
           <section className="rounded-lg border border-border/80 bg-card shadow-sm">
             <CollapsibleTrigger asChild>
               <div className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted/30 md:px-5 md:py-4">
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                  <h1 className="text-base font-semibold text-foreground">Trình biên tập phiên họp</h1>
-                  <span className={cn("rounded-md px-2 py-1 text-xs font-semibold", status.className)}>
-                    {status.label}
-                  </span>
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <h1 className="text-base font-bold text-foreground">Trình biên tập phiên họp</h1>
+                    <span className={cn("rounded-md px-2 py-0.5 text-[11px] font-semibold", status.className)}>
+                      {status.label}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
+                    Tải lên hoặc chọn tệp âm thanh để hệ thống tự động gỡ băng và tạo biên bản.
+                  </p>
                 </div>
-                {isInputOpen ? <ChevronUpIcon className="size-5 text-muted-foreground" /> : <ChevronDownIcon className="size-5 text-muted-foreground" />}
+                <div className="shrink-0">
+                  {isInputOpen ? <ChevronUpIcon className="size-5 text-muted-foreground" /> : <ChevronDownIcon className="size-5 text-muted-foreground" />}
+                </div>
               </div>
             </CollapsibleTrigger>
 

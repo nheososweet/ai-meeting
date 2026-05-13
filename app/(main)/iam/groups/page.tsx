@@ -84,7 +84,7 @@ export default function GroupsPage() {
 
       {/* Filter Toolbar */}
       <div className="shrink-0 flex flex-wrap items-center gap-3 border-b border-border/40 bg-muted/5 p-4">
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
           <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Cơ cấu tổ chức:</span>
           {isAdmin ? (
             <IAMCombobox

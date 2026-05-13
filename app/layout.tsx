@@ -4,6 +4,7 @@ import Script from "next/script";
 import { Providers } from "./providers";
 import "@cyntler/react-doc-viewer/dist/index.css";
 import "./globals.css";
+import NextTopLoader from "nextjs-toploader";
 
 
 // const themeInitScript = `
@@ -112,6 +113,7 @@ export default function RootLayout({
       className={`${quicksand.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <NextTopLoader color="#f97316" height={2} showSpinner={false} />
         <Script
           id="theme-init"
           strategy="beforeInteractive"

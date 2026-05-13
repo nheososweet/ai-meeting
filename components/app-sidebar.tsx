@@ -10,6 +10,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -31,7 +32,12 @@ const appNav = {
       icon: LayoutDashboardIcon,
     },
     {
-      title: "Trình biên tập cuộc họp",
+      title: "Bản ghi cuộc họp",
+      href: "/meeting-records",
+      icon: FolderKanbanIcon,
+    },
+    {
+      title: "Biên tập cuộc họp",
       href: "/meeting",
       icon: MicIcon,
     },
@@ -46,11 +52,6 @@ const appNav = {
     title: "Quản trị hệ thống",
     href: "/iam",
     icon: ShieldIcon,
-  },
-  meetingRecords: {
-    title: "Bản ghi cuộc họp",
-    href: "/meeting-records",
-    icon: FolderKanbanIcon,
   },
   support: [
     // {
@@ -73,12 +74,10 @@ const appNav = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { hasAnyPermission } = useAuth();
+  const { setOpenMobile, isMobile } = useSidebar();
 
   const canSeeIam = hasAnyPermission(IAM_SIDEBAR_PERMISSIONS);
   const isIamActive = pathname.startsWith("/iam");
-
-  const canSeeMeetingRecords = hasAnyPermission(WBS_SIDEBAR_PERMISSIONS);
-  const isMeetingRecordsActive = pathname.startsWith("/meeting-records");
 
   const visibleMain = appNav.main.filter((item: any) =>
     !item.requiredPerms || hasAnyPermission(item.requiredPerms)
@@ -106,14 +105,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <nav className="flex flex-col">
               {visibleMain.map((item) => {
                 const isActive =
-                  item.href === "/history"
-                    ? pathname.startsWith("/history")
+                  item.href === "/history" || item.href === "/meeting-records"
+                    ? pathname.startsWith(item.href)
                     : pathname === item.href;
 
                 return (
                   <Link
                     key={item.title}
                     href={item.href}
+                    onClick={() => {
+                      if (isMobile) {
+                        setTimeout(() => setOpenMobile(false), 150);
+                      }
+                    }}
                     className={cn(
                       "group flex items-center gap-3 px-3 py-3.5 border-b border-sidebar-border transition-colors",
                       isActive
@@ -141,35 +145,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 );
               })}
 
-              {/* Meeting Records Navigation — Always Visible */}
-              <Link
-                href={appNav.meetingRecords.href}
-                className={cn(
-                  "group flex items-center gap-3 px-3 py-3.5 border-b border-sidebar-border transition-colors",
-                  isMeetingRecordsActive
-                    ? "text-primary"
-                    : "text-sidebar-foreground hover:text-primary"
-                )}
-              >
-                <div
-                  className={cn(
-                    "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
-                    isMeetingRecordsActive
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-primary/10 text-primary group-hover:bg-primary/20"
-                  )}
-                >
-                  <appNav.meetingRecords.icon className="size-[18px]" />
-                </div>
-                <span className="text-[13px] font-bold uppercase tracking-wide flex-1">
-                  {appNav.meetingRecords.title}
-                </span>
-              </Link>
-
               {/* IAM Navigation — Sidebar Guard */}
               {canSeeIam && (
                 <Link
                   href={appNav.iam.href}
+                  onClick={() => {
+                    if (isMobile) {
+                      setTimeout(() => setOpenMobile(false), 150);
+                    }
+                  }}
                   className={cn(
                     "group flex items-center gap-3 px-3 py-3.5 border-b border-sidebar-border transition-colors",
                     isIamActive

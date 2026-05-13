@@ -1,7 +1,13 @@
 "use client"
 
 import * as React from "react"
-import { ChevronRightIcon, ChevronDownIcon, UsersIcon, ShieldIcon, PlusIcon, PencilIcon } from "lucide-react"
+import { ChevronRightIcon, ChevronDownIcon, UsersIcon, ShieldIcon, PlusIcon, PencilIcon, MoreHorizontalIcon } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { Group } from "@/lib/types/iam"
@@ -112,13 +118,13 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <UsersIcon className="size-4 text-primary/70 shrink-0" />
           <span className="font-medium text-sm truncate">{node.name}</span>
-          <span className="text-[10px] text-muted-foreground/60 px-1.5 py-0.5 bg-muted rounded border border-border/40">
+          <span className="hidden sm:inline-block text-[10px] text-muted-foreground/60 px-1.5 py-0.5 bg-muted rounded border border-border/40">
             ID: {node.id}
           </span>
         </div>
 
-        {/* Actions (Visible on hover) */}
-        <div className="flex items-center gap-1">
+        {/* Actions - Desktop */}
+        <div className="hidden sm:flex items-center gap-1 shrink-0">
           {hasPermission("assign_permissions") && (
             <Button
               variant="ghost"
@@ -145,13 +151,44 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                className="size-7 text-muted-foreground hover:text-primary hover:bg-primary/10 shrink-0"
                 onClick={() => onEdit(node)}
               >
                 <PencilIcon className="size-3" />
               </Button>
             </>
           )}
+        </div>
+
+        {/* Actions - Mobile (Dropdown) */}
+        <div className="sm:hidden flex items-center shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-foreground">
+                <MoreHorizontalIcon className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              {hasPermission("assign_permissions") && (
+                <DropdownMenuItem onClick={() => onAssignPerms(node)} className="text-xs">
+                  <ShieldIcon className="mr-2 size-3.5" />
+                  <span>Phân quyền</span>
+                </DropdownMenuItem>
+              )}
+              {canManage && (
+                <>
+                  <DropdownMenuItem onClick={() => onAddChild(node)} className="text-xs">
+                    <PlusIcon className="mr-2 size-3.5" />
+                    <span>Thêm con</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onEdit(node)} className="text-xs text-primary focus:bg-primary/10 focus:text-primary">
+                    <PencilIcon className="mr-2 size-3.5" />
+                    <span>Sửa</span>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

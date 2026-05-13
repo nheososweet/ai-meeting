@@ -215,42 +215,54 @@ export default function HistoryPage() {
         <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-4 gap-4">
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-bold text-foreground">Lịch sử họp</h2>
+            <p className="text-sm text-muted-foreground mt-0.5 truncate">
+              Quản lý và xem lại các biên bản cuộc họp.
+            </p>
+          </div>
+        </div>
+
+        {/* Filter Toolbar */}
+        <div className="shrink-0 flex flex-wrap items-center gap-3 border-b border-border/40 bg-muted/5 p-4">
+          <div className="relative w-full sm:w-[280px]">
+            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Tìm kiếm cuộc họp..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 pl-8 pr-8 text-xs bg-muted/10 border-border/60"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-lg leading-none"
+              >
+                ×
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Select value={statusStep} onValueChange={(val) => { setStatusStep(val); }}>
-                <SelectTrigger className="h-9 w-[160px] text-xs font-medium bg-muted/20">
-                  <SelectValue placeholder="Bước xử lý" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STEP_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Select value={statusStep} onValueChange={(val) => { setStatusStep(val); }}>
+              <SelectTrigger className="h-9 flex-1 sm:w-[160px] text-xs font-medium bg-muted/20">
+                <SelectValue placeholder="Bước xử lý" />
+              </SelectTrigger>
+              <SelectContent>
+                {STEP_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-              <Select value={statusValue} onValueChange={(val) => { setStatusValue(val); }}>
-                <SelectTrigger className="h-9 w-[130px] text-xs font-medium bg-muted/20">
-                  <SelectValue placeholder="Trạng thái" />
-                </SelectTrigger>
-                <SelectContent>
-                  {VALUE_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="relative w-full max-w-[240px]">
-              <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                placeholder="Tìm kiếm cuộc họp..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-9 pl-8 text-xs bg-muted/10 border-border/60"
-              />
-            </div>
+            <Select value={statusValue} onValueChange={(val) => { setStatusValue(val); }}>
+              <SelectTrigger className="h-9 flex-1 sm:w-[130px] text-xs font-medium bg-muted/20">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                {VALUE_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

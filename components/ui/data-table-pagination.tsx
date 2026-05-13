@@ -44,13 +44,18 @@ export function DataTablePagination({
   const endItem = Math.min(page * page_size, total_items);
 
   return (
-    <div className={cn("flex items-center justify-between py-2", className)}>
+    <div className={cn("flex flex-wrap items-center justify-between gap-y-3 py-2", className)}>
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        {isFetching && <Loader2Icon className="size-3 animate-spin" />}
-        <span>
+        {isFetching && <Loader2Icon className="size-3 animate-spin shrink-0" />}
+        <span className="hidden sm:inline">
           Hiển thị <span className="font-medium text-foreground">{startItem}</span> -{" "}
           <span className="font-medium text-foreground">{endItem}</span> trong{" "}
           <span className="font-medium text-foreground">{total_items}</span> {itemLabel}
+        </span>
+        <span className="sm:hidden tracking-wider">
+          <span className="font-medium text-foreground">{startItem}</span>-
+          <span className="font-medium text-foreground">{endItem}</span> /{" "}
+          <span className="font-medium text-foreground">{total_items}</span>
         </span>
       </div>
 

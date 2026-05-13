@@ -30,40 +30,35 @@ const themeInitScript = `
 })();
 `;
 
-const openSans = localFont({
+const quicksand = localFont({
   src: [
     {
-      path: "../public/fonts/open-sans/OpenSans-Light.ttf",
+      path: "../public/fonts/Quicksand-Light.ttf",
       weight: "300",
       style: "normal",
     },
     {
-      path: "../public/fonts/open-sans/OpenSans-Regular.ttf",
+      path: "../public/fonts/Quicksand-Regular.ttf",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../public/fonts/open-sans/OpenSans-Medium.ttf",
+      path: "../public/fonts/Quicksand-Medium.ttf",
       weight: "500",
       style: "normal",
     },
     {
-      path: "../public/fonts/open-sans/OpenSans-SemiBold.ttf",
+      path: "../public/fonts/Quicksand-SemiBold.ttf",
       weight: "600",
       style: "normal",
     },
     {
-      path: "../public/fonts/open-sans/OpenSans-Bold.ttf",
+      path: "../public/fonts/Quicksand-Bold.ttf",
       weight: "700",
       style: "normal",
     },
-    {
-      path: "../public/fonts/open-sans/OpenSans-ExtraBold.ttf",
-      weight: "800",
-      style: "normal",
-    },
   ],
-  variable: "--font-open-sans",
+  variable: "--font-quicksand",
   display: "swap",
 });
 
@@ -114,7 +109,7 @@ export default function RootLayout({
     <html
       suppressHydrationWarning
       lang="vi"
-      className={`${openSans.variable} h-full antialiased`}
+      className={`${quicksand.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <Script

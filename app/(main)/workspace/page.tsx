@@ -431,7 +431,7 @@ export default function WorkspacePage() {
     }
 
     showActionToast(
-      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt và không thao tác các nút khác để đảm bảo Pipeline hoạt động chính xác.",
+      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt và không thao tác các nút khác để đảm bảo tiến trình hoạt động chính xác.",
       "info",
       15000,
     );
@@ -1098,25 +1098,6 @@ export default function WorkspacePage() {
           ) : null}
         </section>
 
-        {actionToast ? (
-          <div
-            className={`fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur transition-all ${actionToast.variant === "success"
-              ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
-              : actionToast.variant === "error"
-                ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
-                : "border-blue-300/70 bg-blue-50/95 text-blue-900"
-              }`}
-          >
-            <span>{actionToast.message}</span>
-            <button
-              onClick={hideActionToast}
-              className="group flex size-5 items-center justify-center rounded-full transition-colors hover:bg-black/10 active:bg-black/20"
-              title="Đóng thông báo"
-            >
-              <XIcon className="size-3.5 transition-transform group-hover:scale-110" />
-            </button>
-          </div>
-        ) : null}
       </div>
     </PermissionGuard>
   );

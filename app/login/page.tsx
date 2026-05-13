@@ -105,7 +105,7 @@ function LoginContent() {
             {/* Email */}
             <div className="space-y-1">
               <div className="relative group">
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
+                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
                   <Mail size={20} />
                 </div>
                 <Input
@@ -116,7 +116,7 @@ function LoginContent() {
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
                   required
-                  className="pl-8 h-12 border-x-0 border-t-0 border-b border-gray-200 rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary transition-all font-medium text-gray-800 placeholder:text-gray-400"
+                  className="pl-10 h-12 border-x-0 border-t-0 border-b border-gray-200 rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary transition-all font-medium text-gray-800 placeholder:text-gray-400"
                 />
               </div>
             </div>
@@ -124,7 +124,7 @@ function LoginContent() {
             {/* Password */}
             <div className="space-y-1">
               <div className="relative group">
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
+                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
                   <Lock size={20} />
                 </div>
                 <Input
@@ -135,12 +135,12 @@ function LoginContent() {
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
                   required
-                  className="pl-8 pr-10 h-12 border-x-0 border-t-0 border-b border-gray-200 rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary transition-all font-medium text-gray-800 placeholder:text-gray-400"
+                  className="pl-10 pr-10 h-12 border-x-0 border-t-0 border-b border-gray-200 rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary transition-all font-medium text-gray-800 placeholder:text-gray-400"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -164,14 +164,14 @@ function LoginContent() {
             </Button>
 
             {/* Forgot Password */}
-            <div className="text-center">
+            {/* <div className="text-center">
               <button
                 type="button"
                 className="text-sm font-bold text-gray-500 hover:text-primary transition-colors"
               >
                 Quên mật khẩu
               </button>
-            </div>
+            </div> */}
           </form>
         </div>
       </div>

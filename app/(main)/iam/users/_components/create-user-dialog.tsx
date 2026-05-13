@@ -29,6 +29,22 @@ import { useInfiniteCompanies } from "@/hooks/iam/use-companies"
 import { useInfiniteGroups } from "@/hooks/iam/use-groups"
 import { useInfiniteRoles } from "@/hooks/iam/use-roles"
 
+function useInfiniteRolesNonAdmin(params?: { search?: string }) {
+  const result = useInfiniteRoles(params)
+  return {
+    ...result,
+    data: result.data
+      ? {
+          ...result.data,
+          pages: result.data.pages.map((page: any) => ({
+            ...page,
+            data: page.data.filter((r: any) => r.name !== "admin"),
+          })),
+        }
+      : result.data,
+  }
+}
+
 const userFormSchema = z.object({
   name: z.string().min(1, "Vui lòng nhập họ và tên"),
   email: z.string().email("Email không hợp lệ").min(1, "Vui lòng nhập email"),
@@ -155,7 +171,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
                       onValueChange={field.onChange}
                       placeholder="Chọn vai trò..."
                       searchPlaceholder="Tìm vai trò..."
-                      useInfiniteHook={useInfiniteRoles}
+                      useInfiniteHook={useInfiniteRolesNonAdmin}
                     />
                     <FieldError errors={[fieldState.error]} />
                   </Field>

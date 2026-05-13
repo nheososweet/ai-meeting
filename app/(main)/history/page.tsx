@@ -284,7 +284,7 @@ export default function HistoryPage() {
             />
           ) : (
             <>
-              <div className="flex-1 min-h-0 p-4[&>div]:h-full [&>div]:overflow-auto [&>div]:rounded-md [&>div]:border">
+              <div className="flex-1 min-h-0 p-4 [&>div]:h-full [&>div]:overflow-auto [&>div]:rounded-md [&>div]:border">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-background sticky top-0">

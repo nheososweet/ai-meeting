@@ -1,4 +1,4 @@
-import { ChevronLeftIcon, CopyIcon, Maximize2Icon } from "lucide-react";
+import { ChevronLeftIcon, CopyIcon, Maximize2Icon, PauseIcon, PlayIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatHeaderTimestamp } from "@/app/(main)/workspace/_lib/format-utils";
 import { getSpeakerColor } from "@/app/(main)/workspace/_lib/transcript-utils";
 
 type TranscriptComparisonDialogProps = {
@@ -20,7 +21,27 @@ type TranscriptComparisonDialogProps = {
   shouldShowRefinedTranscript: boolean;
   onCopyRawTranscript: () => void;
   onCopyRefinedTranscript: () => void;
+  audioUrl?: string;
+  onPlaySegment?: (segmentId: string, start: number, end: number) => void;
+  playingSegmentId?: string | null;
 };
+
+function parseSecondsFromHeader(header: string): { start: number; end: number } | null {
+  // Format: (12.5s - 45.3s)
+  const secMatch = header.match(/\(([\d.]+)s\s*-\s*([\d.]+)s\)/);
+  if (secMatch) {
+    return { start: parseFloat(secMatch[1]), end: parseFloat(secMatch[2]) };
+  }
+  // Format: (00:12 - 00:45)
+  const mmssMatch = header.match(/\((\d+):(\d+)\s*-\s*(\d+):(\d+)\)/);
+  if (mmssMatch) {
+    return {
+      start: parseInt(mmssMatch[1]) * 60 + parseInt(mmssMatch[2]),
+      end: parseInt(mmssMatch[3]) * 60 + parseInt(mmssMatch[4]),
+    };
+  }
+  return null;
+}
 
 export function TranscriptComparisonDialog({
   rawTranscript,
@@ -28,24 +49,41 @@ export function TranscriptComparisonDialog({
   shouldShowRefinedTranscript,
   onCopyRawTranscript,
   onCopyRefinedTranscript,
+  audioUrl,
+  onPlaySegment,
+  playingSegmentId,
 }: TranscriptComparisonDialogProps) {
-  function renderStyledTranscript(text: string) {
+  function renderStyledTranscript(text: string, idPrefix: string) {
     if (!text) return null;
 
     return text.split("\n").map((line, idx) => {
-      // Regex to match "Speaker Name (00:00 - 00:14): Text"
       const match = line.match(/^(.+?\s*\(.+?\)):(.*)$/);
       if (match) {
         const header = match[1];
         const content = match[2];
         const speakerNameMatch = header.match(/^(.+?)\s*\(/);
         const speakerName = speakerNameMatch ? speakerNameMatch[1].trim() : "";
+        const segmentId = `${idPrefix}-${idx}`;
+        const timestamps = audioUrl ? parseSecondsFromHeader(header) : null;
 
         return (
           <div key={idx} className="mb-2 last:mb-0">
             <span className={`font-bold ${getSpeakerColor(speakerName)}`}>
-              {header}:
+              {formatHeaderTimestamp(header)}:
             </span>
+            {timestamps && onPlaySegment && (
+              <button
+                onClick={() => onPlaySegment(segmentId, timestamps.start, timestamps.end)}
+                className="ml-1.5 inline-flex items-center justify-center rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-primary"
+                title="Nghe đoạn này"
+              >
+                {playingSegmentId === segmentId ? (
+                  <PauseIcon className="size-3" />
+                ) : (
+                  <PlayIcon className="size-3" />
+                )}
+              </button>
+            )}
             <span className="ml-1.5">{content}</span>
           </div>
         );
@@ -143,6 +181,7 @@ export function TranscriptComparisonDialog({
                     <div className="max-h-[55dvh] overflow-auto rounded-md border border-border/60 bg-secondary/50 p-4 text-sm leading-7 text-muted-foreground">
                       {renderStyledTranscript(
                         refinedTranscript ?? "Chưa có bản làm sạch từ hệ thống.",
+                        "dialog",
                       )}
                     </div>
                   </div>
@@ -206,6 +245,7 @@ export function TranscriptComparisonDialog({
           <div className="rounded-md border border-border/60 bg-secondary/50 p-3 pr-2 text-sm leading-7 text-muted-foreground">
             {renderStyledTranscript(
               refinedTranscript ?? "Chưa có bản làm sạch từ hệ thống.",
+              "inline",
             )}
           </div>
         </div>

@@ -466,6 +466,7 @@ export default function HistoryPage() {
         }}
         onCopyTranscript={handleCopyTranscriptPreview}
         onOpenLabeling={() => setIsLabelingDialogOpen(true)}
+        audioUrl={activeTranscriptRecord?.audioUrl}
       />
 
       <HistorySpeakersLabelingDialog

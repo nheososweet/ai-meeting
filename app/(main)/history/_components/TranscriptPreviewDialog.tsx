@@ -1,4 +1,7 @@
-import { CopyIcon, LoaderCircleIcon, UsersIcon } from "lucide-react";
+"use client";
+
+import { useRef, useState } from "react";
+import { CopyIcon, LoaderCircleIcon, PauseIcon, PlayIcon, UsersIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { formatHeaderTimestamp } from "@/app/(main)/workspace/_lib/format-utils";
 import { getSpeakerColor } from "@/app/(main)/workspace/_lib/transcript-utils";
 
 type TranscriptPreviewDialogProps = {
@@ -21,7 +25,23 @@ type TranscriptPreviewDialogProps = {
   onOpenChange: (nextOpen: boolean) => void;
   onCopyTranscript: () => void;
   onOpenLabeling?: () => void;
+  audioUrl?: string;
 };
+
+function parseSecondsFromHeader(header: string): { start: number; end: number } | null {
+  const secMatch = header.match(/\(([\d.]+)s\s*-\s*([\d.]+)s\)/);
+  if (secMatch) {
+    return { start: parseFloat(secMatch[1]), end: parseFloat(secMatch[2]) };
+  }
+  const mmssMatch = header.match(/\((\d+):(\d+)\s*-\s*(\d+):(\d+)\)/);
+  if (mmssMatch) {
+    return {
+      start: parseInt(mmssMatch[1]) * 60 + parseInt(mmssMatch[2]),
+      end: parseInt(mmssMatch[3]) * 60 + parseInt(mmssMatch[4]),
+    };
+  }
+  return null;
+}
 
 export function TranscriptPreviewDialog({
   open,
@@ -32,24 +52,79 @@ export function TranscriptPreviewDialog({
   onOpenChange,
   onCopyTranscript,
   onOpenLabeling,
+  audioUrl,
 }: TranscriptPreviewDialogProps) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playingSegmentId, setPlayingSegmentId] = useState<string | null>(null);
+
+  function playSegment(segmentId: string, start: number, end: number) {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (playingSegmentId === segmentId && !audio.paused) {
+      audio.pause();
+      setPlayingSegmentId(null);
+      return;
+    }
+
+    audio.pause();
+    audio.currentTime = start;
+    setPlayingSegmentId(segmentId);
+
+    audio.ontimeupdate = () => {
+      if (audio.currentTime >= end) {
+        audio.pause();
+        audio.ontimeupdate = null;
+        setPlayingSegmentId(null);
+      }
+    };
+
+    void audio.play();
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.pause();
+        audio.ontimeupdate = null;
+      }
+      setPlayingSegmentId(null);
+    }
+    onOpenChange(nextOpen);
+  }
+
   function renderStyledTranscript(text: string) {
     if (!text) return null;
 
     return text.split("\n").map((line, idx) => {
-      // Regex to match "Speaker Name (00:00 - 00:14): Text"
       const match = line.match(/^(.+?\s*\(.+?\)):(.*)$/);
       if (match) {
         const header = match[1];
         const content = match[2];
         const speakerNameMatch = header.match(/^(.+?)\s*\(/);
         const speakerName = speakerNameMatch ? speakerNameMatch[1].trim() : "";
+        const segmentId = `seg-${idx}`;
+        const timestamps = audioUrl ? parseSecondsFromHeader(header) : null;
 
         return (
           <div key={idx} className="mb-2 last:mb-0">
             <span className={`font-bold ${getSpeakerColor(speakerName)}`}>
-              {header}:
+              {formatHeaderTimestamp(header)}:
             </span>
+            {timestamps && (
+              <button
+                onClick={() => playSegment(segmentId, timestamps.start, timestamps.end)}
+                className="ml-1.5 inline-flex items-center justify-center rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-primary"
+                title="Nghe đoạn này"
+              >
+                {playingSegmentId === segmentId ? (
+                  <PauseIcon className="size-3" />
+                ) : (
+                  <PlayIcon className="size-3" />
+                )}
+              </button>
+            )}
             <span className="ml-1.5">{content}</span>
           </div>
         );
@@ -63,7 +138,7 @@ export function TranscriptPreviewDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton={false}
         className="mb-2 flex h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] flex-col justify-between gap-0 overflow-hidden rounded-xl p-0 sm:mb-4 sm:h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)] sm:max-w-[calc(100vw-2rem)]"
@@ -77,6 +152,20 @@ export function TranscriptPreviewDialog({
               (transcriptRecordId ? `Bản ghi #${transcriptRecordId}` : "")}
           </DialogDescription>
         </DialogHeader>
+
+        {audioUrl && (
+          <div className="border-b border-border/60 bg-muted/5 px-4 py-2 sm:px-6">
+            <audio
+              ref={audioRef}
+              src={audioUrl}
+              controls
+              preload="metadata"
+              onPause={() => setPlayingSegmentId(null)}
+              onEnded={() => setPlayingSegmentId(null)}
+              className="h-10 w-full accent-primary"
+            />
+          </div>
+        )}
 
         <div className="min-h-0 flex-1 overflow-auto px-4 pb-4 sm:px-6 sm:pb-6">
           {transcriptRecordId && isLoading ? (

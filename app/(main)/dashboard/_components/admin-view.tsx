@@ -1,7 +1,7 @@
-import { 
-  FilesIcon, 
-  CheckCircle2Icon, 
-  UsersIcon, 
+import {
+  FilesIcon,
+  CheckCircle2Icon,
+  UsersIcon,
   ClockIcon,
   Building2Icon,
   ArrowUpRightIcon
@@ -89,7 +89,7 @@ export function AdminView() {
                       <span className={cn(
                         "text-[10px] font-extrabold px-2.5 py-1 rounded-md uppercase tracking-wider",
                         record.status === "completed" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                        record.status === "failed" ? "bg-rose-100 text-rose-700 border border-rose-200" : "bg-blue-50 text-blue-700 border border-blue-200"
+                          record.status === "failed" ? "bg-rose-100 text-rose-700 border border-rose-200" : "bg-blue-50 text-blue-700 border border-blue-200"
                       )}>
                         {record.status}
                       </span>
@@ -159,11 +159,11 @@ export function AdminView() {
               </div>
             </div>
 
-            <div className="mt-12 pt-8 border-t border-dashed border-border/50 text-center">
+            {/* <div className="mt-12 pt-8 border-t border-dashed border-border/50 text-center">
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Dữ liệu được cập nhật dựa trên `transcribe` step.
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

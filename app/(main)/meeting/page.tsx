@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircle2Icon,
   ChevronDownIcon,
@@ -11,6 +11,8 @@ import {
   FolderOpenIcon,
   Loader2Icon,
   Maximize2Icon,
+  PauseIcon,
+  PlayIcon,
 } from "lucide-react";
 import {
   Collapsible,
@@ -28,6 +30,7 @@ import { TranscriptComparisonDialog } from "@/app/(main)/workspace/_components/T
 import { TranslateDialog } from "@/app/(main)/meeting/_components/TranslateDialog";
 import {
   formatDuration,
+  formatTimestamp,
   statusConfig,
 } from "@/app/(main)/workspace/_lib/format-utils";
 import { PIPELINE_STEP_WEIGHT } from "@/app/(main)/workspace/_lib/pipeline-constants";
@@ -163,6 +166,8 @@ export default function MeetingPage() {
   const [selectedFileRecord, setSelectedFileRecord] = useState<FileRecord | null>(null);
   const [activeMeeting, setActiveMeeting] =
     useState<MeetingRecord>(initialMeeting);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playingSegmentId, setPlayingSegmentId] = useState<string | null>(null);
   const [, setUploadProgress] = useState(0);
   const [, setProcessingProgress] = useState(0);
   const [notice, setNotice] = useState(
@@ -372,6 +377,31 @@ export default function MeetingPage() {
     setInputMode(mode);
   }
 
+  function playSegment(segmentId: string, start: number, end: number) {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (playingSegmentId === segmentId && !audio.paused) {
+      audio.pause();
+      setPlayingSegmentId(null);
+      return;
+    }
+
+    audio.pause();
+    audio.currentTime = start;
+    setPlayingSegmentId(segmentId);
+
+    audio.ontimeupdate = () => {
+      if (audio.currentTime >= end) {
+        audio.pause();
+        audio.ontimeupdate = null;
+        setPlayingSegmentId(null);
+      }
+    };
+
+    void audio.play();
+  }
+
   function handleProcessSelectedFile() {
     if (!selectedFileRecord) {
       setNotice("Vui lòng chọn tệp audio trước khi xử lý.");
@@ -379,7 +409,7 @@ export default function MeetingPage() {
     }
 
     showActionToast(
-      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt để đảm bảo Pipeline hoạt động chính xác.",
+      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt để đảm bảo tiến trình hoạt động chính xác.",
       "info",
       15000,
     );
@@ -476,7 +506,7 @@ export default function MeetingPage() {
           speakerCount: new Set(newSegments.map(s => s.speaker)).size,
         };
       });
-      
+
       setIsTranscriptEditorOpen(false);
       showActionToast("Đã lưu bản gỡ băng thành công.");
     } catch (error) {
@@ -695,8 +725,8 @@ export default function MeetingPage() {
                   </Button>
                 )}
                 {activeTab === "transcript" && canTranslate && (shouldShowRawTranscript || shouldShowRefinedTranscript) && (
-                  <TranslateDialog 
-                    initialText={activeMeeting.refinedTranscript || activeMeeting.rawTranscript} 
+                  <TranslateDialog
+                    initialText={activeMeeting.refinedTranscript || activeMeeting.rawTranscript}
                   />
                 )}
                 {activeTab === "diarization" && shouldShowRefinedDiarization && (
@@ -709,6 +739,20 @@ export default function MeetingPage() {
                 )}
               </div>
             </div>
+
+            {activeMeeting.audioUrl && (
+              <div className="border-b border-border/60 bg-muted/5 px-4 py-2 md:px-6">
+                <audio
+                  ref={audioRef}
+                  src={activeMeeting.audioUrl}
+                  controls
+                  preload="metadata"
+                  onPause={() => setPlayingSegmentId(null)}
+                  onEnded={() => setPlayingSegmentId(null)}
+                  className="h-10 w-full accent-primary"
+                />
+              </div>
+            )}
 
             <ScrollArea className="flex-1">
               <div className="p-4 md:p-6 lg:p-8">
@@ -724,6 +768,9 @@ export default function MeetingPage() {
                           shouldShowRefinedTranscript={shouldShowRefinedTranscript}
                           onCopyRawTranscript={handleCopyRawTranscript}
                           onCopyRefinedTranscript={handleCopyRefinedTranscript}
+                          audioUrl={activeMeeting.audioUrl}
+                          onPlaySegment={playSegment}
+                          playingSegmentId={playingSegmentId}
                         />
                       ) : (
                         <div className="rounded-lg border border-border/70 bg-white p-6 shadow-sm">
@@ -761,7 +808,22 @@ export default function MeetingPage() {
                         <div key={i} className={cn("group relative flex flex-col gap-2 rounded-xl border-l-4 p-4 transition-all hover:shadow-md", speakerToneClass(segment.speaker))}>
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-bold text-foreground">{segment.speaker}</span>
-                            <span className="rounded-full bg-muted/60 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">{segment.startSecond}s - {segment.endSecond}s</span>
+                            <div className="flex items-center gap-2">
+                              <span className="rounded-full bg-muted/60 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">{formatTimestamp(segment.startSecond)} - {formatTimestamp(segment.endSecond)}</span>
+                              {activeMeeting.audioUrl && (
+                                <button
+                                  onClick={() => playSegment(segment.id, segment.startSecond, segment.endSecond)}
+                                  className="flex items-center justify-center rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-primary"
+                                  title="Nghe đoạn này"
+                                >
+                                  {playingSegmentId === segment.id ? (
+                                    <PauseIcon className="size-3.5" />
+                                  ) : (
+                                    <PlayIcon className="size-3.5" />
+                                  )}
+                                </button>
+                              )}
+                            </div>
                           </div>
                           <p className="text-sm leading-relaxed text-foreground/90">{segment.text}</p>
                         </div>

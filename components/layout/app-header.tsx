@@ -44,7 +44,7 @@ export function AppHeader() {
         />
 
         {/* Search */}
-        <div className="flex-1 max-w-sm">
+        {/* <div className="flex-1 max-w-sm">
           <div className="relative group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
             <Input
@@ -53,7 +53,7 @@ export function AppHeader() {
               className="w-full h-9 pl-9 pr-4 bg-white/90 border-none focus-visible:ring-1 focus-visible:ring-ring transition-all text-sm shadow-sm"
             />
           </div>
-        </div>
+        </div> */}
 
         {/* Right: User Menu */}
         <div className="ml-auto flex items-center gap-4">

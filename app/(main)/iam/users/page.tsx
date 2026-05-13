@@ -372,24 +372,22 @@ export default function UsersPage() {
                                   </Tooltip>
                                 )}
 
-                                {user.id !== currentUser?.id && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                        onClick={() => {
-                                          setSelectedUser(user)
-                                          setEditOpen(true)
-                                        }}
-                                      >
-                                        <PencilIcon className="size-3.5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Chỉnh sửa thông tin</TooltipContent>
-                                  </Tooltip>
-                                )}
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                      onClick={() => {
+                                        setSelectedUser(user)
+                                        setEditOpen(true)
+                                      }}
+                                    >
+                                      <PencilIcon className="size-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Chỉnh sửa thông tin</TooltipContent>
+                                </Tooltip>
 
                                 {user.id !== currentUser?.id && (
                                   <Tooltip>

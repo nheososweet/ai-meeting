@@ -23,6 +23,8 @@ import { ReportPreviewDialog } from "@/app/(main)/history/_components/ReportPrev
 import { SendEmailDialog } from "@/app/(main)/history/_components/SendEmailDialog";
 import { TranscriptPreviewDialog } from "@/app/(main)/history/_components/TranscriptPreviewDialog";
 import { HistorySpeakersLabelingDialog } from "@/app/(main)/history/_components/HistorySpeakersLabelingDialog";
+import { TranscriptEditorDialog } from "@/app/(main)/meeting/_components/TranscriptEditorDialog";
+import { useUpdateTranscribeMutation } from "@/hooks/services/use-update-transcribe-mutation";
 import {
   resolveReportFilename,
 } from "@/app/(main)/history/_lib/file-utils";
@@ -112,6 +114,11 @@ export default function HistoryPage() {
   const [previewAudioRecord, setPreviewAudioRecord] = useState<FileRecord | null>(null);
   const [previewReportRecordId, setPreviewReportRecordId] = useState<number | null>(null);
   const [isLabelingDialogOpen, setIsLabelingDialogOpen] = useState(false);
+  const [isTranscriptEditorOpen, setIsTranscriptEditorOpen] = useState(false);
+  const [isSavingTranscript, setIsSavingTranscript] = useState(false);
+  const [transcriptEditorError, setTranscriptEditorError] = useState<string | null>(null);
+
+  const updateTranscribeMutation = useUpdateTranscribeMutation();
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
@@ -206,6 +213,33 @@ export default function HistoryPage() {
         ...prev,
         [previewTranscriptRecordId]: newRawTranscript,
       }));
+    }
+  }
+
+  async function handleSaveEditedTranscript(content: string) {
+    if (!previewTranscriptRecordId) return;
+
+    setTranscriptEditorError(null);
+    setIsSavingTranscript(true);
+
+    try {
+      await updateTranscribeMutation.mutateAsync({
+        id: previewTranscriptRecordId,
+        textContent: content,
+      });
+
+      setPreviewTranscriptByRecord((prev) => ({
+        ...prev,
+        [previewTranscriptRecordId]: content,
+      }));
+
+      setIsTranscriptEditorOpen(false);
+      showActionToast("Đã lưu bản gỡ băng thành công.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Lỗi không xác định";
+      setTranscriptEditorError(`Lỗi khi lưu bản gỡ băng: ${message}`);
+    } finally {
+      setIsSavingTranscript(false);
     }
   }
 
@@ -477,7 +511,17 @@ export default function HistoryPage() {
         }}
         onCopyTranscript={handleCopyTranscriptPreview}
         onOpenLabeling={() => setIsLabelingDialogOpen(true)}
+        onOpenEdit={() => setIsTranscriptEditorOpen(true)}
         audioUrl={activeTranscriptRecord?.audioUrl}
+      />
+
+      <TranscriptEditorDialog
+        open={isTranscriptEditorOpen}
+        onOpenChange={setIsTranscriptEditorOpen}
+        rawTranscript={activeTranscriptContent}
+        isSaving={isSavingTranscript}
+        onSave={handleSaveEditedTranscript}
+        error={transcriptEditorError}
       />
 
       <HistorySpeakersLabelingDialog

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { CopyIcon, LoaderCircleIcon, PauseIcon, PlayIcon, UsersIcon } from "lucide-react";
+import { CopyIcon, Edit3Icon, LoaderCircleIcon, PauseIcon, PlayIcon, UsersIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +25,7 @@ type TranscriptPreviewDialogProps = {
   onOpenChange: (nextOpen: boolean) => void;
   onCopyTranscript: () => void;
   onOpenLabeling?: () => void;
+  onOpenEdit?: () => void;
   audioUrl?: string;
 };
 
@@ -52,6 +53,7 @@ export function TranscriptPreviewDialog({
   onOpenChange,
   onCopyTranscript,
   onOpenLabeling,
+  onOpenEdit,
   audioUrl,
 }: TranscriptPreviewDialogProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -192,6 +194,18 @@ export function TranscriptPreviewDialog({
             <CopyIcon className="size-4" />
             Sao chép bản gỡ băng
           </Button>
+          {onOpenEdit && (
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-1.5 border-dashed border-amber-200 bg-amber-50/30 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-900/30 dark:bg-amber-950/20 dark:text-amber-400"
+              onClick={onOpenEdit}
+              disabled={!transcriptRecordId || isLoading}
+            >
+              <Edit3Icon className="size-4" />
+              Chỉnh sửa
+            </Button>
+          )}
           {onOpenLabeling && (
             <Button
               type="button"

@@ -247,7 +247,7 @@ export default function UsersPage() {
           <EmptyState emptyText={search || filterCompanyId !== "all" ? "Không tìm thấy kết quả nào khớp với bộ lọc." : "Chưa có tài khoản nào trong hệ thống."} />
         ) : (
           <>
-            <div className="flex-1 min-h-0 p-4 pb-0 [&>div]:h-full [&>div]:overflow-auto [&>div]:rounded-md [&>div]:border">
+            <div className="flex-1 min-h-0 p-4 [&>div]:h-full [&>div]:overflow-auto [&>div]:rounded-md [&>div]:border">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-background sticky top-0">
@@ -418,14 +418,13 @@ export default function UsersPage() {
               </Table>
             </div>
 
-            <div className="shrink-0 p-4 pt-3 border-t border-border/40">
-              <DataTablePagination
-                meta={meta!}
-                onPageChange={setPage}
-                itemLabel="tài khoản"
-                isFetching={isFetching}
-              />
-            </div>
+            <DataTablePagination
+              meta={meta!}
+              onPageChange={setPage}
+              itemLabel="tài khoản"
+              isFetching={isFetching}
+              className="shrink-0 px-4 pb-4"
+            />
           </>
         )}
       </div>

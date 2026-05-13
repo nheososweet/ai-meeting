@@ -150,7 +150,7 @@ export default function CompaniesPage() {
           <EmptyState emptyText={search ? `Không tìm thấy tổ chức nào khớp với "${search}"` : "Chưa có tổ chức nào trong hệ thống."} />
         ) : (
           <>
-            <div className="flex-1 min-h-0 p-5 pb-0 [&>div]:h-full [&>div]:overflow-auto [&>div]:rounded-md [&>div]:border">
+            <div className="flex-1 min-h-0 p-4 [&>div]:h-full [&>div]:overflow-auto [&>div]:rounded-md [&>div]:border">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-background sticky top-0">
@@ -227,14 +227,13 @@ export default function CompaniesPage() {
               </Table>
             </div>
 
-            <div className="shrink-0 p-5 pt-4 border-t border-border/40">
-              <DataTablePagination
-                meta={meta!}
-                onPageChange={setPage}
-                itemLabel="tổ chức"
-                isFetching={isFetching}
-              />
-            </div>
+            <DataTablePagination
+              meta={meta!}
+              onPageChange={setPage}
+              itemLabel="tổ chức"
+              isFetching={isFetching}
+              className="shrink-0 px-4 pb-4"
+            />
           </>
         )}
       </div>

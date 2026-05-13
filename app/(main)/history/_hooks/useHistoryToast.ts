@@ -1,11 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
 
 export type ActionToastVariant = "info" | "success" | "error";
-
-export type ActionToastState = {
-  message: string;
-  variant: ActionToastVariant;
-};
 
 function detectToastVariant(message: string): ActionToastVariant {
   const normalized = message.toLowerCase();
@@ -27,36 +22,26 @@ function detectToastVariant(message: string): ActionToastVariant {
 }
 
 export function useHistoryToast() {
-  const [actionToast, setActionToast] = useState<ActionToastState | null>(
-    null,
-  );
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const showActionToast = (message: string, variant?: ActionToastVariant) => {
-    setActionToast({
-      message,
-      variant: variant ?? detectToastVariant(message),
-    });
+    const type = variant ?? detectToastVariant(message);
+    const options = { autoClose: 3000 };
 
-    if (toastTimerRef.current) {
-      clearTimeout(toastTimerRef.current);
+    switch (type) {
+      case "success":
+        toast.success(message, options);
+        break;
+      case "error":
+        toast.error(message, options);
+        break;
+      case "info":
+      default:
+        toast.info(message, options);
+        break;
     }
-
-    toastTimerRef.current = setTimeout(() => {
-      setActionToast(null);
-    }, 2200);
   };
 
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current) {
-        clearTimeout(toastTimerRef.current);
-      }
-    };
-  }, []);
-
   return {
-    actionToast,
+    actionToast: null,
     showActionToast,
   };
 }

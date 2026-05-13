@@ -141,7 +141,7 @@ export default function HistoryPage() {
     }));
   }, [records]);
 
-  const { actionToast, showActionToast } = useHistoryToast();
+  const { showActionToast } = useHistoryToast();
 
   const {
     previewTranscriptByRecord,
@@ -516,18 +516,6 @@ export default function HistoryPage() {
         onClose={() => setPreviewAudioRecord(null)}
       />
 
-      {actionToast ? (
-        <div
-          className={`pointer-events-none fixed right-4 bottom-4 z-50 rounded-lg border px-3 py-2 text-xs font-medium shadow-lg backdrop-blur ${actionToast.variant === "success"
-            ? "border-emerald-300/70 bg-emerald-50/95 text-emerald-900"
-            : actionToast.variant === "error"
-              ? "border-rose-300/70 bg-rose-50/95 text-rose-900"
-              : "border-border/70 bg-background/95 text-foreground"
-            }`}
-        >
-          {actionToast.message}
-        </div>
-      ) : null}
     </PermissionGuard>
   );
 }

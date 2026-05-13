@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 
 import {
@@ -39,6 +40,7 @@ type UseHistoryEmailParams = {
 };
 
 export function useHistoryEmail({ records, showActionToast, canSendMail }: UseHistoryEmailParams) {
+  const queryClient = useQueryClient();
   const [sendEmailRecordId, setSendEmailRecordId] = useState<number | null>(null);
   const [emailRecipientsInput, setEmailRecipientsInput] = useState("");
   const [emailValidationError, setEmailValidationError] = useState<
@@ -158,6 +160,7 @@ export function useHistoryEmail({ records, showActionToast, canSendMail }: UseHi
       const sendResult = await sendMail({
         emails: parsed.data,
         momFileUrl: record.reportUrl,
+        fileId: record.id,
         template: {
           subject,
           body,
@@ -175,8 +178,12 @@ export function useHistoryEmail({ records, showActionToast, canSendMail }: UseHi
         return;
       }
 
+      showActionToast(`Đã gửi email thành công tới ${sendResult.sent} địa chỉ.`);
+      const wasWaiting = record.fileStatus.sendEmail !== "success";
       handleCloseSendEmailDialog();
-      showActionToast("Đã gửi email thành công.");
+      if (wasWaiting) {
+        queryClient.invalidateQueries({ queryKey: ["files"] });
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Lỗi không xác định";

@@ -46,7 +46,7 @@ import { CreateCompanyDialog, EditCompanyDialog } from "./_components/company-di
 
 export default function CompaniesPage() {
   const { hasPermission, hasScope } = useAuth()
-  
+
   // Checking permission
   const canManage = hasPermission("manage_companies") && hasScope("global")
 
@@ -59,7 +59,7 @@ export default function CompaniesPage() {
   const [permDialogOpen, setPermDialogOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  
+
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
 
   // Search & Pagination State
@@ -69,12 +69,12 @@ export default function CompaniesPage() {
   const { page, setPage, pageSize } = usePaginationState([debouncedSearch])
 
   // Hooks
-  const { data, isLoading, isFetching, error } = useCompanies({ 
-    page, 
+  const { data, isLoading, isFetching, error } = useCompanies({
+    page,
     page_size: pageSize,
-    search: debouncedSearch || undefined 
+    search: debouncedSearch || undefined
   })
-  
+
   // Lấy danh sách quyền của công ty ĐANG ĐƯỢC CHỌN
   const { data: companyPerms, isLoading: isLoadingCompanyPerms } = useCompanyPermissions(
     permDialogOpen && selectedCompany ? selectedCompany.id : undefined
@@ -108,7 +108,7 @@ export default function CompaniesPage() {
           <h2 className="text-base font-bold text-foreground">Danh sách Tổ chức</h2>
           <p className="text-sm text-muted-foreground mt-0.5 truncate">Quản lý các công ty và tổ chức trong hệ thống.</p>
         </div>
-        
+
         {canManage && (
           <Button onClick={() => setCreateOpen(true)} size="sm" className="shrink-0">
             <PlusIcon className="mr-1.5 size-4" /> Thêm Tổ chức
@@ -127,7 +127,7 @@ export default function CompaniesPage() {
             className="h-9 pl-8 pr-8"
           />
           {search && (
-            <button 
+            <button
               onClick={() => setSearch("")}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
@@ -154,75 +154,75 @@ export default function CompaniesPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-background sticky top-0">
-                      <TableHead className="w-[80px]">ID</TableHead>
-                      <TableHead>Tên Tổ chức</TableHead>
-                      <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
-                      <TableHead className="text-right">Thao tác</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {companies.map((company) => (
-                      <TableRow key={company.id} className="group">
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          #{company.id}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2.5">
-                            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary/70 group-hover:bg-primary/10 transition-colors">
-                              <BuildingIcon className="size-4" />
-                            </div>
-                            <span className="font-semibold text-sm text-foreground/90">{company.name}</span>
+                    <TableHead className="w-[80px]">ID</TableHead>
+                    <TableHead>Tên Tổ chức</TableHead>
+                    <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {companies.map((company) => (
+                    <TableRow key={company.id} className="group">
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        #{company.id}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary/70 group-hover:bg-primary/10 transition-colors">
+                            <BuildingIcon className="size-4" />
                           </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground text-xs">
-                          {formatDate(company.created_at)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {hasPermission("assign_permissions") && (
+                          <span className="font-semibold text-sm text-foreground/90">{company.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground text-xs">
+                        {formatDate(company.created_at)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {hasPermission("assign_permissions") && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-xs hover:bg-primary/10 hover:text-primary"
+                              onClick={() => {
+                                setSelectedCompany(company)
+                                setPermDialogOpen(true)
+                              }}
+                            >
+                              <ShieldIcon className="mr-1.5 size-3.5" /> Phân quyền
+                            </Button>
+                          )}
+
+                          {canManage && (
+                            <>
                               <Button
                                 variant="ghost"
-                                size="sm"
-                                className="h-8 text-xs hover:bg-primary/10 hover:text-primary"
+                                size="icon"
+                                className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
                                 onClick={() => {
                                   setSelectedCompany(company)
-                                  setPermDialogOpen(true)
+                                  setEditOpen(true)
                                 }}
                               >
-                                <ShieldIcon className="mr-1.5 size-3.5" /> Phân quyền
+                                <PencilIcon className="size-3.5" />
                               </Button>
-                            )}
-                            
-                            {canManage && (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                  onClick={() => {
-                                    setSelectedCompany(company)
-                                    setEditOpen(true)
-                                  }}
-                                >
-                                  <PencilIcon className="size-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => {
-                                    setSelectedCompany(company)
-                                    setDeleteOpen(true)
-                                  }}
-                                >
-                                  <Trash2Icon className="size-3.5" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => {
+                                  setSelectedCompany(company)
+                                  setDeleteOpen(true)
+                                }}
+                              >
+                                <Trash2Icon className="size-3.5" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>

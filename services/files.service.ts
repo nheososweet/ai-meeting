@@ -36,10 +36,10 @@ function normalizeFileRecord(record: UpstreamFileRecord): FileRecord {
       transcribe: record.file_status.transcribe,
     },
     // Derive a top-level status for the UI badge based on transcription/report status
-    status: (record.file_status.report === "success" 
-      ? "completed" 
-      : record.file_status.upload === "success" 
-        ? "processing" 
+    status: (record.file_status.report === "success"
+      ? "completed"
+      : record.file_status.upload === "success"
+        ? "processing"
         : "pending") as FileRecordStatus,
     processedAt: record.processed_at,
     size: record.size,

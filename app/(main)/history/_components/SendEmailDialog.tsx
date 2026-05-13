@@ -53,10 +53,10 @@ export function SendEmailDialog({
 }: SendEmailDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Gửi email biên bản</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="line-clamp-2 break-all" title={recordFilename}>
             Bạn đang gửi biên bản của tệp: {recordFilename}
           </DialogDescription>
         </DialogHeader>

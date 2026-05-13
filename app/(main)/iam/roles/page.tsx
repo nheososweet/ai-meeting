@@ -186,7 +186,7 @@ export default function RolesPage() {
                           {formatDate(role.created_at)}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end gap-1">
                             {hasPermission("assign_permissions") && role.name !== "admin" && (
                               <Button
                                 variant="ghost"

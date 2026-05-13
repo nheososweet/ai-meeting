@@ -330,7 +330,7 @@ export default function UsersPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <TooltipProvider>
-                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end gap-1">
                             {hasPermission("assign_permissions") && user.scope !== "global" && user.id !== currentUser?.id && (
                               <Tooltip>
                                 <TooltipTrigger asChild>

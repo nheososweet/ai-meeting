@@ -2,10 +2,13 @@ import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 
-import {
-  sendMail,
-  type PipelineRecord,
-} from "@/services/pipeline-records.service";
+import { sendMail, type MailTemplatePayload } from "@/services/pipeline-records.service";
+import { type FileRecord } from "@/lib/types/files";
+
+type HistoryEmailRecord = FileRecord & {
+  reportUrl: string | null;
+  mailTemplate?: MailTemplatePayload;
+};
 
 const DEFAULT_EMAIL_BODY =
   "<p>Kính gửi Quý thành viên,</p><p>Liên quan đến cuộc họp vừa diễn ra, Ban tổ chức xin gửi đến Quý vị Biên bản họp chi tiết.</p><p>Vui lòng truy cập liên kết sau để xem hoặc tải tài liệu:</p><p><a href=\"{{mom_file_url}}\">{{mom_file_url}}</a></p><p>Mọi thắc mắc vui lòng phản hồi trực tiếp cho Thư ký.</p><p>Trân trọng,</p><p>Admin</p>";
@@ -34,7 +37,7 @@ const recipientEmailsSchema = z
   );
 
 type UseHistoryEmailParams = {
-  records?: PipelineRecord[];
+  records?: HistoryEmailRecord[];
   showActionToast: (message: string) => void;
   canSendMail: boolean;
 };

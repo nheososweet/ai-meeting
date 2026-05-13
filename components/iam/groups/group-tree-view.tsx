@@ -93,7 +93,7 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
         {/* Toggle Icon */}
         <div className="size-6 flex items-center justify-center shrink-0">
           {hasChildren ? (
-            <button 
+            <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="hover:bg-accent rounded-sm p-0.5 transition-all active:scale-95 group/toggle"
             >
@@ -118,7 +118,7 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
         </div>
 
         {/* Actions (Visible on hover) */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1">
           {hasPermission("assign_permissions") && (
             <Button
               variant="ghost"
@@ -130,7 +130,7 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
               Phân quyền
             </Button>
           )}
-          
+
           {canManage && (
             <>
               <Button

@@ -28,7 +28,7 @@ export default function GroupsPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [permDialogOpen, setPermDialogOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
-  
+
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null)
   const [parentGroupId, setParentGroupId] = useState<string>("__none__")
 
@@ -45,10 +45,10 @@ export default function GroupsPage() {
     }
   }
 
-  const parsedCompanyId = isAdmin 
+  const parsedCompanyId = isAdmin
     ? (selectedCompanyId ? Number(selectedCompanyId) : null)
     : (currentUser?.companyId || null)
-    
+
   const { data: groupsData, isLoading: isLoadingGroups, error: groupsError } = useGroups(parsedCompanyId)
   const groups = groupsData?.data || []
 
@@ -71,10 +71,10 @@ export default function GroupsPage() {
     <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm">
       <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-4 gap-4">
         <div className="flex-1 min-w-0">
-          <h2 className="text-base font-bold text-foreground">Danh sách Phòng ban / Nhóm</h2>
-          <p className="text-sm text-muted-foreground mt-0.5 truncate">Quản lý các nhóm trực thuộc tổ chức.</p>
+          <h2 className="text-base font-bold text-foreground">Danh sách Nhóm</h2>
+          <p className="text-sm text-muted-foreground mt-0.5 truncate">Quản lý các nhóm trực thuộc công ty.</p>
         </div>
-        
+
         {canManage && parsedCompanyId && (
           <Button onClick={() => { setParentGroupId("__none__"); setCreateOpen(true) }} size="sm" className="shrink-0">
             <PlusIcon className="mr-1.5 size-4" /> Thêm Nhóm
@@ -121,7 +121,7 @@ export default function GroupsPage() {
         ) : groups.length === 0 ? (
           <EmptyState emptyText={`Tổ chức "${selectedCompanyName}" chưa có nhóm nào.`} />
         ) : (
-          <GroupTreeView 
+          <GroupTreeView
             groups={groups}
             isLoading={isLoadingGroups}
             canManage={canManage}
@@ -142,9 +142,9 @@ export default function GroupsPage() {
       </div>
 
       {/* Dialog Tạo Nhóm Mới */}
-      <CreateGroupDialog 
-        open={createOpen} 
-        onOpenChange={setCreateOpen} 
+      <CreateGroupDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
         companyId={parsedCompanyId}
         companyName={selectedCompanyName}
         groups={groups}

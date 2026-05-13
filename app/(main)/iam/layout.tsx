@@ -10,8 +10,8 @@ import { PermissionGuard } from "@/components/iam/shared/permission-guard"
 const iamTabs = [
   { label: "Tài khoản", href: "/iam/users", permCode: "manage_users" },
   { label: "Vai trò", href: "/iam/roles", permCode: "manage_role" },
-  { label: "Tổ chức / Công ty", href: "/iam/companies", permCode: "manage_companies" },
-  { label: "Phòng ban / Nhóm", href: "/iam/groups", permCode: "manage_groups" },
+  { label: "Công ty", href: "/iam/companies", permCode: "manage_companies" },
+  { label: "Nhóm", href: "/iam/groups", permCode: "manage_groups" },
 ]
 
 export default function IamLayout({ children }: { children: ReactNode }) {
@@ -28,7 +28,7 @@ export default function IamLayout({ children }: { children: ReactNode }) {
     }
     return hasPermission(tab.permCode)
   })
-  
+
   // Tự động chuyển hướng nếu đang ở route gốc /iam và đã load xong auth
   useEffect(() => {
     if (pathname === "/iam" && !isLoading && visibleTabs.length > 0) {
@@ -41,7 +41,7 @@ export default function IamLayout({ children }: { children: ReactNode }) {
   const requiredPerm = currentTab?.permCode
 
   return (
-    <PermissionGuard 
+    <PermissionGuard
       permissions={["manage_users", "manage_groups", "manage_role", "manage_companies"]}
     >
       <div className="flex h-full min-h-0 flex-1 flex-col gap-4">
@@ -81,7 +81,7 @@ export default function IamLayout({ children }: { children: ReactNode }) {
 
         {/* Content with specific guard per tab */}
         <div className="flex-1 min-h-0 flex flex-col">
-          <PermissionGuard 
+          <PermissionGuard
             permission={requiredPerm}
           >
             {children}

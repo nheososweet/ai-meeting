@@ -12,6 +12,7 @@ export function useSummaryMinutesMutation() {
     {
       transcriptLines: string[];
       model?: string;
+      fileId?: number;
     }
   >({
     mutationFn: generateSummaryAndMinutes,

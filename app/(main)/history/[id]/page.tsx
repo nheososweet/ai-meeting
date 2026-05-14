@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-
 import { HistoryDetailView } from "@/components/history/history-detail-view";
 import { getMeetingById } from "@/lib/mock/meetings";
+import { PermissionGuard } from "@/components/iam/shared/permission-guard";
 
 export default async function HistoryDetailPage({
   params,
@@ -15,5 +15,9 @@ export default async function HistoryDetailPage({
     notFound();
   }
 
-  return <HistoryDetailView meeting={meeting} />;
+  return (
+    <PermissionGuard permission="view_records">
+      <HistoryDetailView meeting={meeting} />
+    </PermissionGuard>
+  );
 }

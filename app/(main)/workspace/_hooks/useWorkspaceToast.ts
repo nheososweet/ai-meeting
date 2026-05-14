@@ -1,11 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
+import { useRef } from "react";
 
 export type ActionToastVariant = "info" | "success" | "error";
-
-export type ActionToastState = {
-  message: string;
-  variant: ActionToastVariant;
-};
 
 function detectToastVariant(message: string): ActionToastVariant {
   const normalized = message.toLowerCase();
@@ -27,36 +23,37 @@ function detectToastVariant(message: string): ActionToastVariant {
 }
 
 export function useWorkspaceToast() {
-  const [actionToast, setActionToast] = useState<ActionToastState | null>(
-    null,
-  );
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showActionToast = (
+    message: string,
+    variant?: ActionToastVariant,
+    duration?: number,
+  ) => {
+    const type = variant ?? detectToastVariant(message);
+    const options = {
+      autoClose: duration ?? 3000,
+    };
 
-  const showActionToast = (message: string, variant?: ActionToastVariant) => {
-    setActionToast({
-      message,
-      variant: variant ?? detectToastVariant(message),
-    });
-
-    if (toastTimerRef.current) {
-      clearTimeout(toastTimerRef.current);
+    switch (type) {
+      case "success":
+        toast.success(message, options);
+        break;
+      case "error":
+        toast.error(message, options);
+        break;
+      case "info":
+      default:
+        toast.info(message, options);
+        break;
     }
-
-    toastTimerRef.current = setTimeout(() => {
-      setActionToast(null);
-    }, 2200);
   };
 
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current) {
-        clearTimeout(toastTimerRef.current);
-      }
-    };
-  }, []);
+  const hideActionToast = () => {
+    toast.dismiss();
+  };
 
   return {
-    actionToast,
+    actionToast: null, // Keep for compatibility but it's now handled by react-toastify
     showActionToast,
+    hideActionToast,
   };
 }

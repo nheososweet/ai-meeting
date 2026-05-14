@@ -2,6 +2,7 @@ import { UserRoundIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { reformatTranscriptTimestamps } from "@/app/(main)/workspace/_lib/transcript-utils";
 import type { SpeakerSummary } from "@/lib/types/meeting";
 
 type MinutesSectionProps = {
@@ -26,9 +27,11 @@ export function MinutesSection({
         </Button>
       </div>
 
-      <p className="mt-2 whitespace-pre-line text-sm leading-7 text-muted-foreground">
-        {minutesText}
-      </p>
+      <div className="mt-3 rounded-md border border-border/60 bg-secondary/50 p-3 shadow-inner">
+        <p className="whitespace-pre-line text-sm leading-7 text-muted-foreground">
+          {reformatTranscriptTimestamps(minutesText)}
+        </p>
+      </div>
 
       <Separator className="my-4" />
 
@@ -48,7 +51,7 @@ export function MinutesSection({
               </p>
               <ul className="mt-1 space-y-1 text-muted-foreground">
                 {summary.keyPoints.map((point) => (
-                  <li key={point}>- {point}</li>
+                  <li key={point}>- {reformatTranscriptTimestamps(point)}</li>
                 ))}
               </ul>
             </li>

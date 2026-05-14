@@ -1,17 +1,30 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import Script from "next/script";
 import { Providers } from "./providers";
 import "@cyntler/react-doc-viewer/dist/index.css";
 import "./globals.css";
+import NextTopLoader from "nextjs-toploader";
+
+
+// const themeInitScript = `
+// (() => {
+//   try {
+//     const savedTheme = localStorage.getItem("theme");
+//     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+//     const shouldUseDark = savedTheme ? savedTheme === "dark" : prefersDark;
+
+//     document.documentElement.classList.toggle("dark", shouldUseDark);
+//   } catch {
+//     // Ignore theme init errors to avoid blocking page render.
+//   }
+// })();
+// `;
 
 const themeInitScript = `
 (() => {
   try {
-    const savedTheme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const shouldUseDark = savedTheme ? savedTheme === "dark" : prefersDark;
-
-    document.documentElement.classList.toggle("dark", shouldUseDark);
+    document.documentElement.classList.remove("dark");
   } catch {
     // Ignore theme init errors to avoid blocking page render.
   }
@@ -54,10 +67,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   ),
-  applicationName: "Hệ thống phiên dịch âm thanh thông minh",
+  applicationName: "Hệ thống báo cáo biên bản cuộc họp",
   title: {
-    default: "Hệ thống phiên dịch âm thanh thông minh",
-    template: "%s | Hệ thống phiên dịch âm thanh thông minh",
+    default: "Hệ thống báo cáo biên bản cuộc họp",
+    template: "%s | Hệ thống báo cáo biên bản cuộc họp",
   },
   description:
     "Nền tảng phiên dịch âm thanh thông minh hỗ trợ dịch băng, quản lý biên bản và theo dõi lịch sử cuộc họp.",
@@ -69,16 +82,16 @@ export const metadata: Metadata = {
     "transcript",
   ],
   openGraph: {
-    title: "Hệ thống phiên dịch âm thanh thông minh",
+    title: "Hệ thống báo cáo biên bản cuộc họp",
     description:
       "Nền tảng phiên dịch âm thanh thông minh hỗ trợ dịch băng, quản lý biên bản và theo dõi lịch sử cuộc họp.",
     locale: "vi_VN",
     type: "website",
-    siteName: "Hệ thống phiên dịch âm thanh thông minh",
+    siteName: "Hệ thống báo cáo biên bản cuộc họp",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Hệ thống phiên dịch âm thanh thông minh",
+    title: "Hệ thống báo cáo biên bản cuộc họp",
     description:
       "Nền tảng phiên dịch âm thanh thông minh hỗ trợ dịch băng, quản lý biên bản và theo dõi lịch sử cuộc họp.",
   },
@@ -99,10 +112,13 @@ export default function RootLayout({
       lang="vi"
       className={`${quicksand.variable} h-full antialiased`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
       <body className="min-h-full flex flex-col">
+        <NextTopLoader color="#f97316" height={2} showSpinner={false} />
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
         <Providers>{children}</Providers>
       </body>
     </html>

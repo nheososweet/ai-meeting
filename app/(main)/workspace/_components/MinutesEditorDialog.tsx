@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 type MinutesEditorDialogProps = {
   open: boolean;
@@ -44,7 +45,7 @@ export function MinutesEditorDialog({
   reportUrl,
 }: MinutesEditorDialogProps) {
   return (
-    <div className="mt-4 rounded-lg border border-border/70 bg-background p-4">
+    <div className="mt-4 rounded-lg border border-border/70 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <h3 className="text-sm font-semibold text-foreground">
@@ -92,7 +93,7 @@ export function MinutesEditorDialog({
                         className="inline-flex items-center gap-1 text-xs text-emerald-700 underline transition-colors hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
                       >
                         <ArrowUpRightIcon className="size-3" />
-                        Xem file biên bản
+                        Xem tệp biên bản
                       </a>
                     </div>
                   </div>
@@ -100,23 +101,22 @@ export function MinutesEditorDialog({
               ) : null}
             </DialogHeader>
 
-            <div className="min-h-0 flex-1 px-6 pb-6">
-              <div className="space-y-2">
+            <div className="flex min-h-0 flex-1 flex-col px-6 pb-6">
+              <div className="flex min-h-0 flex-1 flex-col space-y-2">
                 <label
                   htmlFor="minutes-draft"
                   className="text-xs font-medium text-muted-foreground"
                 >
                   Nội dung biên bản
                 </label>
-                <textarea
+                <Textarea
                   id="minutes-draft"
                   value={minutesDraft}
                   onChange={(event) => {
                     onMinutesDraftChange(event.target.value);
                   }}
                   disabled={isSavingMinutes}
-                  rows={26}
-                  className="min-h-[calc(100dvh-13rem)] w-full resize-none overflow-auto rounded-lg border border-input bg-transparent px-3 py-2 text-sm leading-6 outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="flex-1 resize-none overflow-auto rounded-lg border border-input bg-white px-3 py-2 text-sm leading-6 outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 shadow-sm"
                 />
                 {minutesValidationError ? (
                   <p className="text-xs text-rose-600 dark:text-rose-300">
@@ -152,10 +152,12 @@ export function MinutesEditorDialog({
         </Dialog>
       </div>
 
-      <div className="prose prose-sm mt-3 max-w-none text-foreground prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-td:text-muted-foreground prose-th:text-foreground dark:prose-invert">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {minutesMarkdown}
-        </ReactMarkdown>
+      <div className="mt-3 rounded-md border border-border/60 bg-secondary/50 p-3 shadow-inner">
+        <div className="prose prose-sm max-w-none text-foreground prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-td:text-muted-foreground prose-th:text-foreground dark:prose-invert">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {minutesMarkdown}
+          </ReactMarkdown>
+        </div>
       </div>
     </div>
   );

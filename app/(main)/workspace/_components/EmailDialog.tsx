@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUpRightIcon, InfoIcon, LoaderCircleIcon } from "lucide-react";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -74,7 +75,7 @@ export function EmailDialog({
           ) : null}
         </div>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Gửi email biên bản</DialogTitle>
           <DialogDescription>
@@ -85,7 +86,7 @@ export function EmailDialog({
         {reportUrl ? (
           <div className="min-w-0 space-y-1 rounded-md border border-border/70 bg-muted/30 px-3 py-2">
             <p className="text-xs font-medium text-muted-foreground">
-              URL file biên bản
+              URL tệp biên bản
             </p>
             <a
               href={reportUrl}
@@ -125,15 +126,11 @@ export function EmailDialog({
           >
             Nội dung email
           </label>
-          <textarea
-            id="email-body"
+          <RichTextEditor
             value={emailBodyInput}
-            onChange={(event) => {
-              onEmailBodyInputChange(event.target.value);
-            }}
-            rows={7}
+            onChange={onEmailBodyInputChange}
             disabled={isSendingEmail}
-            className="w-full resize-y rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            maxHeight="220px"
           />
 
           {emailIsHtml ? (

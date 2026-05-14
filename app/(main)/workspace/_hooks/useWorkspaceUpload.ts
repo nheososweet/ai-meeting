@@ -98,7 +98,7 @@ export function useWorkspaceUpload({
     if (!isSupportedAudioFile(file)) {
       clearUploadState();
       setUploadWarning(
-        "Định dạng không hỗ trợ. Chỉ nhận WAV, MP3, WebM hoặc OGG.",
+        "Định dạng không hỗ trợ. Chỉ nhận MP3 hoặc WAV.",
       );
       onSetNotice("File không hợp lệ, vui lòng chọn tệp audio đúng định dạng.");
       return;
@@ -109,7 +109,7 @@ export function useWorkspaceUpload({
       setUploadWarning(
         `File quá lớn. Giới hạn hiện tại là ${formatFileSize(MAX_UPLOAD_SIZE_BYTES)}.`,
       );
-      onSetNotice("File vượt ngưỡng tải lên, vui lòng chọn file nhỏ hơn.");
+      onSetNotice("File vượt ngưỡng tải lên, vui lòng chọn tệp nhỏ hơn.");
       return;
     }
 

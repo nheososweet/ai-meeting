@@ -10,6 +10,7 @@ import {
   resolveReportFilename,
   resolveTranscriptFilename,
 } from "@/app/(main)/history/_lib/file-utils";
+import { cn } from "@/lib/utils";
 import type { PipelineRecord } from "@/services/pipeline-records.service";
 
 type HistoryRecordItemProps = {
@@ -39,7 +40,7 @@ export function HistoryRecordItem({
 }: HistoryRecordItemProps) {
   return (
     <div
-      className={`grid gap-3 rounded-md border border-border/70 border-l-4 bg-background p-4 transition-colors hover:bg-muted/20 ${
+      className={`grid gap-3 rounded-md border border-border/70 border-l-4 bg-card p-4 shadow-sm transition-colors hover:bg-secondary/50 ${
         record.reportUrl
           ? "border-l-emerald-500/70"
           : "border-l-muted-foreground/30"
@@ -50,12 +51,21 @@ export function HistoryRecordItem({
           <div className="flex flex-wrap items-center gap-2">
             <h2
               className="max-w-full truncate text-sm font-semibold text-foreground"
-              title={record.filename}
+              title={record.title || record.filename}
             >
-              {record.filename}
+              {record.title || record.filename}
             </h2>
             <span className="rounded-md border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground">
               ID #{record.id}
+            </span>
+            <span className={cn(
+              "rounded-md px-2 py-0.5 text-[11px] font-medium border capitalize",
+              record.status === "uploaded" && "bg-blue-50 text-blue-600 border-blue-200",
+              record.status === "processing" && "bg-amber-50 text-amber-600 border-amber-200",
+              record.status === "completed" && "bg-emerald-50 text-emerald-600 border-emerald-200",
+              record.status === "error" && "bg-rose-50 text-rose-600 border-rose-200"
+            )}>
+              {record.status}
             </span>
             {!record.reportUrl ? (
               <span className="rounded-md border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground">
@@ -77,14 +87,16 @@ export function HistoryRecordItem({
             <DownloadIcon className="size-3.5" />
             Tải âm thanh
           </a>
-          <a
-            href={buildDownloadUrl(record.transcribeUrl)}
-            download={resolveTranscriptFilename(record.filename)}
-            className="inline-flex items-center gap-1 rounded-full border border-border/70 px-2 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-muted"
-          >
-            <DownloadIcon className="size-3.5" />
-            Tải transcript
-          </a>
+          {record.transcribeUrl && (
+            <a
+              href={buildDownloadUrl(record.transcribeUrl)}
+              download={resolveTranscriptFilename(record.filename)}
+              className="inline-flex items-center gap-1 rounded-full border border-border/70 px-2 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <DownloadIcon className="size-3.5" />
+              Tải transcript
+            </a>
+          )}
           {record.reportUrl ? (
             <a
               href={buildDownloadUrl(record.reportUrl)}
@@ -111,19 +123,21 @@ export function HistoryRecordItem({
           {previewAudioActive ? "Ẩn nghe thử" : "Nghe thử"}
         </button>
 
-        <button
-          type="button"
-          onClick={() => onPreviewTranscript(record)}
-          className="inline-flex min-h-8 items-center gap-1 rounded-full border border-border/70 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={loadingTranscript}
-        >
-          <FileTextIcon className="size-3.5" />
-          {loadingTranscript
-            ? "Đang tải transcript..."
-            : previewTranscriptActive
-              ? "Ẩn transcript"
-              : "Xem transcript"}
-        </button>
+        {record.transcribeUrl && (
+          <button
+            type="button"
+            onClick={() => onPreviewTranscript(record)}
+            className="inline-flex min-h-8 items-center gap-1 rounded-full border border-border/70 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={loadingTranscript}
+          >
+            <FileTextIcon className="size-3.5" />
+            {loadingTranscript
+              ? "Đang tải transcript..."
+              : previewTranscriptActive
+                ? "Ẩn transcript"
+                : "Xem transcript"}
+          </button>
+        )}
 
         {record.reportUrl ? (
           <button

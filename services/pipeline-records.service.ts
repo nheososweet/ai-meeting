@@ -1,4 +1,5 @@
-import { pipelineApi } from "@/services/pipeline-api";
+import { api, pipelineApi } from "@/services/pipeline-api";
+import { type PaginatedResponse } from "@/lib/types/iam";
 
 interface UpstreamDiarizeTranscribeResponse {
   id?: unknown;
@@ -16,14 +17,29 @@ interface UpstreamUpdateReportResponse {
   report_url?: unknown;
 }
 
-interface UpstreamRecord {
-  id?: unknown;
-  create_time?: unknown;
-  audio_url?: unknown;
+interface UpstreamUpdateTranscribeResponse {
+  status?: unknown;
   transcribe_url?: unknown;
-  report?: unknown;
-  filename?: unknown;
-  mail_template?: unknown;
+}
+
+interface UpstreamRecord {
+  id: number;
+  create_time: string;
+  uploader_id: number;
+  group_id: number | null;
+  s3_key: string;
+  audio_url: string;
+  transcribe_url: string | null;
+  report: string | null;
+  filename: string;
+  title: string;
+  status: string;
+  processed_at: string | null;
+  assigned_to_user_ids: number[];
+  assigned_to_group_ids: number[];
+  assigned_to_company_ids: number[];
+  company_id: number | null;
+  mail_template?: unknown; // Keep if it might be returned sometimes
 }
 
 interface UpstreamChatResponse {
@@ -77,13 +93,23 @@ export interface UpdateReportResponse {
   reportUrl: string;
 }
 
+export interface UpdateTranscribeResponse {
+  status: "success";
+  transcribeUrl: string;
+}
+
 export interface PipelineRecord {
   id: number;
   createTime: string;
   audioUrl: string;
-  transcribeUrl: string;
+  transcribeUrl: string | null;
   reportUrl: string | null;
   filename: string;
+  title: string;
+  status: string;
+  uploaderId: number;
+  companyId: number | null;
+  groupId: number | null;
   mailTemplate?: MailTemplatePayload;
 }
 
@@ -186,27 +212,27 @@ function parseSendMailResponse(data: unknown): SendMailResponse {
 
   const results = Array.isArray(payload.results)
     ? payload.results
-        .map((item) => {
-          const parsedItem = item as UpstreamSendMailResultItem;
-          const email =
-            typeof parsedItem.email === "string" ? parsedItem.email.trim() : "";
-          const status =
-            typeof parsedItem.status === "string"
-              ? parsedItem.status.trim()
-              : "unknown";
+      .map((item) => {
+        const parsedItem = item as UpstreamSendMailResultItem;
+        const email =
+          typeof parsedItem.email === "string" ? parsedItem.email.trim() : "";
+        const status =
+          typeof parsedItem.status === "string"
+            ? parsedItem.status.trim()
+            : "unknown";
 
-          if (!email) {
-            return null;
-          }
+        if (!email) {
+          return null;
+        }
 
-          return {
-            email,
-            status: status || "unknown",
-          };
-        })
-        .filter((item): item is { email: string; status: string } =>
-          Boolean(item),
-        )
+        return {
+          email,
+          status: status || "unknown",
+        };
+      })
+      .filter((item): item is { email: string; status: string } =>
+        Boolean(item),
+      )
     : [];
 
   return {
@@ -273,6 +299,67 @@ export async function diarizeAndTranscribe(input: {
   };
 }
 
+export async function diarizeAndTranscribeByFileId(input: {
+  fileId: number;
+  language?: string;
+}): Promise<DiarizeTranscribeResponse> {
+  const formData = new URLSearchParams();
+  formData.append("file_id", String(input.fileId));
+  formData.append("language", input.language ?? "Vietnamese");
+
+  const response = await pipelineApi.post<UpstreamDiarizeTranscribeResponse>(
+    "/diarize-and-transcribe",
+    formData.toString(),
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    },
+  );
+
+  const payload = response.data;
+
+  const rawTranscription = ensureStringArray(
+    Array.isArray(payload.raw_transcription)
+      ? payload.raw_transcription
+      : payload.transcription,
+  );
+
+  if (!rawTranscription.length) {
+    throw new Error("API diarize/transcribe trả về dữ liệu không hợp lệ.");
+  }
+
+  const refinedTranscription = ensureStringArray(
+    Array.isArray(payload.refined_transcription)
+      ? payload.refined_transcription
+      : payload.raw_transcription,
+  );
+
+  return {
+    id: typeof payload.id === "number" ? payload.id : undefined,
+    filename:
+      typeof payload.filename === "string" && payload.filename.trim()
+        ? payload.filename
+        : `file_${input.fileId}`,
+    status:
+      typeof payload.status === "string" && payload.status.trim()
+        ? payload.status
+        : "success",
+    rawTranscription,
+    refinedTranscription: refinedTranscription.length
+      ? refinedTranscription
+      : rawTranscription,
+    audioUrl:
+      typeof payload.audio_url === "string" && payload.audio_url.trim()
+        ? payload.audio_url
+        : undefined,
+    transcribeUrl:
+      typeof payload.transcribe_url === "string" && payload.transcribe_url.trim()
+        ? payload.transcribe_url
+        : undefined,
+  };
+}
+
 export async function updateReport(input: {
   id: number;
   textContent: string;
@@ -281,7 +368,7 @@ export async function updateReport(input: {
   formData.append("id", String(input.id));
   formData.append("text_content", input.textContent);
 
-  const response = await pipelineApi.post<UpstreamUpdateReportResponse>(
+  const response = await api.post<UpstreamUpdateReportResponse>(
     "/update-report",
     formData.toString(),
     {
@@ -303,9 +390,43 @@ export async function updateReport(input: {
   };
 }
 
+export async function updateTranscribe(input: {
+  id: number;
+  textContent: string;
+}): Promise<UpdateTranscribeResponse> {
+  const formData = new URLSearchParams();
+  formData.append("id", String(input.id));
+  formData.append("text_content", input.textContent);
+
+  const response = await api.post<UpstreamUpdateTranscribeResponse>(
+    "/update-transcribe",
+    formData.toString(),
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    },
+  );
+
+  const payload = response.data;
+
+  if (
+    payload.status !== "success" ||
+    typeof payload.transcribe_url !== "string"
+  ) {
+    throw new Error("Không thể cập nhật transcribe từ API update-transcribe.");
+  }
+
+  return {
+    status: "success",
+    transcribeUrl: payload.transcribe_url,
+  };
+}
+
 export async function generateSummaryAndMinutes(input: {
   transcriptLines: string[];
   model?: string;
+  fileId?: number;
 }): Promise<SummaryAndMinutesResponse> {
   const mergedTranscript = input.transcriptLines
     .map((line) => String(line ?? "").trim())
@@ -316,15 +437,21 @@ export async function generateSummaryAndMinutes(input: {
     throw new Error("Thiếu transcript để gọi API chat.");
   }
 
-  const response = await pipelineApi.post<UpstreamChatResponse>("/chat", {
+  const requestBody: Record<string, unknown> = {
     messages: [
       {
         role: "user",
         content: mergedTranscript,
       },
     ],
-    model: input.model ?? "qwen3.5-flash-2026-02-23",
-  });
+    model: input.model ?? "qwen-plus",
+  };
+
+  if (input.fileId) {
+    requestBody.file_id = input.fileId;
+  }
+
+  const response = await pipelineApi.post<UpstreamChatResponse>("/chat", requestBody);
 
   const reply = response.data?.reply;
 
@@ -379,6 +506,7 @@ export async function sendMail(input: {
   emails: string[];
   momFileUrl: string;
   template: MailTemplatePayload;
+  fileId?: number;
 }): Promise<SendMailResponse> {
   const cleanedEmails = input.emails
     .map((email) => String(email ?? "").trim())
@@ -404,7 +532,7 @@ export async function sendMail(input: {
     throw new Error("Thiếu nội dung email.");
   }
 
-  const response = await pipelineApi.post<unknown>("/send-mail", {
+  const requestBody: Record<string, unknown> = {
     template: {
       subject,
       body,
@@ -412,42 +540,77 @@ export async function sendMail(input: {
     },
     emails: cleanedEmails,
     mom_file_url: momFileUrl,
-  });
+  };
+
+  if (input.fileId) {
+    requestBody.file_id = input.fileId;
+  }
+
+  const response = await api.post<unknown>("/send-mail", requestBody);
 
   return parseSendMailResponse(response.data);
 }
 
-export async function getRecords(): Promise<PipelineRecord[]> {
-  const response = await pipelineApi.get<unknown>("/records");
+export async function getRecords(params?: {
+  page?: number;
+  size?: number;
+}): Promise<PaginatedResponse<PipelineRecord>> {
+  const response = await api.get<PaginatedResponse<UpstreamRecord>>(
+    "/records",
+    { params },
+  );
 
-  if (!Array.isArray(response.data)) {
+  const payload = response.data;
+
+  if (!payload || !Array.isArray(payload.data)) {
     throw new Error("API records trả về dữ liệu không hợp lệ.");
   }
 
-  return (response.data as UpstreamRecord[])
+  const records = payload.data
     .map((record): PipelineRecord | null => {
-      if (
-        typeof record.id !== "number" ||
-        typeof record.create_time !== "string" ||
-        typeof record.audio_url !== "string" ||
-        typeof record.transcribe_url !== "string" ||
-        typeof record.filename !== "string"
-      ) {
+      if (!record || typeof record.id !== "number") {
         return null;
       }
 
       return {
         id: record.id,
         createTime: record.create_time,
-        audioUrl: record.audio_url,
-        transcribeUrl: record.transcribe_url,
-        reportUrl:
-          typeof record.report === "string" && record.report.trim()
-            ? record.report
-            : null,
-        filename: record.filename,
+        audioUrl: record.audio_url || "",
+        transcribeUrl: record.transcribe_url || null,
+        reportUrl: record.report || null,
+        filename: record.filename || "Untitled",
+        title: record.title || "",
+        status: record.status || "unknown",
+        uploaderId: record.uploader_id,
+        companyId: record.company_id,
+        groupId: record.group_id,
         mailTemplate: parseMailTemplatePayload(record.mail_template),
       };
     })
     .filter((record): record is PipelineRecord => Boolean(record));
+
+  return {
+    data: records,
+    meta: payload.meta,
+  };
+}
+
+interface UpstreamTranslateResponse {
+  translated_text: string;
+}
+
+export async function translateTranscript(payload: {
+  text: string;
+  targetLanguage: string;
+}): Promise<string> {
+  const response = await pipelineApi.post<UpstreamTranslateResponse>(
+    "/translate",
+    {
+      text: payload.text,
+      target_language: payload.targetLanguage,
+      model: "qwen-plus",
+      temperature: 0.3,
+    }
+  );
+  return response.data.translated_text;
 }

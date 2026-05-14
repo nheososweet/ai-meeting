@@ -1,10 +1,14 @@
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 
-import {
-  sendMail,
-  type PipelineRecord,
-} from "@/services/pipeline-records.service";
+import { sendMail, type MailTemplatePayload } from "@/services/pipeline-records.service";
+import { type FileRecord } from "@/lib/types/files";
+
+type HistoryEmailRecord = FileRecord & {
+  reportUrl: string | null;
+  mailTemplate?: MailTemplatePayload;
+};
 
 const DEFAULT_EMAIL_BODY =
   "<p>Kính gửi Quý thành viên,</p><p>Liên quan đến cuộc họp vừa diễn ra, Ban tổ chức xin gửi đến Quý vị Biên bản họp chi tiết.</p><p>Vui lòng truy cập liên kết sau để xem hoặc tải tài liệu:</p><p><a href=\"{{mom_file_url}}\">{{mom_file_url}}</a></p><p>Mọi thắc mắc vui lòng phản hồi trực tiếp cho Thư ký.</p><p>Trân trọng,</p><p>Admin</p>";
@@ -33,11 +37,13 @@ const recipientEmailsSchema = z
   );
 
 type UseHistoryEmailParams = {
-  records?: PipelineRecord[];
+  records?: HistoryEmailRecord[];
   showActionToast: (message: string) => void;
+  canSendMail: boolean;
 };
 
-export function useHistoryEmail({ records, showActionToast }: UseHistoryEmailParams) {
+export function useHistoryEmail({ records, showActionToast, canSendMail }: UseHistoryEmailParams) {
+  const queryClient = useQueryClient();
   const [sendEmailRecordId, setSendEmailRecordId] = useState<number | null>(null);
   const [emailRecipientsInput, setEmailRecipientsInput] = useState("");
   const [emailValidationError, setEmailValidationError] = useState<
@@ -59,6 +65,10 @@ export function useHistoryEmail({ records, showActionToast }: UseHistoryEmailPar
   }, [sendEmailRecordId, records]);
 
   function handleOpenSendEmailDialog(recordId: number) {
+    if (!canSendMail) {
+      showActionToast("Bạn không có quyền thực hiện hành động này.");
+      return;
+    }
     const record = records?.find((candidate) => candidate.id === recordId);
     const fallbackSubject = buildDefaultSubject(record?.filename ?? "");
 
@@ -110,6 +120,10 @@ export function useHistoryEmail({ records, showActionToast }: UseHistoryEmailPar
   }
 
   async function handleSendEmail() {
+    if (!canSendMail) {
+      showActionToast("Bạn không có quyền thực hiện hành động này.");
+      return;
+    }
     if (!sendEmailRecordId || isSendingEmail) {
       return;
     }
@@ -149,6 +163,7 @@ export function useHistoryEmail({ records, showActionToast }: UseHistoryEmailPar
       const sendResult = await sendMail({
         emails: parsed.data,
         momFileUrl: record.reportUrl,
+        fileId: record.id,
         template: {
           subject,
           body,
@@ -166,8 +181,12 @@ export function useHistoryEmail({ records, showActionToast }: UseHistoryEmailPar
         return;
       }
 
+      showActionToast(`Đã gửi email thành công tới ${sendResult.sent} địa chỉ.`);
+      const wasWaiting = record.fileStatus.sendEmail !== "success";
       handleCloseSendEmailDialog();
-      showActionToast("Đã gửi email thành công.");
+      if (wasWaiting) {
+        queryClient.invalidateQueries({ queryKey: ["files"] });
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Lỗi không xác định";

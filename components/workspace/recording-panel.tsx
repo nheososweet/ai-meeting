@@ -75,7 +75,7 @@ function RecordingPanelView({
   }
 
   return (
-    <div className="mt-5 space-y-3 rounded-lg border border-border/70 bg-muted/30 p-3">
+    <div className="mt-5 space-y-3 rounded-lg border border-border/70 bg-secondary/50 p-3">
       <p className="text-sm font-medium text-foreground">Thu âm trực tiếp</p>
       <Button
         variant={isRecording ? "default" : "outline"}
@@ -92,7 +92,7 @@ function RecordingPanelView({
       </Button>
 
       {recordingSecond > 0 && !isRecording ? (
-        <div className="space-y-2 rounded-md border border-border/70 bg-background p-3">
+        <div className="space-y-2 rounded-md border border-border/70 bg-white p-3 shadow-sm">
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{formatPlaybackTime(playbackCurrentSecond)}</span>

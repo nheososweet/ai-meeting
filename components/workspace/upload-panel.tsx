@@ -47,39 +47,42 @@ function UploadPanelView({
   return (
     <div className="mt-5 space-y-3">
       <label className="text-sm font-medium text-foreground">
-        Tải lên tệp WAV/MP3
+        Tải lên tệp MP3, WAV
       </label>
 
       <div
-        className={`rounded-2xl border border-dashed p-4 transition-colors ${
-          isDraggingUpload
-            ? "border-primary bg-primary/5"
-            : "border-border/70 bg-muted/20"
-        } ${busyProcessing ? "opacity-70" : ""}`}
+        className={`group cursor-pointer rounded-xl border border-dashed p-3 transition-all md:p-4 ${isDraggingUpload
+          ? "border-primary bg-primary/5 scale-[1.01]"
+          : "border-border/70 bg-secondary/50 hover:border-primary/50 hover:bg-muted/50"
+          } ${busyProcessing ? "pointer-events-none opacity-70" : ""}`}
         onDragEnter={onDragEnter}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
+        onClick={() => {
+          if (!busyProcessing && fileInputRef.current) {
+            fileInputRef.current.click();
+          }
+        }}
       >
-        <div className="flex flex-col gap-3">
-          <div className="flex items-start gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background shadow-sm">
-              <FileAudioIcon className="size-5 text-primary" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-foreground">
-                Kéo thả file vào đây hoặc chọn từ máy
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Hỗ trợ WAV, MP3, WebM, OGG. Giới hạn 100 MB.
-              </p>
-            </div>
+        <div className="flex items-center gap-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background shadow-sm transition-transform group-hover:scale-110">
+            <FileAudioIcon className="size-5 text-primary" />
+          </div>
+          <div className="flex-1 space-y-0.5">
+            <p className="text-sm font-semibold text-foreground">
+              Kéo thả tệp vào đây hoặc <span className="text-primary hover:underline">Chọn tệp từ máy</span>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Hỗ trợ MP3, WAV. Giới hạn 200 MB.
+            </p>
           </div>
 
           <Input
             ref={fileInputRef}
             type="file"
-            accept="audio/wav,audio/mp3,audio/mpeg,audio/webm,audio/ogg"
+            className="hidden"
+            accept=".mp3,.wav"
             onChange={onFileChange}
             disabled={busyProcessing}
           />
@@ -93,7 +96,7 @@ function UploadPanelView({
       ) : null}
 
       {selectedFileName ? (
-        <div className="space-y-2 rounded-lg border border-border/70 bg-muted/40 p-3">
+        <div className="space-y-2 rounded-lg border border-border/70 bg-secondary/50 p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-medium text-foreground">
               Tệp đã chọn: {selectedFileName}

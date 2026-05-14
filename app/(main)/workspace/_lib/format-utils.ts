@@ -6,6 +6,18 @@ export function formatDuration(seconds: number): string {
   return `${minutes}m ${String(remainSeconds).padStart(2, "0")}s`;
 }
 
+export function formatTimestamp(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+export function formatHeaderTimestamp(header: string): string {
+  return header.replace(/\(([\d.]+)s\s*-\s*([\d.]+)s\)/, (_, s1, s2) =>
+    `(${formatTimestamp(parseFloat(s1))} - ${formatTimestamp(parseFloat(s2))})`
+  );
+}
+
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) {
     return `${bytes} B`;

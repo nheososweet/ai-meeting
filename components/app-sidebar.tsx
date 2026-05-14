@@ -7,30 +7,52 @@ import { usePathname } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import { Clock3Icon, MicIcon, TerminalIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { Clock3Icon, FolderKanbanIcon, LayoutDashboardIcon, MicIcon, ShieldIcon } from "lucide-react";
+import { useAuth } from "@/lib/auth/auth-context";
+import { IAM_SIDEBAR_PERMISSIONS, WBS_SIDEBAR_PERMISSIONS } from "@/lib/auth/permissions";
 
 const appNav = {
   main: [
+    // {
+    //   title: "TRÌNH BIÊN TẬP CUỘC HỌP",
+    //   href: "/workspace",
+    //   icon: MicIcon,
+    //   requiredPerms: ["process_pipeline"],
+    // },
     {
-      title: "Phiên dịch",
-      href: "/workspace",
+      title: "Bảng điều khiển",
+      href: "/dashboard",
+      icon: LayoutDashboardIcon,
+    },
+    {
+      title: "Bản ghi cuộc họp",
+      href: "/meeting-records",
+      icon: FolderKanbanIcon,
+    },
+    {
+      title: "Biên tập cuộc họp",
+      href: "/meeting",
       icon: MicIcon,
     },
     {
       title: "Lịch sử cuộc họp",
       href: "/history",
       icon: Clock3Icon,
+      requiredPerms: ["view_records"],
     },
   ],
+  iam: {
+    title: "Quản trị hệ thống",
+    href: "/iam",
+    icon: ShieldIcon,
+  },
   support: [
     // {
     //   title: "Mẫu biên bản",
@@ -51,84 +73,121 @@ const appNav = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const { hasAnyPermission } = useAuth();
+  const { setOpenMobile, isMobile } = useSidebar();
+
+  const canSeeIam = hasAnyPermission(IAM_SIDEBAR_PERMISSIONS);
+  const isIamActive = pathname.startsWith("/iam");
+
+  const visibleMain = appNav.main.filter((item: any) =>
+    !item.requiredPerms || hasAnyPermission(item.requiredPerms)
+  );
 
   return (
     <Sidebar variant="inset" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <div>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <TerminalIcon className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    Hệ thống phiên dịch
-                  </span>
-                  <span className="truncate text-xs">Âm thanh thông minh</span>
-                </div>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarHeader className="items-center gap-3 px-4 pt-4 pb-3 border-b border-sidebar-border">
+        <div className="relative w-12 h-12 shrink-0">
+          <Image
+            src="/vpcp-ui/element/quoc_huy.png"
+            alt="Quốc Huy"
+            fill
+            className="object-contain"
+            sizes="48px"
+          />
+        </div>
+        <h2 className="text-[11px] font-extrabold leading-tight text-primary uppercase text-center tracking-wide">
+          Hệ thống biên tập và tổng hợp cuộc họp thông minh
+        </h2>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Điều hướng chính</SidebarGroupLabel>
+        <SidebarGroup className="p-0">
           <SidebarGroupContent>
-            <SidebarMenu>
-              {appNav.main.map((item) => {
+            <nav className="flex flex-col">
+              {visibleMain.map((item) => {
                 const isActive =
-                  item.href === "/history"
-                    ? pathname.startsWith("/history")
+                  item.href === "/history" || item.href === "/meeting-records"
+                    ? pathname.startsWith(item.href)
                     : pathname === item.href;
 
                 return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      isActive={isActive}
+                  <Link
+                    key={item.title}
+                    href={item.href}
+                    onClick={() => {
+                      if (isMobile) {
+                        setTimeout(() => setOpenMobile(false), 150);
+                      }
+                    }}
+                    className={cn(
+                      "group flex items-center gap-3 px-3 py-3.5 border-b border-sidebar-border transition-colors",
+                      isActive
+                        ? "text-primary"
+                        : "text-sidebar-foreground hover:text-primary"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "bg-primary/10 text-primary group-hover:bg-primary/20"
+                      )}
                     >
-                      <Link href={item.href}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                      <item.icon className="size-[18px]" />
+                    </div>
+                    <span className="text-[13px] font-bold uppercase tracking-wide flex-1">
+                      {item.title}
+                    </span>
+                    {/* {isActive && (
+                      <ChevronRightIcon className="size-4 shrink-0 text-primary" />
+                    )} */}
+                  </Link>
                 );
               })}
-            </SidebarMenu>
+
+              {/* IAM Navigation — Sidebar Guard */}
+              {canSeeIam && (
+                <Link
+                  href={appNav.iam.href}
+                  onClick={() => {
+                    if (isMobile) {
+                      setTimeout(() => setOpenMobile(false), 150);
+                    }
+                  }}
+                  className={cn(
+                    "group flex items-center gap-3 px-3 py-3.5 border-b border-sidebar-border transition-colors",
+                    isIamActive
+                      ? "text-primary"
+                      : "text-sidebar-foreground hover:text-primary"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
+                      isIamActive
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-primary/10 text-primary group-hover:bg-primary/20"
+                    )}
+                  >
+                    <appNav.iam.icon className="size-[18px]" />
+                  </div>
+                  <span className="text-[13px] font-bold uppercase tracking-wide flex-1">
+                    {appNav.iam.title}
+                  </span>
+                </Link>
+              )}
+            </nav>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {/* <SidebarGroup className="mt-auto">
-          <SidebarGroupLabel>Tiện ích nhanh</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {appNav.support.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup> */}
       </SidebarContent>
-      <SidebarFooter>
+      {/* <SidebarFooter>
         <div className="rounded-md border border-sidebar-border bg-sidebar-accent/50 px-3 py-2 text-xs">
           <p className="font-semibold text-sidebar-foreground">
             {appNav.user.name}
           </p>
           <p className="text-sidebar-foreground/70">{appNav.user.role}</p>
         </div>
-      </SidebarFooter>
+      </SidebarFooter> */}
     </Sidebar>
   );
 }

@@ -8,25 +8,57 @@ const baseURL = (
   DEFAULT_PIPELINE_API_BASE_URL
 ).replace(/\/$/, "");
 
+// ── Pending request counter (dùng cho beforeunload warning) ─────────────────
+
+let pendingRequests = 0;
+
+export function getPendingCount(): number {
+  return pendingRequests;
+}
+
+const handleBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+
+function incrementPending() {
+  pendingRequests++;
+  if (pendingRequests === 1 && typeof window !== "undefined") {
+    window.addEventListener("beforeunload", handleBeforeUnload);
+  }
+}
+
+function decrementPending() {
+  pendingRequests = Math.max(0, pendingRequests - 1);
+  if (pendingRequests === 0 && typeof window !== "undefined") {
+    window.removeEventListener("beforeunload", handleBeforeUnload);
+  }
+}
+
 // ── Shared Interceptors Logic ────────────────────────────
 
 const setupInterceptors = (instance: AxiosInstance) => {
-  // Request Interceptor: Attach Bearer token
+  // Request Interceptor: Attach Bearer token + đếm pending
   instance.interceptors.request.use(
     (config) => {
+      incrementPending();
       const token = getTokenFromStorage();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     },
-    (error) => Promise.reject(error),
+    (error) => {
+      decrementPending();
+      return Promise.reject(error);
+    },
   );
 
-  // Response Interceptor: Handle 401 (token expired)
+  // Response Interceptor: Handle 401 (token expired) + giảm pending
   instance.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      decrementPending();
+      return response;
+    },
     (error) => {
+      decrementPending();
       if (
         error.response?.status === 401 &&
         typeof window !== "undefined"

@@ -231,23 +231,23 @@ export default function MeetingRecordsPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-background sticky top-0 z-10 hover:bg-background shadow-[0_1px_0_0_rgba(0,0,0,0.05)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.05)]">
-                    <TableHead className="w-[80px]">ID</TableHead>
+                    <TableHead className="w-[80px]">STT</TableHead>
                     <TableHead>Bản ghi</TableHead>
                     <TableHead className="hidden lg:table-cell">Người tải lên</TableHead>
-                    <TableHead className="text-[11px] font-bold uppercase tracking-wider">Tiến độ</TableHead>
+                    <TableHead>Tiến độ</TableHead>
                     <TableHead className="hidden lg:table-cell">Người được gán</TableHead>
                     <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
                     <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {records.map((record) => {
-                    const isCompleted = record.status === "completed";
+                  {records.map((record, index) => {
+                    const isCompleted = record.fileStatus.transcribe === "success";
 
                     return (
                       <TableRow key={record.id} className="group transition-colors hover:bg-muted/20">
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          #{record.id}
+                        <TableCell className="text-xs text-muted-foreground">
+                          {index + 1}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-0.5">

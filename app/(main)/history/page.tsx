@@ -322,19 +322,19 @@ export default function HistoryPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-background sticky top-0">
-                      <TableHead className="w-[70px] text-[11px] font-bold uppercase tracking-wider pl-5">ID</TableHead>
-                      <TableHead className="text-[11px] font-bold uppercase tracking-wider">Cuộc họp</TableHead>
-                      <TableHead className="hidden lg:table-cell text-[11px] font-bold uppercase tracking-wider">Người xử lý</TableHead>
-                      <TableHead className="text-[11px] font-bold uppercase tracking-wider">Tiến độ</TableHead>
-                      <TableHead className="hidden md:table-cell text-[11px] font-bold uppercase tracking-wider">Ngày tạo</TableHead>
-                      <TableHead className="text-right text-[11px] font-bold uppercase tracking-wider pr-5">Thao tác</TableHead>
+                      <TableHead className="w-[70px] pl-5">STT</TableHead>
+                      <TableHead>Cuộc họp</TableHead>
+                      <TableHead className="hidden lg:table-cell">Người xử lý</TableHead>
+                      <TableHead>Tiến độ</TableHead>
+                      <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
+                      <TableHead className="text-right pr-5">Thao tác</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {records.map((record) => (
+                    {records.map((record, index) => (
                       <TableRow key={record.id} className="group transition-colors hover:bg-muted/20">
-                        <TableCell className="font-mono text-xs text-muted-foreground pl-5">
-                          #{record.id}
+                        <TableCell className="text-xs text-muted-foreground pl-5">
+                          {index + 1}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-0.5">
@@ -353,11 +353,6 @@ export default function HistoryPage() {
                           <div className="flex items-center gap-2.5">
                             {record.assignedToUsers.length > 0 ? (
                               <>
-                                <Avatar className="size-7 border border-border/60">
-                                  <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-bold">
-                                    {record.assignedToUsers[0].name.charAt(0)}
-                                  </AvatarFallback>
-                                </Avatar>
                                 <div className="flex flex-col">
                                   <span className="text-xs font-medium text-foreground/80">{record.assignedToUsers[0].name}</span>
                                   <span className="text-[10px] text-muted-foreground italic">Người xử lý</span>

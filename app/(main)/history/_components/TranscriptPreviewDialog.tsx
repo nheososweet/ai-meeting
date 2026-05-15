@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { formatHeaderTimestamp } from "@/app/(main)/workspace/_lib/format-utils";
 import { getSpeakerColor } from "@/app/(main)/workspace/_lib/transcript-utils";
+import { useAuth } from "@/lib/auth/auth-context";
+import { PERMISSIONS } from "@/lib/types/iam";
 
 type TranscriptPreviewDialogProps = {
   open: boolean;
@@ -58,6 +60,9 @@ export function TranscriptPreviewDialog({
 }: TranscriptPreviewDialogProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playingSegmentId, setPlayingSegmentId] = useState<string | null>(null);
+
+  const { hasPermission } = useAuth();
+  const canEdit = hasPermission(PERMISSIONS.PROCESS_PIPELINE);
 
   function playSegment(segmentId: string, start: number, end: number) {
     const audio = audioRef.current;
@@ -194,7 +199,7 @@ export function TranscriptPreviewDialog({
             <CopyIcon className="size-4" />
             Sao chép bản gỡ băng
           </Button>
-          {onOpenEdit && (
+          {canEdit && onOpenEdit && (
             <Button
               type="button"
               variant="outline"
@@ -206,7 +211,7 @@ export function TranscriptPreviewDialog({
               Chỉnh sửa
             </Button>
           )}
-          {onOpenLabeling && (
+          {canEdit && onOpenLabeling && (
             <Button
               type="button"
               variant="outline"

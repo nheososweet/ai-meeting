@@ -38,9 +38,9 @@ Nói ngắn gọn: đây là công cụ "từ âm thanh -> transcript -> biên b
 ### 4.1 Màn hình Phiên dịch (/workspace)
 
 1. Hỗ trợ 2 nguồn vào:
-   - Tải tệp audio (WAV, MP3, WebM, OGG).
+   - Tải tệp audio (WAV, MP3, M4A, WebM, OGG).
    - Thu âm trực tiếp từ micro.
-2. Kiểm tra định dạng và dung lượng file (giới hạn 100 MB).
+2. Kiểm tra định dạng và dung lượng file (giới hạn 200 MB).
 3. Hiển thị pipeline xử lý rõ ràng theo từng bước:
    - Chuyển giọng nói thành văn bản.
    - Phân chia theo từng người nói.

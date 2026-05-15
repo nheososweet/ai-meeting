@@ -5,11 +5,15 @@ export const ACCEPTED_AUDIO_MIME_TYPES = new Set([
   "audio/x-wav",
   "audio/mp3",
   "audio/mpeg",
+  "audio/x-m4a",
+  "audio/m4a",
+  "audio/mp4",
 ]);
 
 export const ACCEPTED_AUDIO_EXTENSIONS = new Set([
   "wav",
   "mp3",
+  "m4a",
 ]);
 
 export type PipelineStepStatus = "pending" | "running" | "completed" | "error";

@@ -26,10 +26,10 @@ const uploadSchema = z.object({
     .refine((files) => {
       if (!files?.[0]) return false;
       const file = files[0] as File;
-      const validExtensions = ["mp3", "wav"];
+      const validExtensions = ["mp3", "wav", "m4a"];
       const extension = file.name.split(".").pop()?.toLowerCase();
       return extension && validExtensions.includes(extension);
-    }, "Chỉ hỗ trợ định dạng MP3, WAV"),
+    }, "Chỉ hỗ trợ định dạng MP3, WAV, M4A"),
 });
 
 type UploadFormValues = z.infer<typeof uploadSchema>;
@@ -88,12 +88,12 @@ export function UploadFileDialog({ open, onOpenChange, showActionToast }: Upload
             <Input
               id="file"
               type="file"
-              accept=".mp3,.wav"
+              accept=".mp3,.wav,.m4a"
               {...register("file")}
               className="cursor-pointer"
             />
             <p className="text-[10px] text-muted-foreground italic">
-              * Chỉ hỗ trợ tệp định dạng .mp3, .wav (Tối đa 200MB)
+              * Chỉ hỗ trợ tệp định dạng .mp3, .wav, .m4a (Tối đa 200MB)
             </p>
             {errors.file && (
               <p className="text-xs text-destructive">

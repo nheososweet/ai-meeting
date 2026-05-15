@@ -242,7 +242,7 @@ export default function MeetingRecordsPage() {
                 </TableHeader>
                 <TableBody>
                   {records.map((record, index) => {
-                    const isCompleted = record.status === "completed";
+                    const isCompleted = record.fileStatus.transcribe === "success";
 
                     return (
                       <TableRow key={record.id} className="group transition-colors hover:bg-muted/20">

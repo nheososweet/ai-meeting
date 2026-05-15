@@ -5,14 +5,13 @@ import {
   CheckCircle2Icon,
   ChevronDownIcon,
   ChevronUpIcon,
-  CircleDashedIcon,
   CircleIcon,
   Edit3Icon,
   FolderOpenIcon,
   Loader2Icon,
-  Maximize2Icon,
   PauseIcon,
   PlayIcon,
+  RotateCcwIcon,
 } from "lucide-react";
 import {
   Collapsible,
@@ -20,7 +19,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmailDialog } from "@/app/(main)/workspace/_components/EmailDialog";
@@ -29,11 +27,9 @@ import { PipelineProgressCard } from "@/app/(main)/workspace/_components/Pipelin
 import { TranscriptComparisonDialog } from "@/app/(main)/workspace/_components/TranscriptComparisonDialog";
 import { TranslateDialog } from "@/app/(main)/meeting/_components/TranslateDialog";
 import {
-  formatDuration,
   formatTimestamp,
   statusConfig,
 } from "@/app/(main)/workspace/_lib/format-utils";
-import { PIPELINE_STEP_WEIGHT } from "@/app/(main)/workspace/_lib/pipeline-constants";
 import { SpeakersLabelingDialog } from "@/app/(main)/workspace/_components/SpeakersLabelingDialog";
 import {
   cleanTranscriptLine,
@@ -44,21 +40,21 @@ import {
   minutesDraftSchema,
   recipientEmailsSchema,
 } from "@/app/(main)/workspace/_lib/validation";
-import { useWorkspacePipeline } from "@/app/(main)/workspace/_hooks/useWorkspacePipeline";
 import { useWorkspaceToast } from "@/app/(main)/workspace/_hooks/useWorkspaceToast";
-import { useDiarizeTranscribeByFileIdMutation } from "@/hooks/services/use-diarize-transcribe-by-file-id-mutation";
-import { useDiarizeTranscribeMutation } from "@/hooks/services/use-diarize-transcribe-mutation";
-import { useSummaryMinutesMutation } from "@/hooks/services/use-summary-minutes-mutation";
 import { useUpdateReportMutation } from "@/hooks/services/use-update-report-mutation";
 import { useUpdateTranscribeMutation } from "@/hooks/services/use-update-transcribe-mutation";
-import { meetingRecords } from "@/lib/mock/meetings";
 import { sendMail } from "@/services/pipeline-records.service";
 import type {
   AudioInputSource,
   MeetingMailTemplate,
-  MeetingRecord,
   TranscriptSegment,
 } from "@/lib/types/meeting";
+import { useMeetingPipeline } from "@/hooks/use-meeting-pipeline";
+import {
+  buildDefaultMailTemplate,
+  resolveMailTemplate,
+  initialMeeting,
+} from "@/app/(main)/meeting/_lib/initial-meeting";
 
 import { TranscriptEditorDialog } from "./_components/TranscriptEditorDialog";
 import { FileSelector } from "./_components/file-selector";
@@ -66,11 +62,6 @@ import { FileRecord } from "@/lib/types/files";
 import { cn } from "@/lib/utils";
 
 import { useAuth } from "@/lib/auth/auth-context";
-
-const sourceMeeting = meetingRecords[0];
-const DEFAULT_EMAIL_SUBJECT_PREFIX = "Thông báo Biên bản Họp";
-const DEFAULT_EMAIL_BODY =
-  '<p>Kính gửi Quý thành viên,</p><p>Liên quan đến cuộc họp vừa diễn ra, Ban tổ chức xin gửi đến Quý vị Biên bản họp chi tiết.</p><p>Vui lòng truy cập liên kết sau để xem hoặc tải tài liệu:</p><p><a href="{{mom_file_url}}">{{mom_file_url}}</a></p><p>Mọi thắc mắc vui lòng phản hồi trực tiếp cho Thư ký.</p><p>Trân trọng,</p><p>Admin</p>';
 
 function speakerToneClass(speaker: string): string {
   const palette = [
@@ -84,55 +75,6 @@ function speakerToneClass(speaker: string): string {
     .reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return palette[hash % palette.length] ?? palette[0];
 }
-
-function buildDefaultMailTemplate(meetingTitle: string): MeetingMailTemplate {
-  const cleanTitle = meetingTitle.trim();
-
-  return {
-    subject: cleanTitle
-      ? `${DEFAULT_EMAIL_SUBJECT_PREFIX} - ${cleanTitle}`
-      : DEFAULT_EMAIL_SUBJECT_PREFIX,
-    body: DEFAULT_EMAIL_BODY,
-    isHtml: true,
-  };
-}
-
-function resolveMailTemplate(
-  template: MeetingMailTemplate | undefined,
-  meetingTitle: string,
-): MeetingMailTemplate {
-  const fallback = buildDefaultMailTemplate(meetingTitle);
-
-  if (!template) {
-    return fallback;
-  }
-
-  return {
-    subject: template.subject.trim() || fallback.subject,
-    body: template.body.trim() || fallback.body,
-    isHtml: template.isHtml,
-  };
-}
-
-const initialMeeting: MeetingRecord = {
-  ...sourceMeeting,
-  title: "Phiên mới chưa xử lý",
-  fileName: "Chưa có tệp nguồn",
-  inputSource: "upload",
-  processingStatus: "idle",
-  emailStatus: "not_sent",
-  rawTranscript:
-    "Bản gỡ băng sẽ hiển thị sau khi bạn chọn tệp và hoàn tất xử lý AI.",
-  refinedTranscript:
-    "Bản làm sạch sẽ hiển thị sau khi hệ thống xử lý xong bản gỡ băng gốc.",
-  segments: [],
-  minutes: "Biên bản điều hành sẽ được sinh sau khi xử lý hoàn tất.",
-  speakerSummaries: [],
-  emailLogs: [],
-  durationSecond: 0,
-  speakerCount: 0,
-  mailTemplate: buildDefaultMailTemplate(""),
-};
 
 function TabEmptyState({ busyProcessing }: { busyProcessing: boolean }) {
   if (busyProcessing) {
@@ -152,9 +94,6 @@ function TabEmptyState({ busyProcessing }: { busyProcessing: boolean }) {
 }
 
 export default function MeetingPage() {
-  const diarizeTranscribeMutation = useDiarizeTranscribeMutation();
-  const diarizeTranscribeByFileIdMutation = useDiarizeTranscribeByFileIdMutation();
-  const summaryMinutesMutation = useSummaryMinutesMutation();
   const updateReportMutation = useUpdateReportMutation();
   const updateTranscribeMutation = useUpdateTranscribeMutation();
 
@@ -162,91 +101,50 @@ export default function MeetingPage() {
   const canSendMail = hasPermission("send_mail");
   const canTranslate = hasPermission("translate");
 
+  const {
+    activeMeeting,
+    setActiveMeeting,
+    pipelineSteps,
+    failedStepId,
+    notice,
+    setNotice,
+    minutesDraft,
+    setMinutesDraft,
+    busyProcessing,
+    stageProgress,
+    canRetryPipeline,
+    startProcessing,
+    retryPipeline,
+    resetPipeline,
+  } = useMeetingPipeline();
+
   const [inputMode, setInputMode] = useState<AudioInputSource>("assigned");
   const [selectedFileRecord, setSelectedFileRecord] = useState<FileRecord | null>(null);
-  const [activeMeeting, setActiveMeeting] =
-    useState<MeetingRecord>(initialMeeting);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playingSegmentId, setPlayingSegmentId] = useState<string | null>(null);
-  const [, setUploadProgress] = useState(0);
-  const [, setProcessingProgress] = useState(0);
-  const [notice, setNotice] = useState(
-    "Sẵn sàng nhận tệp để bắt đầu xử lý.",
-  );
 
   const [emailRecipientsInput, setEmailRecipientsInput] = useState("");
-  const [emailValidationError, setEmailValidationError] = useState<
-    string | null
-  >(null);
-  const [emailTemplateValidationError, setEmailTemplateValidationError] =
-    useState<string | null>(null);
-  const [emailSubjectInput, setEmailSubjectInput] = useState(
-    buildDefaultMailTemplate("").subject,
-  );
-  const [emailBodyInput, setEmailBodyInput] = useState(
-    buildDefaultMailTemplate("").body,
-  );
+  const [emailValidationError, setEmailValidationError] = useState<string | null>(null);
+  const [emailTemplateValidationError, setEmailTemplateValidationError] = useState<string | null>(null);
+  const [emailSubjectInput, setEmailSubjectInput] = useState(buildDefaultMailTemplate("").subject);
+  const [emailBodyInput, setEmailBodyInput] = useState(buildDefaultMailTemplate("").body);
   const [emailIsHtml, setEmailIsHtml] = useState(true);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [isMinutesDialogOpen, setIsMinutesDialogOpen] = useState(false);
   const [isTranscriptEditorOpen, setIsTranscriptEditorOpen] = useState(false);
   const [isSavingTranscript, setIsSavingTranscript] = useState(false);
   const [transcriptValidationError, setTranscriptValidationError] = useState<string | null>(null);
-  const [minutesDraft, setMinutesDraft] = useState(initialMeeting.minutes);
-  const [minutesValidationError, setMinutesValidationError] = useState<
-    string | null
-  >(null);
+  const [minutesValidationError, setMinutesValidationError] = useState<string | null>(null);
   const [isSavingMinutes, setIsSavingMinutes] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
 
-  const busyProcessing =
-    activeMeeting.processingStatus === "uploading" ||
-    activeMeeting.processingStatus === "processing";
-
-  const { actionToast, showActionToast } = useWorkspaceToast();
-
-  const {
-    pipelineSteps,
-    failedStepId,
-    resetPipelineSteps,
-    setFailedStepId,
-    startProcessing,
-    retryPipeline,
-  } = useWorkspacePipeline({
-    sourceMeeting,
-    setActiveMeeting,
-    setMinutesDraft,
-    setNotice,
-    setUploadProgress,
-    setProcessingProgress,
-    diarizeTranscribeMutation,
-    diarizeTranscribeByFileIdMutation,
-    summaryMinutesMutation,
-    updateReportMutation,
-  });
+  const { showActionToast } = useWorkspaceToast();
 
   const status = statusConfig(activeMeeting.processingStatus);
-  const stageProgress = useMemo(() => {
-    if (activeMeeting.processingStatus === "completed") {
-      return 100;
-    }
-
-    if (activeMeeting.processingStatus === "idle") {
-      return 0;
-    }
-
-    const weightedProgress = pipelineSteps.reduce((acc, step) => {
-      const weight = PIPELINE_STEP_WEIGHT[step.id] ?? 0;
-      return acc + (step.progress * weight) / 100;
-    }, 0);
-
-    return Math.max(0, Math.min(100, Math.round(weightedProgress)));
-  }, [activeMeeting.processingStatus, pipelineSteps]);
 
   const shouldShowPipeline = activeMeeting.processingStatus !== "idle";
   const shouldShowMinutes = activeMeeting.minutes !== initialMeeting.minutes;
-  const shouldShowRawTranscript =
-    activeMeeting.rawTranscript !== initialMeeting.rawTranscript;
+  const shouldShowRawTranscript = activeMeeting.rawTranscript !== initialMeeting.rawTranscript;
   const shouldShowRefinedTranscript =
     Boolean(activeMeeting.refinedTranscript?.trim()) &&
     activeMeeting.refinedTranscript !== initialMeeting.refinedTranscript;
@@ -255,8 +153,6 @@ export default function MeetingPage() {
     Boolean(activeMeeting.reportUrl?.trim());
   const shouldShowDiarization = activeMeeting.segments.length > 0;
   const shouldShowSpeakerSummary = activeMeeting.speakerSummaries.length > 0;
-  const canRetryPipeline = Boolean(failedStepId) && !busyProcessing;
-  const recordingDurationLabel = "";
 
   // Sync selected file status after pipeline completes
   useEffect(() => {
@@ -268,9 +164,7 @@ export default function MeetingPage() {
             fileStatus: {
               ...prev.fileStatus,
               transcribe: "success",
-              report: activeMeeting.reportUrl
-                ? "success"
-                : prev.fileStatus.report,
+              report: activeMeeting.reportUrl ? "success" : prev.fileStatus.report,
             },
           }
           : null,
@@ -280,16 +174,11 @@ export default function MeetingPage() {
 
   const refinedSegments = useMemo(() => {
     const refinedText = (activeMeeting.refinedTranscript ?? "").trim();
-
-    if (!refinedText) {
-      return [] as TranscriptSegment[];
-    }
-
+    if (!refinedText) return [] as TranscriptSegment[];
     const refinedLines = refinedText
       .split("\n")
       .map((line) => cleanTranscriptLine(line))
       .filter((line) => line.length > 0);
-
     return parseTranscriptSegments(refinedLines);
   }, [activeMeeting.refinedTranscript]);
 
@@ -312,36 +201,22 @@ export default function MeetingPage() {
   }, [busyProcessing]);
 
   useEffect(() => {
-    const nextTemplate = resolveMailTemplate(
-      activeMeeting.mailTemplate,
-      activeMeeting.title,
-    );
-
+    const nextTemplate = resolveMailTemplate(activeMeeting.mailTemplate, activeMeeting.title);
     setEmailSubjectInput(nextTemplate.subject);
     setEmailBodyInput(nextTemplate.body);
     setEmailIsHtml(nextTemplate.isHtml);
   }, [activeMeeting.mailTemplate, activeMeeting.title]);
 
   function handleRetryPipeline() {
-    retryPipeline({
-      busyProcessing,
-      activeMeeting,
-      selectedFile: null,
-      selectedFileName: activeMeeting.fileName,
-      selectedFileDurationSecond: activeMeeting.durationSecond,
-      recordingFile: null,
-      recordingSecond: 0,
-    });
+    retryPipeline({ selectedFile: null, recordingFile: null, recordingSecond: 0 });
   }
 
   async function handleCopyRawTranscript() {
     const transcript = activeMeeting.rawTranscript.trim();
-
     if (!transcript) {
       showActionToast("Chưa có bản gỡ băng để sao chép.");
       return;
     }
-
     try {
       await navigator.clipboard.writeText(transcript);
       showActionToast("Đã sao chép bản gỡ băng gốc.");
@@ -352,12 +227,10 @@ export default function MeetingPage() {
 
   async function handleCopyRefinedTranscript() {
     const transcript = (activeMeeting.refinedTranscript ?? "").trim();
-
     if (!transcript) {
       showActionToast("Chưa có bản đã làm sạch để sao chép.");
       return;
     }
-
     try {
       await navigator.clipboard.writeText(transcript);
       showActionToast("Đã sao chép bản đã làm sạch.");
@@ -372,7 +245,6 @@ export default function MeetingPage() {
       setNotice("Không thể đổi chế độ khi pipeline đang xử lý.");
       return;
     }
-
     setSelectedFileRecord(null);
     setInputMode(mode);
   }
@@ -409,7 +281,7 @@ export default function MeetingPage() {
     }
 
     showActionToast(
-      "Đang khởi tạo quy trình xử lý AI. Vui lòng giữ nguyên trạng thái trình duyệt để đảm bảo tiến trình hoạt động chính xác.",
+      "Đang khởi tạo quy trình xử lý AI. Bạn có thể chuyển sang trang khác — pipeline sẽ tiếp tục chạy ngầm.",
       "info",
       15000,
     );
@@ -562,7 +434,9 @@ export default function MeetingPage() {
         }));
 
         setIsEmailDialogOpen(sendResult.failed > 0);
-        showActionToast(sendResult.failed > 0 ? `Đã gửi ${sendResult.sent}/${sendResult.total} email, còn ${sendResult.failed} lỗi.` : "Đã gửi email thành công.");
+        showActionToast(sendResult.failed > 0
+          ? `Đã gửi ${sendResult.sent}/${sendResult.total} email, còn ${sendResult.failed} lỗi.`
+          : "Đã gửi email thành công.");
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         setNotice(`Gửi email thất bại: ${errorMessage}`);
@@ -634,9 +508,16 @@ export default function MeetingPage() {
                       {status.label}
                     </span>
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
-                    Tải lên hoặc chọn tệp âm thanh để hệ thống tự động gỡ băng và tạo biên bản.
-                  </p>
+                  {shouldShowPipeline ? (
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
+                      <span className="font-medium text-foreground/80">{activeMeeting.fileName}</span>
+                      {busyProcessing && <span className="ml-1.5 text-primary/70">— đang xử lý...</span>}
+                    </p>
+                  ) : (
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
+                      Tải lên hoặc chọn tệp âm thanh để hệ thống tự động gỡ băng và tạo biên bản.
+                    </p>
+                  )}
                 </div>
                 <div className="shrink-0">
                   {isInputOpen ? <ChevronUpIcon className="size-5 text-muted-foreground" /> : <ChevronDownIcon className="size-5 text-muted-foreground" />}
@@ -646,13 +527,23 @@ export default function MeetingPage() {
 
             {!isInputOpen && shouldShowPipeline && (
               <div className="border-t border-border/60 px-4 pb-3 pt-2 md:px-5 md:pb-4 md:pt-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${stageProgress}%` }} />
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <p className="text-xs text-muted-foreground truncate">{notice}</p>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {!busyProcessing && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); resetPipeline(); setIsInputOpen(true); }}
+                        className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                      >
+                        <RotateCcwIcon className="size-3" /> Phiên mới
+                      </button>
+                    )}
+                    <span className="text-xs font-bold text-primary">{stageProgress}%</span>
                   </div>
-                  <span className="min-w-[40px] text-right text-xs font-bold text-primary">{stageProgress}%</span>
                 </div>
-                <p className="mt-2 text-xs font-medium text-muted-foreground">{notice}</p>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${stageProgress}%` }} />
+                </div>
               </div>
             )}
 
@@ -660,7 +551,7 @@ export default function MeetingPage() {
               <div className="p-4 md:p-6 lg:p-8">
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10">
                   <div className="flex-1 space-y-6">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Button
                         variant={inputMode === "assigned" ? "default" : "outline"}
                         size="sm"
@@ -677,6 +568,16 @@ export default function MeetingPage() {
                       >
                         Tệp đã tải lên
                       </Button>
+                      {shouldShowPipeline && !busyProcessing && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={resetPipeline}
+                          className="h-8 rounded-full px-4 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                        >
+                          <RotateCcwIcon className="size-3.5" /> Phiên mới
+                        </Button>
+                      )}
                     </div>
 
                     <div className="min-h-[400px]">

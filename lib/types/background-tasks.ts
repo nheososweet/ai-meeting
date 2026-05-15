@@ -1,6 +1,6 @@
 export type BackgroundTaskType =
   | "upload_file"
-// thêm loại khác ở đây khi cần: "export_pdf" | "send_bulk_email"
+  | "meeting_pipeline"
 
 export type PipelineStepStatus = "waiting" | "processing" | "success" | "failed"
 
@@ -12,8 +12,15 @@ export interface UploadPipelineSteps {
   sendEmail: PipelineStepStatus
 }
 
+export interface MeetingPipelineSteps {
+  raw_transcript:  PipelineStepStatus
+  diarization:     PipelineStepStatus
+  speaker_summary: PipelineStepStatus
+  minutes:         PipelineStepStatus
+}
+
 // Union type cho steps — mở rộng khi có loại task mới
-export type TaskSteps = UploadPipelineSteps
+export type TaskSteps = UploadPipelineSteps | MeetingPipelineSteps
 
 export type BackgroundTaskStatus = "running" | "polling" | "completed" | "failed"
 

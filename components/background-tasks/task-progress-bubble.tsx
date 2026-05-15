@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useBackgroundTask } from "@/hooks/use-background-task";
 import { Progress } from "@/components/ui/progress";
-import type { BackgroundTaskItem, PipelineStepStatus, UploadPipelineSteps } from "@/lib/types/background-tasks";
+import type { BackgroundTaskItem, MeetingPipelineSteps, PipelineStepStatus, UploadPipelineSteps } from "@/lib/types/background-tasks";
 
 // ─── Step icon helper ────────────────────────────────────────────────────────
 
@@ -45,12 +45,20 @@ const UPLOAD_STEP_LABELS: Record<keyof UploadPipelineSteps, string> = {
   sendEmail:  "Email",
 };
 
+const MEETING_STEP_LABELS: Record<keyof MeetingPipelineSteps, string> = {
+  raw_transcript:  "Gỡ băng",
+  diarization:     "Phân vai",
+  speaker_summary: "Tóm tắt",
+  minutes:         "Biên bản",
+};
+
 function TaskItemRow({ task, onRemove }: { task: BackgroundTaskItem; onRemove: () => void }) {
   const isDone     = task.status === "completed";
   const isFailed   = task.status === "failed";
   const isRunning  = task.status === "running";
   const canDismiss = isDone || isFailed;
-  const steps      = task.steps as UploadPipelineSteps | undefined;
+  const uploadSteps  = task.type === "upload_file"      ? task.steps as UploadPipelineSteps | undefined  : undefined;
+  const meetingSteps = task.type === "meeting_pipeline" ? task.steps as MeetingPipelineSteps | undefined : undefined;
 
   return (
     <div className="flex flex-col gap-1.5 rounded-lg border border-border/60 bg-background p-2.5">
@@ -73,7 +81,7 @@ function TaskItemRow({ task, onRemove }: { task: BackgroundTaskItem; onRemove: (
       </div>
 
       {/* Progress bar */}
-      {isRunning ? (
+      {isRunning && task.type === "upload_file" ? (
         // Indeterminate animation khi đang HTTP upload
         <div className="relative h-1 w-full rounded-full bg-muted overflow-hidden">
           <div className="absolute inset-y-0 w-1/3 rounded-full bg-blue-500 animate-[slide_1.5s_ease-in-out_infinite]" />
@@ -98,15 +106,22 @@ function TaskItemRow({ task, onRemove }: { task: BackgroundTaskItem; onRemove: (
       )}>
         {isDone   ? "Hoàn tất" :
          isFailed ? (task.errorMessage ?? "Đã xảy ra lỗi") :
-         isRunning ? "Đang tải lên..." :
+         isRunning && task.type === "upload_file" ? "Đang tải lên..." :
                      "Đang xử lý..."}
       </p>
 
       {/* Pipeline steps */}
-      {steps && (
+      {uploadSteps && (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-0.5">
           {(Object.keys(UPLOAD_STEP_LABELS) as (keyof UploadPipelineSteps)[]).map(key => (
-            <StepIcon key={key} status={steps[key]} label={UPLOAD_STEP_LABELS[key]} />
+            <StepIcon key={key} status={uploadSteps[key]} label={UPLOAD_STEP_LABELS[key]} />
+          ))}
+        </div>
+      )}
+      {meetingSteps && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-0.5">
+          {(Object.keys(MEETING_STEP_LABELS) as (keyof MeetingPipelineSteps)[]).map(key => (
+            <StepIcon key={key} status={meetingSteps[key]} label={MEETING_STEP_LABELS[key]} />
           ))}
         </div>
       )}

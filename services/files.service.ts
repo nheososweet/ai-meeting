@@ -65,6 +65,14 @@ export const filesService = {
   },
 
   /**
+   * Fetch a single file record by ID (used for background task polling)
+   */
+  getFileById: async (id: number): Promise<FileRecord> => {
+    const response = await api.get<UpstreamFileRecord>(`/files/${id}`);
+    return normalizeFileRecord(response.data);
+  },
+
+  /**
    * Upload a new file
    */
   uploadFile: async (file: File, title: string): Promise<FileRecord> => {

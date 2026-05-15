@@ -16,6 +16,7 @@ function normalizeFileRecord(record: UpstreamFileRecord): FileRecord {
     id: record.id,
     createTime: record.create_time,
     uploaderId: record.uploader_id,
+    uploadedBy: record.uploaded_by || null,
     assignedToUsers: record.assigned_to_users || [],
     assignedToGroups: record.assigned_to_groups || [],
     assignedToCompanies: record.assigned_to_companies || [],

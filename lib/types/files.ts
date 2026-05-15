@@ -7,6 +7,7 @@ export interface UpstreamFileRecord {
   id: number;
   create_time: string;
   uploader_id: number;
+  uploaded_by?: { id: number; name: string } | null;
   assigned_to_users: { id: number; name: string }[];
   assigned_to_groups: { id: number; name: string }[];
   assigned_to_companies: { id: number; name: string }[];
@@ -38,6 +39,7 @@ export interface FileRecord {
   id: number;
   createTime: string;
   uploaderId: number;
+  uploadedBy?: { id: number; name: string } | null;
   assignedToUsers: { id: number; name: string }[];
   assignedToGroups: { id: number; name: string }[];
   assignedToCompanies: { id: number; name: string }[];

@@ -89,6 +89,11 @@ const STEP_OPTIONS = [
   { value: "send_email", label: "Gửi Email" },
 ];
 
+const SCOPE_OPTIONS = [
+  { value: "all", label: "Tất cả tệp" },
+  { value: "mine", label: "Tệp của bạn" },
+];
+
 const VALUE_OPTIONS = [
   { value: "success", label: "Thành công" },
   { value: "failed", label: "Thất bại" },
@@ -110,9 +115,10 @@ export default function MeetingRecordsPage() {
   const [search, setSearch] = useState("");
   const [statusStep, setStatusStep] = useState<string>("upload");
   const [statusValue, setStatusValue] = useState<string>("success");
+  const [scope, setScope] = useState<string>("all");
   const debouncedSearch = useDebounce(search, 500);
 
-  const { page, setPage } = usePaginationState([debouncedSearch, statusStep, statusValue]);
+  const { page, setPage } = usePaginationState([debouncedSearch, statusStep, statusValue, scope]);
 
   // Hooks
   const { data, isLoading, isFetching, error } = useFilesQuery({
@@ -121,6 +127,7 @@ export default function MeetingRecordsPage() {
     search: debouncedSearch || undefined,
     status_step: statusStep,
     status_value: statusValue,
+    self_upload: scope === "mine" ? true : undefined,
   });
 
   const records = data?.data || [];
@@ -185,6 +192,19 @@ export default function MeetingRecordsPage() {
               ))}
             </SelectContent>
           </Select>
+
+          <div className="h-4 w-px bg-border/60 mx-1 hidden sm:block" />
+
+          <Select value={scope} onValueChange={setScope}>
+            <SelectTrigger className="h-9 w-[130px] text-xs font-medium bg-muted/20 border-primary/20 text-primary">
+              <SelectValue placeholder="Phạm vi" />
+            </SelectTrigger>
+            <SelectContent>
+              {SCOPE_OPTIONS.map(opt => (
+                <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -213,6 +233,7 @@ export default function MeetingRecordsPage() {
                   <TableRow className="bg-background sticky top-0 z-10 hover:bg-background shadow-[0_1px_0_0_rgba(0,0,0,0.05)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.05)]">
                     <TableHead className="w-[80px]">ID</TableHead>
                     <TableHead>Bản ghi</TableHead>
+                    <TableHead className="hidden lg:table-cell">Người tải lên</TableHead>
                     <TableHead className="text-[11px] font-bold uppercase tracking-wider">Tiến độ</TableHead>
                     <TableHead className="hidden lg:table-cell">Người được gán</TableHead>
                     <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
@@ -240,6 +261,9 @@ export default function MeetingRecordsPage() {
                               {record.filename}
                             </span>
                           </div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-[11px] text-muted-foreground font-medium">
+                          {record.uploadedBy?.name || "Hệ thống"}
                         </TableCell>
                         <TableCell>
                           <StatusIndicator record={record} />

@@ -16,6 +16,7 @@ function normalizeFileRecord(record: UpstreamFileRecord): FileRecord {
     id: record.id,
     createTime: record.create_time,
     uploaderId: record.uploader_id,
+    uploadedBy: record.uploaded_by || null,
     assignedToUsers: record.assigned_to_users || [],
     assignedToGroups: record.assigned_to_groups || [],
     assignedToCompanies: record.assigned_to_companies || [],
@@ -62,6 +63,14 @@ export const filesService = {
       data: payload.data.map(normalizeFileRecord),
       meta: payload.meta,
     };
+  },
+
+  /**
+   * Fetch a single file record by ID (used for background task polling)
+   */
+  getFileById: async (id: number): Promise<FileRecord> => {
+    const response = await api.get<UpstreamFileRecord>(`/files/${id}`);
+    return normalizeFileRecord(response.data);
   },
 
   /**

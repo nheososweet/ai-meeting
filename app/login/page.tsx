@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService } from "@/services/auth.service";
 import { mapAuthUser } from "@/lib/auth/auth-context";
 import { parseApiError } from "@/lib/api-error";
+import { validatePasswordComplexity } from "@/lib/validation";
 
 function LoginContent() {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -57,6 +58,13 @@ function LoginContent() {
       setErrorMsg("Vui lòng nhập đầy đủ email và mật khẩu");
       return;
     }
+
+    const passwordError = validatePasswordComplexity(password);
+    if (passwordError) {
+      setErrorMsg(passwordError);
+      return;
+    }
+
     loginMutation.mutate();
   };
 

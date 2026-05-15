@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -22,12 +22,13 @@ import {
   FieldError,
 } from "@/components/ui/field"
 import { IAMCombobox } from "@/components/iam/shared/iam-combobox"
-import { Loader2Icon, Building2Icon } from "lucide-react"
+import { Loader2Icon, Building2Icon, EyeIcon, EyeOffIcon } from "lucide-react"
 import { useAuth } from "@/lib/auth/auth-context"
 import { useCreateUser } from "@/hooks/iam/use-users"
 import { useInfiniteCompanies } from "@/hooks/iam/use-companies"
 import { useInfiniteGroups } from "@/hooks/iam/use-groups"
 import { useInfiniteRoles } from "@/hooks/iam/use-roles"
+import { passwordSchema } from "@/lib/validation"
 
 function useInfiniteRolesNonAdmin(params?: { search?: string }) {
   const result = useInfiniteRoles(params)
@@ -48,7 +49,7 @@ function useInfiniteRolesNonAdmin(params?: { search?: string }) {
 const userFormSchema = z.object({
   name: z.string().min(1, "Vui lòng nhập họ và tên"),
   email: z.string().email("Email không hợp lệ").min(1, "Vui lòng nhập email"),
-  password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+  password: passwordSchema,
   roleId: z.string().min(1, "Vui lòng chọn vai trò"),
   companyId: z.string().min(1, "Vui lòng chọn tổ chức"),
   groupId: z.string().optional(),
@@ -62,6 +63,7 @@ interface CreateUserDialogProps {
 }
 
 export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) {
+  const [showPassword, setShowPassword] = useState(false)
   const { currentUser } = useAuth()
   const isAdmin = currentUser?.role === "admin"
 
@@ -154,7 +156,22 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Mật khẩu <span className="text-destructive">*</span></FieldLabel>
-                    <Input type="password" placeholder="Tối thiểu 8 ký tự..." {...field} aria-invalid={fieldState.invalid} />
+                    <div className="relative group">
+                      <Input 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder="Tối thiểu 8 ký tự..." 
+                        {...field} 
+                        aria-invalid={fieldState.invalid}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+                      </button>
+                    </div>
                     <FieldError errors={[fieldState.error]} />
                   </Field>
                 )}

@@ -31,6 +31,7 @@ import { cn, formatDate } from "@/lib/utils";
 import { useFilesInfiniteQuery } from "@/hooks/services/use-files";
 import { FileRecord } from "@/lib/types/files";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useAuth } from "@/lib/auth/auth-context";
 
 interface FileSelectorProps {
   selectedFileRecord: FileRecord | null;
@@ -143,6 +144,9 @@ export function FileSelector({
   assigned_filter,
   self_upload,
 }: FileSelectorProps) {
+  const { hasPermission } = useAuth();
+  const canProcess = hasPermission("process_pipeline") || !!self_upload;
+
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [statusTab, setStatusTab] = useState<"waiting" | "fail">("waiting");
@@ -330,7 +334,7 @@ export function FileSelector({
         )}
         <Button
           onClick={onProcessFile}
-          disabled={!selectedFileRecord || busyProcessing}
+          disabled={!selectedFileRecord || busyProcessing || !canProcess}
           className="w-full h-10 text-xs font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all hover:translate-y-[-1px] active:translate-y-[1px]"
         >
           {busyProcessing ? (

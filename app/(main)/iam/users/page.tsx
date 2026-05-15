@@ -251,7 +251,7 @@ export default function UsersPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-background sticky top-0">
-                    <TableHead className="w-[80px]">ID</TableHead>
+                    <TableHead className="w-[80px]">STT</TableHead>
                     <TableHead>Tài khoản</TableHead>
                     <TableHead>Vai trò & Phạm vi</TableHead>
                     <TableHead>Trạng thái</TableHead>
@@ -261,10 +261,10 @@ export default function UsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
+                  {users.map((user, index) => (
                     <TableRow key={user.id} className="group/row">
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        #{user.id}
+                      <TableCell className="text-xs text-muted-foreground">
+                        {index + 1}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">

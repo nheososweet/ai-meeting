@@ -48,12 +48,14 @@ function FileDetailsDialog({
   file,
   isOpen,
   onClose,
-  onSelect
+  onSelect,
+  selfUpload,
 }: {
   file: FileRecord | null;
   isOpen: boolean;
   onClose: () => void;
   onSelect: (file: FileRecord) => void;
+  selfUpload?: boolean;
 }) {
   if (!file) return null;
 
@@ -91,14 +93,18 @@ function FileDetailsDialog({
           {/* Thông tin chi tiết */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">Người giao</span>
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">
+                {selfUpload ? "Người tải lên" : "Người giao"}
+              </span>
               <div className="flex items-center gap-2 text-sm">
                 <User className="size-3.5 text-primary/70" />
-                <span className="font-medium">{file.assignedByUser?.name || "N/A"}</span>
+                <span className="font-medium">
+                  {selfUpload ? (file.uploadedBy?.name || "N/A") : (file.assignedByUser?.name || "N/A")}
+                </span>
               </div>
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">Ngày giao</span>
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">Ngày tải lên</span>
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="size-3.5 text-primary/70" />
                 <span className="font-medium">{formatDate(file.createTime)}</span>
@@ -270,7 +276,9 @@ export function FileSelector({
                         <div className="flex items-center gap-2 text-[10px] text-muted-foreground/80 mt-0.5">
                           <span className="truncate max-w-[120px]">{formatDate(file.createTime)}</span>
                           <span className="size-1 rounded-full bg-border" />
-                          <span className="truncate max-w-[100px]">{file.assignedByUser?.name}</span>
+                          <span className="truncate max-w-[100px]">
+                            {self_upload ? file.uploadedBy?.name : file.assignedByUser?.name}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -342,6 +350,7 @@ export function FileSelector({
         isOpen={!!detailFile}
         onClose={() => setDetailFile(null)}
         onSelect={onFileSelect}
+        selfUpload={self_upload}
       />
     </div>
   );

@@ -154,17 +154,17 @@ export default function CompaniesPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-background sticky top-0">
-                    <TableHead className="w-[80px]">ID</TableHead>
+                    <TableHead className="w-[80px]">STT</TableHead>
                     <TableHead>Tên Tổ chức</TableHead>
                     <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
                     <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {companies.map((company) => (
+                  {companies.map((company, index) => (
                     <TableRow key={company.id} className="group">
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        #{company.id}
+                      <TableCell className="text-xs text-muted-foreground">
+                        {index + 1}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2.5">

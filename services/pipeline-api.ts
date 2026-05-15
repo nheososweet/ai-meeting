@@ -94,12 +94,12 @@ export const api = setupInterceptors(
 
 /**
  * Long-running API instance for LLM pipelines and heavy data processing.
- * Timeout: 25 minutes.
+ * Timeout: 1 hour 30 minutes.
  */
 export const pipelineApi = setupInterceptors(
   axios.create({
     baseURL,
-    timeout: 1_500_000,
+    timeout: 5_400_000,
     headers: {
       accept: "application/json",
     },

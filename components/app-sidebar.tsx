@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Clock3Icon, FolderKanbanIcon, LayoutDashboardIcon, MicIcon, ShieldIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
-import { IAM_SIDEBAR_PERMISSIONS, WBS_SIDEBAR_PERMISSIONS } from "@/lib/auth/permissions";
+import { IAM_SIDEBAR_PERMISSIONS } from "@/lib/auth/permissions";
 
 const appNav = {
   main: [

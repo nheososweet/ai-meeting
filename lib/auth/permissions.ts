@@ -61,21 +61,6 @@ export const IAM_ROUTE_PERMISSIONS: Record<string, string> = {
   "/iam/roles": PERMISSIONS.MANAGE_ROLES,
 }
 
-// ── WBS Sidebar / Route Guards ──────────────────────────
-
-/** Permissions required to see the WBS sidebar menu */
-export const WBS_SIDEBAR_PERMISSIONS: string[] = [
-  PERMISSIONS.ASSIGN_FILES,
-]
-
-/** Permissions required per WBS sub-route */
-export const WBS_ROUTE_PERMISSIONS: Record<string, string> = {
-  "/meeting-records": PERMISSIONS.ASSIGN_FILES,
-  "/wbs/projects": PERMISSIONS.ASSIGN_FILES,
-  "/wbs/assignments": PERMISSIONS.ASSIGN_FILES,
-  "/wbs/files": PERMISSIONS.ASSIGN_FILES,
-}
-
 // ── Workspace / Pipeline Guards ─────────────────────────
 
 /** Permissions related to the workspace/pipeline features */

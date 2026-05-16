@@ -115,6 +115,7 @@ export default function MeetingPage() {
     canRetryPipeline,
     startProcessing,
     retryPipeline,
+    retryFromStep,
     resetPipeline,
   } = useMeetingPipeline();
 
@@ -209,6 +210,14 @@ export default function MeetingPage() {
 
   function handleRetryPipeline() {
     retryPipeline({ selectedFile: null, recordingFile: null, recordingSecond: 0 });
+  }
+
+  function handleRetryStep(stepId: import("@/app/(main)/workspace/_lib/pipeline-constants").PipelineStepId) {
+    if (stepId === "raw_transcript") {
+      handleRetryPipeline();
+    } else {
+      retryFromStep(stepId);
+    }
   }
 
   async function handleCopyRawTranscript() {
@@ -599,6 +608,7 @@ export default function MeetingPage() {
                       canRetryPipeline={canRetryPipeline}
                       failedStepId={failedStepId}
                       onRetryPipeline={handleRetryPipeline}
+                      onRetryStep={handleRetryStep}
                     />
                   </div>
                 </div>

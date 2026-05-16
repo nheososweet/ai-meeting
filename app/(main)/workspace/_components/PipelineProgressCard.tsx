@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import type { PipelineStep } from "@/app/(main)/workspace/_lib/pipeline-constants";
+import type { PipelineStep, PipelineStepId } from "@/app/(main)/workspace/_lib/pipeline-constants";
 
 type PipelineProgressCardProps = {
   stageProgress: number;
@@ -14,6 +14,7 @@ type PipelineProgressCardProps = {
   canRetryPipeline: boolean;
   failedStepId: PipelineStep["id"] | null;
   onRetryPipeline: () => void;
+  onRetryStep?: (stepId: PipelineStepId) => void;
 };
 
 export function PipelineProgressCard({
@@ -22,6 +23,7 @@ export function PipelineProgressCard({
   canRetryPipeline,
   failedStepId,
   onRetryPipeline,
+  onRetryStep,
 }: PipelineProgressCardProps) {
   return (
     <>
@@ -43,22 +45,10 @@ export function PipelineProgressCard({
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Chi tiết quy trình
           </h3>
-          {canRetryPipeline ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-7 px-2 text-[11px]"
-              onClick={onRetryPipeline}
-            >
-              Thử lại bước lỗi
-            </Button>
-          ) : null}
         </div>
         {failedStepId ? (
           <p className="mt-2 text-[11px] text-rose-600 dark:text-rose-300">
-            Đã phát hiện lỗi ở bước: {failedStepId}. Bạn có thể thử lại để chạy
-            lại quy trình.
+            Đã phát hiện lỗi ở bước: <span className="font-medium">{failedStepId}</span>. Nhấn &quot;Thử lại&quot; trên bước tương ứng để tiếp tục.
           </p>
         ) : null}
         <ul className="mt-3 space-y-2">
@@ -67,28 +57,30 @@ export function PipelineProgressCard({
               step.status === "completed"
                 ? {
                   icon: (
-                    <CheckCircle2Icon className="size-4 text-emerald-600" />
+                    <CheckCircle2Icon className="size-4 shrink-0 text-emerald-600" />
                   ),
                   label: "Hoàn tất",
                 }
                 : step.status === "running"
                   ? {
                     icon: (
-                      <CircleDashedIcon className="size-4 animate-spin text-amber-600" />
+                      <CircleDashedIcon className="size-4 shrink-0 animate-spin text-amber-600" />
                     ),
                     label: "Đang chạy",
                   }
                   : step.status === "error"
                     ? {
-                      icon: <XCircleIcon className="size-4 text-rose-600" />,
+                      icon: <XCircleIcon className="size-4 shrink-0 text-rose-600" />,
                       label: "Lỗi",
                     }
                     : {
                       icon: (
-                        <CircleIcon className="size-4 text-muted-foreground/60" />
+                        <CircleIcon className="size-4 shrink-0 text-muted-foreground/60" />
                       ),
                       label: "Chờ",
                     };
+
+            const isFailedStep = step.status === "error" && failedStepId === step.id && canRetryPipeline;
 
             return (
               <li
@@ -107,6 +99,23 @@ export function PipelineProgressCard({
                       </p>
                     </div>
                   </div>
+                  {isFailedStep ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-6 shrink-0 px-2 text-[10px] text-rose-600 hover:text-rose-700 border-rose-300 hover:border-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                      onClick={() => {
+                        if (step.id === "raw_transcript") {
+                          onRetryPipeline();
+                        } else {
+                          onRetryStep?.(step.id);
+                        }
+                      }}
+                    >
+                      {step.id === "raw_transcript" ? "Thử lại từ đầu" : "Thử lại bước này"}
+                    </Button>
+                  ) : null}
                 </div>
 
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">

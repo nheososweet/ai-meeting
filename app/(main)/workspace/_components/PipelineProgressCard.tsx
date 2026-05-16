@@ -48,7 +48,7 @@ export function PipelineProgressCard({
               type="button"
               size="sm"
               variant="outline"
-              className="h-7 px-2 text-[11px]"
+              className="h-7 px-2 text-xs"
               onClick={onRetryPipeline}
             >
               Thử lại bước lỗi
@@ -56,7 +56,7 @@ export function PipelineProgressCard({
           ) : null}
         </div>
         {failedStepId ? (
-          <p className="mt-2 text-[11px] text-rose-600 dark:text-rose-300">
+          <p className="mt-2 text-xs text-rose-600 dark:text-rose-300">
             Đã phát hiện lỗi ở bước: {failedStepId}. Bạn có thể thử lại để chạy
             lại quy trình.
           </p>

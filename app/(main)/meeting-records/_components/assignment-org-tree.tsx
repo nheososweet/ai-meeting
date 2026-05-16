@@ -97,7 +97,7 @@ export function AssignmentOrgTree({
             Cơ cấu tổ chức tiếp nhận
           </p>
           {totalSelected > 0 && (
-            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
               Đã chọn {totalSelected}
             </span>
           )}
@@ -107,7 +107,7 @@ export function AssignmentOrgTree({
         {totalSelected > 0 && (
           <div className="flex flex-wrap gap-1.5 p-2 bg-background border rounded-md min-h-[40px]">
             {selectedCompanies.map(c => (
-              <Badge key={`sel-c-${c.id}`} variant="secondary" className="pl-2 pr-1 py-0 h-6 text-[11px] flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100">
+              <Badge key={`sel-c-${c.id}`} variant="secondary" className="pl-2 pr-1 py-0 h-6 text-xs flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100">
                 <Building2 className="size-3" />
                 <span className="max-w-[120px] truncate">{c.name}</span>
                 <button 
@@ -120,7 +120,7 @@ export function AssignmentOrgTree({
               </Badge>
             ))}
             {selectedGroups.map(g => (
-              <Badge key={`sel-g-${g.id}`} variant="secondary" className="pl-2 pr-1 py-0 h-6 text-[11px] flex items-center gap-1 bg-purple-50 text-purple-700 border-purple-100 hover:bg-purple-100">
+              <Badge key={`sel-g-${g.id}`} variant="secondary" className="pl-2 pr-1 py-0 h-6 text-xs flex items-center gap-1 bg-purple-50 text-purple-700 border-purple-100 hover:bg-purple-100">
                 <Users className="size-3" />
                 <span className="max-w-[120px] truncate">{g.name}</span>
                 <button 
@@ -174,7 +174,7 @@ export function AssignmentOrgTree({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full mt-2 text-[11px] h-7 text-primary hover:bg-primary/5"
+            className="w-full mt-2 text-xs h-7 text-primary hover:bg-primary/5"
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
           >
@@ -287,7 +287,7 @@ function CompanyNode({
               value={groupSearch}
               onChange={(e) => setGroupSearch(e.target.value)}
               disabled={disabled}
-              className="h-7 text-[11px] pl-7 bg-background"
+              className="h-7 text-xs pl-7 bg-background"
             />
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-muted-foreground" />
           </div>
@@ -317,7 +317,7 @@ function CompanyNode({
                 <button
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="text-[10px] text-primary hover:underline pl-6 py-1 flex items-center gap-1 disabled:opacity-50"
+                  className="text-xs text-primary hover:underline pl-6 py-1 flex items-center gap-1 disabled:opacity-50"
                 >
                   {isFetchingNextPage ? (
                     <Loader2 className="size-2 animate-spin" />

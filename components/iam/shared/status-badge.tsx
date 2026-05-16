@@ -16,7 +16,7 @@ const statusConfig: Record<UserStatus, { label: string; className: string }> = {
 export function StatusBadge({ status }: { status: UserStatus }) {
   const config = statusConfig[status]
   return (
-    <Badge variant="outline" className={cn("text-[11px] font-semibold", config.className)}>
+    <Badge variant="outline" className={cn("text-xs font-semibold", config.className)}>
       {config.label}
     </Badge>
   )

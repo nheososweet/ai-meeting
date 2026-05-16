@@ -887,7 +887,7 @@ export default function WorkspacePage() {
                       Bản gỡ băng theo người nói
                     </h3>
                     <div className="flex items-center gap-1">
-                      <span className="rounded-full border border-border/70 bg-background px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      <span className="rounded-full border border-border/70 bg-background px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                         {activeMeeting.speakerCount} người nói
                       </span>
                       <Dialog>
@@ -939,7 +939,7 @@ export default function WorkspacePage() {
                                       <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground">
                                         {segment.speaker}
                                       </span>
-                                      <span className="text-[11px] font-medium text-muted-foreground">
+                                      <span className="text-xs font-medium text-muted-foreground">
                                         {formatTimelineSecond(
                                           segment.startSecond,
                                         )}{" "}
@@ -972,7 +972,7 @@ export default function WorkspacePage() {
                                           <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground">
                                             {segment.speaker}
                                           </span>
-                                          <span className="text-[11px] font-medium text-muted-foreground">
+                                          <span className="text-xs font-medium text-muted-foreground">
                                             {formatTimelineSecond(
                                               segment.startSecond,
                                             )}{" "}
@@ -1053,7 +1053,7 @@ export default function WorkspacePage() {
                                 <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground">
                                   {segment.speaker}
                                 </span>
-                                <span className="text-[11px] font-medium text-muted-foreground">
+                                <span className="text-xs font-medium text-muted-foreground">
                                   {formatTimelineSecond(segment.startSecond)} -{" "}
                                   {formatTimelineSecond(segment.endSecond)}
                                 </span>

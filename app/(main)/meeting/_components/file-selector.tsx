@@ -94,7 +94,7 @@ function FileDetailsDialog({
           {/* Thông tin chi tiết */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">
+              <span className="text-xs uppercase font-bold text-muted-foreground tracking-tight">
                 {selfUpload ? "Người tải lên" : "Người giao"}
               </span>
               <div className="flex items-center gap-2 text-sm">
@@ -105,7 +105,7 @@ function FileDetailsDialog({
               </div>
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">Ngày tải lên</span>
+              <span className="text-xs uppercase font-bold text-muted-foreground tracking-tight">Ngày tải lên</span>
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="size-3.5 text-primary/70" />
                 <span className="font-medium">{formatDate(file.createTime)}</span>
@@ -113,10 +113,10 @@ function FileDetailsDialog({
             </div>
             {file.assignedToGroups.length > 0 && (
               <div className="space-y-1 col-span-2 pt-2 border-t border-border/30">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">Phòng ban được gán</span>
+                <span className="text-xs uppercase font-bold text-muted-foreground tracking-tight">Phòng ban được gán</span>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {file.assignedToGroups.map(g => (
-                    <Badge key={g.id} variant="secondary" className="text-[10px] font-normal">{g.name}</Badge>
+                    <Badge key={g.id} variant="secondary" className="text-xs font-medium">{g.name}</Badge>
                   ))}
                 </div>
               </div>
@@ -193,7 +193,7 @@ export function FileSelector({
             placeholder="Tìm theo tên..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8.5 h-8 text-[11px] bg-background border-border/40 focus-visible:ring-primary/20 transition-all"
+            className="pl-8.5 h-8 text-xs bg-background border-border/40 focus-visible:ring-primary/20 transition-all"
           />
         </div>
 
@@ -201,7 +201,7 @@ export function FileSelector({
           <button
             onClick={() => setStatusTab("waiting")}
             className={cn(
-              "flex-1 px-2 py-1 text-[10px] font-bold rounded transition-all uppercase tracking-tight",
+              "flex-1 px-2 py-1 text-xs font-bold rounded transition-all uppercase tracking-tight",
               statusTab === "waiting"
                 ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
                 : "text-muted-foreground hover:text-foreground"
@@ -212,7 +212,7 @@ export function FileSelector({
           <button
             onClick={() => setStatusTab("fail")}
             className={cn(
-              "flex-1 px-2 py-1 text-[10px] font-bold rounded transition-all uppercase tracking-tight",
+              "flex-1 px-2 py-1 text-xs font-bold rounded transition-all uppercase tracking-tight",
               statusTab === "fail"
                 ? "bg-rose-500 text-white shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -243,7 +243,7 @@ export function FileSelector({
                   <FileAudio className="size-6 opacity-30" />
                 </div>
                 <p className="text-sm font-semibold text-foreground/70">Danh sách trống</p>
-                <p className="text-[11px] opacity-60">
+                <p className="text-xs opacity-70">
                   {assigned_filter
                     ? "Chưa có tệp nào được gán cho bạn trong mục này."
                     : "Bạn chưa tải lên tệp nào trong mục này."}
@@ -277,7 +277,7 @@ export function FileSelector({
                         )}>
                           {file.title || file.filename}
                         </h4>
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground/80 mt-0.5">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground/80 mt-0.5">
                           <span className="truncate max-w-[120px]">{formatDate(file.createTime)}</span>
                           <span className="size-1 rounded-full bg-border" />
                           <span className="truncate max-w-[100px]">
@@ -310,7 +310,7 @@ export function FileSelector({
 
                 <div ref={ref} className="h-12 flex items-center justify-center">
                   {isFetchingNextPage && (
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Loader2 className="size-3 animate-spin" />
                       Đang tải thêm...
                     </div>
@@ -327,7 +327,7 @@ export function FileSelector({
         {selectedFileRecord && (
           <div className="flex items-center gap-2 mb-2 p-2 bg-primary/5 rounded-lg border border-primary/10 animate-in fade-in slide-in-from-bottom-1">
             <CheckCircle2 className="size-3 text-primary" />
-            <p className="text-[10px] font-medium text-primary truncate">
+            <p className="text-xs font-medium text-primary truncate">
               Đã chọn: {selectedFileRecord.title || selectedFileRecord.filename}
             </p>
           </div>

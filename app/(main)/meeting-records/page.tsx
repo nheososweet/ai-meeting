@@ -257,12 +257,12 @@ export default function MeetingRecordsPage() {
                                 {record.title || "Chưa có tiêu đề"}
                               </span>
                             </div>
-                            <span className="text-[11px] text-muted-foreground pl-5 truncate max-w-[300px]">
+                            <span className="text-xs font-medium text-muted-foreground pl-5 truncate max-w-75">
                               {record.filename}
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell text-[11px] text-muted-foreground font-medium">
+                        <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-medium">
                           {record.uploadedBy?.name || "Hệ thống"}
                         </TableCell>
                         <TableCell>
@@ -278,7 +278,7 @@ export default function MeetingRecordsPage() {
                                   record.assignedToCompanies.length;
 
                                 if (totalAssignees === 0) {
-                                  return <span className="text-[10px] italic text-muted-foreground">Chưa phân bổ</span>;
+                                  return <span className="text-xs font-medium italic text-muted-foreground">Chưa phân bổ</span>;
                                 }
 
                                 const displayLimit = 3;
@@ -296,7 +296,7 @@ export default function MeetingRecordsPage() {
                                           {allAssignees.slice(0, displayLimit).map((assignee) => (
                                             <Avatar key={`${assignee.type}-${assignee.id}`} className="size-6 border-2 border-background">
                                               <AvatarFallback className={cn(
-                                                "text-[10px] font-bold uppercase",
+                                                "text-xs font-bold uppercase",
                                                 assignee.type === 'company' ? "bg-blue-100 text-blue-700" :
                                                   assignee.type === 'group' ? "bg-amber-100 text-amber-700" :
                                                     "bg-primary/10 text-primary"
@@ -317,7 +317,7 @@ export default function MeetingRecordsPage() {
                                         <div className="flex flex-col gap-1.5">
                                           {record.assignedToCompanies.length > 0 && (
                                             <div className="flex flex-col gap-1">
-                                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Công ty</p>
+                                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Công ty</p>
                                               {record.assignedToCompanies.map(c => (
                                                 <div key={c.id} className="flex items-center gap-1.5 text-xs">
                                                   <Building2Icon className="size-3 text-blue-500" />
@@ -328,7 +328,7 @@ export default function MeetingRecordsPage() {
                                           )}
                                           {record.assignedToGroups.length > 0 && (
                                             <div className="flex flex-col gap-1">
-                                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Phòng ban/Nhóm</p>
+                                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Phòng ban/Nhóm</p>
                                               {record.assignedToGroups.map(g => (
                                                 <div key={g.id} className="flex items-center gap-1.5 text-xs">
                                                   <UsersIcon className="size-3 text-amber-500" />
@@ -339,7 +339,7 @@ export default function MeetingRecordsPage() {
                                           )}
                                           {record.assignedToUsers.length > 0 && (
                                             <div className="flex flex-col gap-1">
-                                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Cá nhân</p>
+                                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Cá nhân</p>
                                               {record.assignedToUsers.map(u => (
                                                 <div key={u.id} className="flex items-center gap-1.5 text-xs">
                                                   <UserIcon className="size-3 text-primary" />
@@ -357,7 +357,7 @@ export default function MeetingRecordsPage() {
                             </div>
                           </TooltipProvider>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground text-[11px]">
+                        <TableCell className="hidden md:table-cell text-muted-foreground text-xs font-medium">
                           {formatDate(record.createTime)}
                         </TableCell>
                         <TableCell className="text-right">
@@ -518,7 +518,7 @@ function StatusIndicator({ record }: { record: FileRecord }) {
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <span className="text-[10px] font-medium">{step.label}: {status === "success" ? "Xong" : status === "processing" ? "Đang xử lý" : "Chờ"}</span>
+                <span className="text-xs font-medium">{step.label}: {status === "success" ? "Xong" : status === "processing" ? "Đang xử lý" : "Chờ"}</span>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

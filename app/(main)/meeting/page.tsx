@@ -504,17 +504,17 @@ export default function MeetingPage() {
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <h1 className="text-base font-bold text-foreground">Trình biên tập phiên họp</h1>
-                    <span className={cn("rounded-md px-2 py-0.5 text-[11px] font-semibold", status.className)}>
+                    <span className={cn("rounded-md px-2 py-0.5 text-xs font-semibold", status.className)}>
                       {status.label}
                     </span>
                   </div>
                   {shouldShowPipeline ? (
-                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
+                    <p className="text-sm font-medium text-muted-foreground line-clamp-1">
                       <span className="font-medium text-foreground/80">{activeMeeting.fileName}</span>
                       {busyProcessing && <span className="ml-1.5 text-primary/70">— đang xử lý...</span>}
                     </p>
                   ) : (
-                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
+                    <p className="text-sm font-medium text-muted-foreground line-clamp-1">
                       Tải lên hoặc chọn tệp âm thanh để hệ thống tự động gỡ băng và tạo biên bản.
                     </p>
                   )}
@@ -533,7 +533,7 @@ export default function MeetingPage() {
                     {!busyProcessing && (
                       <button
                         onClick={(e) => { e.stopPropagation(); resetPipeline(); setIsInputOpen(true); }}
-                        className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                        className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                       >
                         <RotateCcwIcon className="size-3" /> Phiên mới
                       </button>
@@ -613,7 +613,7 @@ export default function MeetingPage() {
               <div className="w-full overflow-x-auto pb-1 -mb-1" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
                 <TabsList className="h-9 bg-transparent p-0 gap-1 w-max">
                   {availableTabs.map((tab) => (
-                    <TabsTrigger key={tab.id} value={tab.id} className="h-8 rounded-md px-3 text-xs font-medium transition-all data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm">
+                    <TabsTrigger key={tab.id} value={tab.id} className="h-8 rounded-md px-3 text-sm font-medium transition-all data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm">
                       {tab.label}
                     </TabsTrigger>
                   ))}
@@ -622,13 +622,13 @@ export default function MeetingPage() {
 
               <div className="flex flex-wrap items-center gap-2 shrink-0">
                 {activeTab === "transcript" && shouldShowRawTranscript && (
-                  <Button variant="ghost" size="sm" onClick={handleCopyRawTranscript} className="h-8 gap-1.5 text-[11px] font-semibold text-muted-foreground">Sao chép bản gốc</Button>
+                  <Button variant="ghost" size="sm" onClick={handleCopyRawTranscript} className="h-8 gap-1.5 text-xs font-semibold text-muted-foreground">Sao chép bản gốc</Button>
                 )}
                 {activeTab === "transcript" && shouldShowRefinedTranscript && (
-                  <Button variant="ghost" size="sm" onClick={handleCopyRefinedTranscript} className="h-8 gap-1.5 text-[11px] font-semibold text-primary hover:bg-primary/10">Sao chép bản làm sạch</Button>
+                  <Button variant="ghost" size="sm" onClick={handleCopyRefinedTranscript} className="h-8 gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10">Sao chép bản làm sạch</Button>
                 )}
                 {activeTab === "transcript" && (shouldShowRawTranscript || shouldShowRefinedTranscript) && (
-                  <Button variant="ghost" size="sm" onClick={() => setIsTranscriptEditorOpen(true)} className="h-8 gap-1.5 text-[11px] font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10">
+                  <Button variant="ghost" size="sm" onClick={() => setIsTranscriptEditorOpen(true)} className="h-8 gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10">
                     <Edit3Icon className="size-3.5" /> Chỉnh sửa
                   </Button>
                 )}
@@ -717,7 +717,7 @@ export default function MeetingPage() {
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-bold text-foreground">{segment.speaker}</span>
                             <div className="flex items-center gap-2">
-                              <span className="rounded-full bg-muted/60 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">{formatTimestamp(segment.startSecond)} - {formatTimestamp(segment.endSecond)}</span>
+                              <span className="rounded-full bg-muted/60 px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">{formatTimestamp(segment.startSecond)} - {formatTimestamp(segment.endSecond)}</span>
                               {activeMeeting.audioUrl && (
                                 <button
                                   onClick={() => playSegment(segment.id, segment.startSecond, segment.endSecond)}
@@ -733,7 +733,7 @@ export default function MeetingPage() {
                               )}
                             </div>
                           </div>
-                          <p className="text-sm leading-relaxed text-foreground/90">{segment.text}</p>
+                          <p className="text-sm font-medium leading-relaxed text-foreground/90">{segment.text}</p>
                         </div>
                       ))}
                     </div>
@@ -748,7 +748,7 @@ export default function MeetingPage() {
                           <div className="mb-4 flex items-center gap-2">
                             <h4 className="text-sm font-bold text-foreground">{s.speaker}</h4>
                           </div>
-                          <ul className="space-y-3">{s.keyPoints.map((point, j) => <li key={j} className="flex gap-3 text-sm text-foreground/80"><span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/40" />{point}</li>)}</ul>
+                          <ul className="space-y-3">{s.keyPoints.map((point, j) => <li key={j} className="flex gap-3 text-sm font-medium text-foreground/80"><span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/40" />{point}</li>)}</ul>
                         </div>
                       ))}
                     </div>

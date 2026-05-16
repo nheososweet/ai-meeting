@@ -86,7 +86,7 @@ export function UserView() {
                     <h4 className="text-sm font-bold truncate group-hover:text-primary transition-colors">
                       {record.title || record.filename}
                     </h4>
-                    <div className="flex items-center gap-4 mt-1 text-[11px] text-muted-foreground font-medium">
+                    <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground font-medium">
                       <span className="flex items-center gap-1.5">
                         <CalendarIcon className="size-3" />
                         {formatDate(record.createTime)}

@@ -118,7 +118,7 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <UsersIcon className="size-4 text-primary/70 shrink-0" />
           <span className="font-medium text-sm truncate">{node.name}</span>
-          <span className="hidden sm:inline-block text-[10px] text-muted-foreground/60 px-1.5 py-0.5 bg-muted rounded border border-border/40">
+          <span className="hidden sm:inline-block text-xs text-muted-foreground/60 px-1.5 py-0.5 bg-muted rounded border border-border/40">
             ID: {node.id}
           </span>
         </div>
@@ -129,7 +129,7 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-[11px] px-2"
+              className="h-7 text-xs px-2"
               onClick={() => onAssignPerms(node)}
             >
               <ShieldIcon className="mr-1.5 size-3" />
@@ -142,7 +142,7 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-[11px] px-2"
+                className="h-7 text-xs px-2"
                 onClick={() => onAddChild(node)}
               >
                 <PlusIcon className="mr-1.5 size-3" />

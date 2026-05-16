@@ -69,7 +69,7 @@ export function AppHeader() {
                   <span className="text-sm font-semibold text-foreground leading-none">
                     {currentUser.name}
                   </span>
-                  <span className="text-[11px] text-muted-foreground mt-1 leading-none capitalize">
+                  <span className="text-sm font-medium text-muted-foreground mt-1 leading-none capitalize">
                     {getRoleLabel(currentUser.role)}
                   </span>
                 </div>
@@ -85,7 +85,7 @@ export function AppHeader() {
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">{currentUser.name}</span>
-                      <span className="truncate text-xs text-muted-foreground">{currentUser.email}</span>
+                      <span className="truncate text-sm font-medium text-muted-foreground">{currentUser.email}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>
@@ -94,7 +94,7 @@ export function AppHeader() {
                   <DropdownMenuItem className="gap-2 cursor-pointer">
                     <ShieldIcon className="size-4 text-muted-foreground" />
                     <span className="flex-1">{getRoleLabel(currentUser.role)}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded text-muted-foreground capitalize">
+                    <span className="text-xs font-medium px-1.5 py-0.5 rounded text-muted-foreground capitalize">
                       {currentUser.scope}
                     </span>
                   </DropdownMenuItem>

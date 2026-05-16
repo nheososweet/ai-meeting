@@ -69,7 +69,7 @@ export function SendEmailDialog({
               href={reportUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-muted-foreground transition-colors hover:text-primary hover:underline hover:underline-offset-2"
+              className="block w-full overflow-hidden text-ellipsis whitespace-nowrap text-xs text-muted-foreground transition-colors hover:text-primary hover:underline hover:underline-offset-2"
               title={reportUrl}
             >
               {reportUrl}
@@ -109,7 +109,7 @@ export function SendEmailDialog({
 
           {emailIsHtml ? (
             <div className="space-y-1 rounded-md border border-border/70 bg-muted/20 p-3">
-              <p className="text-[11px] font-medium text-muted-foreground">
+              <p className="text-xs font-medium text-muted-foreground">
                 Xem trước email
               </p>
               <div

@@ -249,7 +249,7 @@ export default function HistoryPage() {
         <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-4 gap-4">
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-bold text-foreground">Lịch sử họp</h2>
-            <p className="text-sm text-muted-foreground mt-0.5 truncate">
+            <p className="text-sm font-medium text-muted-foreground mt-0.5 truncate">
               Quản lý và xem lại các biên bản cuộc họp.
             </p>
           </div>
@@ -344,7 +344,7 @@ export default function HistoryPage() {
                                 {record.title || "Chưa có tiêu đề"}
                               </span>
                             </div>
-                            <span className="text-[11px] text-muted-foreground pl-5 truncate max-w-[280px]">
+                            <span className="text-sm font-medium text-muted-foreground pl-5 truncate max-w-70">
                               {record.filename}
                             </span>
                           </div>
@@ -355,18 +355,18 @@ export default function HistoryPage() {
                               <>
                                 <div className="flex flex-col">
                                   <span className="text-xs font-medium text-foreground/80">{record.assignedToUsers[0].name}</span>
-                                  <span className="text-[10px] text-muted-foreground italic">Người xử lý</span>
+                                  <span className="text-xs font-medium text-muted-foreground italic">Người xử lý</span>
                                 </div>
                               </>
                             ) : (
-                              <span className="text-xs text-muted-foreground italic">Chưa gán</span>
+                              <span className="text-xs font-medium text-muted-foreground italic">Chưa gán</span>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
                           <StatusIndicator record={record} />
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground text-[11px]">
+                        <TableCell className="hidden md:table-cell text-muted-foreground text-sm font-medium">
                           {formatDate(record.createTime)}
                         </TableCell>
                         <TableCell className="text-right pr-5">
@@ -453,7 +453,7 @@ export default function HistoryPage() {
                                   </Tooltip>
                                 </TooltipProvider>
                                 <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Tùy chọn tải xuống</DropdownMenuLabel>
+                                  <DropdownMenuLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Tùy chọn tải xuống</DropdownMenuLabel>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem asChild disabled={!record.transcribeUrl}>
                                     <a href={record.transcribeUrl || "#"} download className="flex items-center gap-2 cursor-pointer">
@@ -597,7 +597,7 @@ function StatusIndicator({ record }: { record: FileRecord }) {
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <span className="text-[10px] font-medium">{step.label}: {status === "success" ? "Xong" : status === "processing" ? "Đang xử lý" : "Chờ"}</span>
+                <span className="text-xs font-medium">{step.label}: {status === "success" ? "Xong" : status === "processing" ? "Đang xử lý" : "Chờ"}</span>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -644,7 +644,7 @@ function AudioPreviewDialog({ file, isOpen, onClose }: { file: FileRecord | null
               <div className="size-8 rounded-full bg-blue-50 flex items-center justify-center">
                 <PlayIcon className="size-3 text-blue-600 fill-current" />
               </div>
-              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Đang nghe thử</span>
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Đang nghe thử</span>
             </div>
             <Button variant="ghost" size="sm" onClick={onClose} className="text-xs font-bold hover:bg-rose-50 hover:text-rose-600 rounded-full h-8">
               Kết thúc

@@ -83,7 +83,7 @@ export function NavUser() {
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{currentUser.name}</span>
-                <span className="truncate text-xs">{currentUser.email}</span>
+                <span className="truncate text-sm font-medium">{currentUser.email}</span>
               </div>
               <ChevronsUpDownIcon className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -103,7 +103,7 @@ export function NavUser() {
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{currentUser.name}</span>
-                  <span className="truncate text-xs">{currentUser.email}</span>
+                  <span className="truncate text-sm font-medium">{currentUser.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
@@ -112,7 +112,7 @@ export function NavUser() {
               <DropdownMenuItem className="gap-2">
                 <ShieldIcon className="size-4" />
                 <span>{getRoleLabel(currentUser.role)}</span>
-                <span className="ml-auto text-xs text-muted-foreground capitalize">
+                <span className="ml-auto text-sm font-medium text-muted-foreground capitalize">
                   {currentUser.scope}
                 </span>
               </DropdownMenuItem>

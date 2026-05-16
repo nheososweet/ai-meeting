@@ -101,7 +101,7 @@ function UploadPanelView({
             <p className="text-xs font-medium text-foreground">
               Tệp đã chọn: {selectedFileName}
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {selectedFileSizeLabel} • {selectedFileDurationLabel}
             </p>
           </div>

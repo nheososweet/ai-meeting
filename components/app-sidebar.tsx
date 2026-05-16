@@ -14,7 +14,13 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { Clock3Icon, FolderKanbanIcon, LayoutDashboardIcon, MicIcon, ShieldIcon } from "lucide-react";
+import {
+  Clock3Icon,
+  FolderKanbanIcon,
+  LayoutDashboardIcon,
+  MicIcon,
+  ShieldIcon,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { IAM_SIDEBAR_PERMISSIONS } from "@/lib/auth/permissions";
 
@@ -79,8 +85,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const canSeeIam = hasAnyPermission(IAM_SIDEBAR_PERMISSIONS);
   const isIamActive = pathname.startsWith("/iam");
 
-  const visibleMain = appNav.main.filter((item: any) =>
-    !item.requiredPerms || hasAnyPermission(item.requiredPerms)
+  const visibleMain = appNav.main.filter(
+    (item: any) => !item.requiredPerms || hasAnyPermission(item.requiredPerms),
   );
 
   return (
@@ -95,7 +101,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             sizes="48px"
           />
         </div>
-        <h2 className="text-[11px] font-extrabold leading-tight text-primary uppercase text-center tracking-wide">
+        <h2 className="text-sm font-extrabold leading-tight text-primary uppercase text-center tracking-wide">
           Hệ thống biên tập và tổng hợp cuộc họp thông minh
         </h2>
       </SidebarHeader>
@@ -122,7 +128,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       "group flex items-center gap-3 px-3 py-3.5 border-b border-sidebar-border transition-colors",
                       isActive
                         ? "text-primary"
-                        : "text-sidebar-foreground hover:text-primary"
+                        : "text-sidebar-foreground hover:text-primary",
                     )}
                   >
                     <div
@@ -130,12 +136,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
                         isActive
                           ? "bg-primary text-primary-foreground shadow-sm"
-                          : "bg-primary/10 text-primary group-hover:bg-primary/20"
+                          : "bg-primary/10 text-primary group-hover:bg-primary/20",
                       )}
                     >
                       <item.icon className="size-[18px]" />
                     </div>
-                    <span className="text-[13px] font-bold uppercase tracking-wide flex-1">
+                    <span className="text-sm font-bold uppercase tracking-wide flex-1">
                       {item.title}
                     </span>
                     {/* {isActive && (
@@ -158,7 +164,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     "group flex items-center gap-3 px-3 py-3.5 border-b border-sidebar-border transition-colors",
                     isIamActive
                       ? "text-primary"
-                      : "text-sidebar-foreground hover:text-primary"
+                      : "text-sidebar-foreground hover:text-primary",
                   )}
                 >
                   <div
@@ -166,12 +172,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
                       isIamActive
                         ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-primary/10 text-primary group-hover:bg-primary/20"
+                        : "bg-primary/10 text-primary group-hover:bg-primary/20",
                     )}
                   >
                     <appNav.iam.icon className="size-[18px]" />
                   </div>
-                  <span className="text-[13px] font-bold uppercase tracking-wide flex-1">
+                  <span className="text-sm font-bold uppercase tracking-wide flex-1">
                     {appNav.iam.title}
                   </span>
                 </Link>

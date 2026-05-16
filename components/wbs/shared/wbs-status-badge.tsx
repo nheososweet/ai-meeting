@@ -24,7 +24,7 @@ const statusConfig: Record<JobStatus, { label: string; className: string }> = {
 export function WbsStatusBadge({ status, className }: { status: JobStatus; className?: string }) {
   const config = statusConfig[status]
   return (
-    <Badge variant="outline" className={cn("text-[11px] font-semibold whitespace-nowrap", config.className, className)}>
+    <Badge variant="outline" className={cn("text-xs font-semibold whitespace-nowrap", config.className, className)}>
       {config.label}
     </Badge>
   )

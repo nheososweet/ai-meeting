@@ -153,7 +153,7 @@ export function AssignFileDialog({
               disabled={isReadOnly}
             />
             {!isReadOnly && (
-              <p className="text-[11px] text-muted-foreground italic">
+              <p className="text-xs text-muted-foreground italic">
                 * Lưu ý: Việc gán cho Công ty và Phòng ban là độc lập. Hãy check vào từng đối tượng cụ thể bạn muốn cấp quyền.
               </p>
             )}

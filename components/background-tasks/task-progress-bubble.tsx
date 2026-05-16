@@ -30,7 +30,7 @@ function StepIcon({ status, label }: { status: PipelineStepStatus; label: string
       ) : (
         <ClockIcon className="size-3 text-slate-300" />
       )}
-      <span className="text-[9px] text-muted-foreground leading-none">{label}</span>
+      <span className="text-xs text-muted-foreground leading-none">{label}</span>
     </span>
   );
 }
@@ -99,7 +99,7 @@ function TaskItemRow({ task, onRemove }: { task: BackgroundTaskItem; onRemove: (
 
       {/* Status text */}
       <p className={cn(
-        "text-[10px] leading-none",
+        "text-xs leading-none",
         isDone   ? "text-emerald-600" :
         isFailed ? "text-rose-600"    :
                    "text-muted-foreground"
@@ -152,7 +152,7 @@ export function TaskProgressBubble() {
                 : <CheckCircle2Icon className="size-3.5 text-emerald-500" />
               }
               <span className="text-xs font-semibold text-foreground">Tác vụ nền</span>
-              <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs font-bold text-muted-foreground">
                 {tasks.length}
               </span>
             </div>
@@ -192,7 +192,7 @@ export function TaskProgressBubble() {
           }
           <span>Tác vụ nền</span>
           <span className={cn(
-            "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+            "rounded-full px-1.5 py-0.5 text-xs font-bold",
             allDone
               ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
               : "bg-muted text-muted-foreground"

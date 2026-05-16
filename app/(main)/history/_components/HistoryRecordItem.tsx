@@ -55,11 +55,11 @@ export function HistoryRecordItem({
             >
               {record.title || record.filename}
             </h2>
-            <span className="rounded-md border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground">
+            <span className="rounded-md border border-border/60 px-2 py-0.5 text-xs text-muted-foreground">
               ID #{record.id}
             </span>
             <span className={cn(
-              "rounded-md px-2 py-0.5 text-[11px] font-medium border capitalize",
+              "rounded-md px-2 py-0.5 text-xs font-medium border capitalize",
               record.status === "uploaded" && "bg-blue-50 text-blue-600 border-blue-200",
               record.status === "processing" && "bg-amber-50 text-amber-600 border-amber-200",
               record.status === "completed" && "bg-emerald-50 text-emerald-600 border-emerald-200",
@@ -68,7 +68,7 @@ export function HistoryRecordItem({
               {record.status}
             </span>
             {!record.reportUrl ? (
-              <span className="rounded-md border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground">
+              <span className="rounded-md border border-border/60 px-2 py-0.5 text-xs text-muted-foreground">
                 Chưa có biên bản
               </span>
             ) : null}
@@ -82,7 +82,7 @@ export function HistoryRecordItem({
           <a
             href={buildDownloadUrl(record.audioUrl)}
             download={record.filename}
-            className="inline-flex items-center gap-1 rounded-full border border-border/70 px-2 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-muted"
+            className="inline-flex items-center gap-1 rounded-full border border-border/70 px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
           >
             <DownloadIcon className="size-3.5" />
             Tải âm thanh
@@ -91,7 +91,7 @@ export function HistoryRecordItem({
             <a
               href={buildDownloadUrl(record.transcribeUrl)}
               download={resolveTranscriptFilename(record.filename)}
-              className="inline-flex items-center gap-1 rounded-full border border-border/70 px-2 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-muted"
+              className="inline-flex items-center gap-1 rounded-full border border-border/70 px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
             >
               <DownloadIcon className="size-3.5" />
               Tải transcript
@@ -104,7 +104,7 @@ export function HistoryRecordItem({
                 record.filename,
                 record.reportUrl,
               )}
-              className="inline-flex items-center gap-1 rounded-full border border-border/70 px-2 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-muted"
+              className="inline-flex items-center gap-1 rounded-full border border-border/70 px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
             >
               <DownloadIcon className="size-3.5" />
               Tải biên bản

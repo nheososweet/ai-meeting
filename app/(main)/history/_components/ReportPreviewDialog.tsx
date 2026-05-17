@@ -184,7 +184,8 @@ export function ReportPreviewDialog({
           {reportUrl ? (
             <Button type="button" variant="outline" className="gap-1.5" asChild>
               <a href={reportUrl} target="_blank" rel="noopener noreferrer">
-                Mở tab mới
+                {/* Mở tab mới */}
+                Tải xuống
               </a>
             </Button>
           ) : null}

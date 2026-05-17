@@ -6,6 +6,7 @@ import {
   type FileUploadResponse,
   type FilesQueryParams,
   type FileRecordStatus,
+  type FileHistoryResponse,
 } from "@/lib/types/files";
 
 /**
@@ -45,6 +46,7 @@ function normalizeFileRecord(record: UpstreamFileRecord): FileRecord {
     processedAt: record.processed_at,
     size: record.size,
     duration: record.duration,
+    isSelfUpload: record.is_self_upload ?? false,
   };
 }
 
@@ -71,6 +73,14 @@ export const filesService = {
   getFileById: async (id: number): Promise<FileRecord> => {
     const response = await api.get<UpstreamFileRecord>(`/files/${id}`);
     return normalizeFileRecord(response.data);
+  },
+
+  /**
+   * Fetch processing history for a file (uploader + assignees)
+   */
+  getFileHistory: async (fileId: number): Promise<FileHistoryResponse> => {
+    const response = await api.get<FileHistoryResponse>(`/files/${fileId}/history`);
+    return response.data;
   },
 
   /**

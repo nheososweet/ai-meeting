@@ -25,6 +25,7 @@ import {
   FileCheckIcon,
   MailIcon,
   PlayIcon,
+  ActivityIcon,
 } from "lucide-react";
 import {
   Avatar,
@@ -79,6 +80,7 @@ import { buildDownloadUrl } from "@/app/(main)/history/_lib/file-utils";
 import { useHistoryToast } from "@/app/(main)/history/_hooks/useHistoryToast";
 import { PermissionGuard } from "@/components/iam/shared/permission-guard";
 import { AssignFileDialog } from "./_components/assign-file-dialog";
+import { FileHistoryDialog } from "./_components/file-history-dialog";
 import { FileRecord } from "@/lib/types/files";
 
 const STEP_OPTIONS = [
@@ -109,6 +111,7 @@ export default function MeetingRecordsPage() {
   // State
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [previewRecord, setPreviewRecord] = useState<FileRecord | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<FileRecord | null>(null);
 
@@ -118,7 +121,12 @@ export default function MeetingRecordsPage() {
   const [scope, setScope] = useState<string>("all");
   const debouncedSearch = useDebounce(search, 500);
 
-  const { page, setPage } = usePaginationState([debouncedSearch, statusStep, statusValue, scope]);
+  const { page, setPage } = usePaginationState([
+    debouncedSearch,
+    statusStep,
+    statusValue,
+    scope,
+  ]);
 
   // Hooks
   const { data, isLoading, isFetching, error } = useFilesQuery({
@@ -137,14 +145,20 @@ export default function MeetingRecordsPage() {
     <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm">
       <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-4 gap-4">
         <div className="flex-1 min-w-0">
-          <h2 className="text-base font-bold text-foreground">Bản ghi cuộc họp</h2>
+          <h2 className="text-base font-bold text-foreground">
+            Bản ghi cuộc họp
+          </h2>
           <p className="text-sm text-muted-foreground mt-0.5 truncate">
             Quản lý và theo dõi trạng thái các tệp ghi âm cuộc họp.
           </p>
         </div>
 
         {/* {canManage && ( */}
-        <Button onClick={() => setIsUploadOpen(true)} size="sm" className="shrink-0">
+        <Button
+          onClick={() => setIsUploadOpen(true)}
+          size="sm"
+          className="shrink-0"
+        >
           <PlusIcon className="mr-1.5 size-4" /> Tải lên tệp
         </Button>
         {/* )} */}
@@ -176,8 +190,14 @@ export default function MeetingRecordsPage() {
               <SelectValue placeholder="Bước xử lý" />
             </SelectTrigger>
             <SelectContent>
-              {STEP_OPTIONS.map(opt => (
-                <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+              {STEP_OPTIONS.map((opt) => (
+                <SelectItem
+                  key={opt.value}
+                  value={opt.value}
+                  className="text-xs"
+                >
+                  {opt.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -187,8 +207,14 @@ export default function MeetingRecordsPage() {
               <SelectValue placeholder="Trạng thái" />
             </SelectTrigger>
             <SelectContent>
-              {VALUE_OPTIONS.map(opt => (
-                <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+              {VALUE_OPTIONS.map((opt) => (
+                <SelectItem
+                  key={opt.value}
+                  value={opt.value}
+                  className="text-xs"
+                >
+                  {opt.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -200,8 +226,14 @@ export default function MeetingRecordsPage() {
               <SelectValue placeholder="Phạm vi" />
             </SelectTrigger>
             <SelectContent>
-              {SCOPE_OPTIONS.map(opt => (
-                <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+              {SCOPE_OPTIONS.map((opt) => (
+                <SelectItem
+                  key={opt.value}
+                  value={opt.value}
+                  className="text-xs"
+                >
+                  {opt.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -233,19 +265,29 @@ export default function MeetingRecordsPage() {
                   <TableRow className="bg-background sticky top-0 z-10 hover:bg-background shadow-[0_1px_0_0_rgba(0,0,0,0.05)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.05)]">
                     <TableHead className="w-[80px]">STT</TableHead>
                     <TableHead>Bản ghi</TableHead>
-                    <TableHead className="hidden lg:table-cell">Người tải lên</TableHead>
+                    <TableHead className="hidden lg:table-cell">
+                      Người tải lên
+                    </TableHead>
                     <TableHead>Tiến độ</TableHead>
-                    <TableHead className="hidden lg:table-cell">Người được gán</TableHead>
-                    <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
+                    <TableHead className="hidden lg:table-cell">
+                      Người được gán
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      Ngày tạo
+                    </TableHead>
                     <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {records.map((record, index) => {
-                    const isCompleted = record.fileStatus.transcribe === "success";
+                    const isCompleted =
+                      record.fileStatus.transcribe === "success";
 
                     return (
-                      <TableRow key={record.id} className="group transition-colors hover:bg-muted/20">
+                      <TableRow
+                        key={record.id}
+                        className="group transition-colors hover:bg-muted/20"
+                      >
                         <TableCell className="text-xs text-muted-foreground">
                           {index + 1}
                         </TableCell>
@@ -278,14 +320,30 @@ export default function MeetingRecordsPage() {
                                   record.assignedToCompanies.length;
 
                                 if (totalAssignees === 0) {
-                                  return <span className="text-xs font-medium italic text-muted-foreground">Chưa phân bổ</span>;
+                                  return (
+                                    <span className="text-xs font-medium italic text-muted-foreground">
+                                      Chưa phân bổ
+                                    </span>
+                                  );
                                 }
 
                                 const displayLimit = 3;
                                 const allAssignees = [
-                                  ...record.assignedToUsers.map(u => ({ id: u.id, name: u.name, type: 'user' })),
-                                  ...record.assignedToGroups.map(g => ({ id: g.id, name: g.name, type: 'group' })),
-                                  ...record.assignedToCompanies.map(c => ({ id: c.id, name: c.name, type: 'company' }))
+                                  ...record.assignedToUsers.map((u) => ({
+                                    id: u.id,
+                                    name: u.name,
+                                    type: "user",
+                                  })),
+                                  ...record.assignedToGroups.map((g) => ({
+                                    id: g.id,
+                                    name: g.name,
+                                    type: "group",
+                                  })),
+                                  ...record.assignedToCompanies.map((c) => ({
+                                    id: c.id,
+                                    name: c.name,
+                                    type: "company",
+                                  })),
                                 ];
 
                                 return (
@@ -293,59 +351,100 @@ export default function MeetingRecordsPage() {
                                     <TooltipTrigger asChild>
                                       <div className="flex items-center cursor-help">
                                         <AvatarGroup>
-                                          {allAssignees.slice(0, displayLimit).map((assignee) => (
-                                            <Avatar key={`${assignee.type}-${assignee.id}`} className="size-6 border-2 border-background">
-                                              <AvatarFallback className={cn(
-                                                "text-xs font-bold uppercase",
-                                                assignee.type === 'company' ? "bg-blue-100 text-blue-700" :
-                                                  assignee.type === 'group' ? "bg-amber-100 text-amber-700" :
-                                                    "bg-primary/10 text-primary"
-                                              )}>
-                                                {assignee.name.charAt(0)}
-                                              </AvatarFallback>
-                                            </Avatar>
-                                          ))}
+                                          {allAssignees
+                                            .slice(0, displayLimit)
+                                            .map((assignee) => (
+                                              <Avatar
+                                                key={`${assignee.type}-${assignee.id}`}
+                                                className="size-6 border-2 border-background"
+                                              >
+                                                <AvatarFallback
+                                                  className={cn(
+                                                    "text-xs font-bold uppercase",
+                                                    assignee.type === "company"
+                                                      ? "bg-blue-100 text-blue-700"
+                                                      : assignee.type ===
+                                                          "group"
+                                                        ? "bg-amber-100 text-amber-700"
+                                                        : "bg-primary/10 text-primary",
+                                                  )}
+                                                >
+                                                  {assignee.name.charAt(0)}
+                                                </AvatarFallback>
+                                              </Avatar>
+                                            ))}
                                           {totalAssignees > displayLimit && (
-                                            <AvatarGroupCount>+{totalAssignees - displayLimit}</AvatarGroupCount>
+                                            <AvatarGroupCount>
+                                              +{totalAssignees - displayLimit}
+                                            </AvatarGroupCount>
                                           )}
                                         </AvatarGroup>
                                       </div>
                                     </TooltipTrigger>
-                                    <TooltipContent side="top" className="max-w-[300px] p-3">
+                                    <TooltipContent
+                                      side="top"
+                                      className="max-w-[300px] p-3"
+                                    >
                                       <div className="flex flex-col gap-2">
-                                        <p className="text-xs font-semibold border-b pb-1 mb-1">Danh sách phân bổ</p>
+                                        <p className="text-xs font-semibold border-b pb-1 mb-1">
+                                          Danh sách phân bổ
+                                        </p>
                                         <div className="flex flex-col gap-1.5">
-                                          {record.assignedToCompanies.length > 0 && (
+                                          {record.assignedToCompanies.length >
+                                            0 && (
                                             <div className="flex flex-col gap-1">
-                                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Công ty</p>
-                                              {record.assignedToCompanies.map(c => (
-                                                <div key={c.id} className="flex items-center gap-1.5 text-xs">
-                                                  <Building2Icon className="size-3 text-blue-500" />
-                                                  <span>{c.name}</span>
-                                                </div>
-                                              ))}
+                                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                                                Công ty
+                                              </p>
+                                              {record.assignedToCompanies.map(
+                                                (c) => (
+                                                  <div
+                                                    key={c.id}
+                                                    className="flex items-center gap-1.5 text-xs"
+                                                  >
+                                                    <Building2Icon className="size-3 text-blue-500" />
+                                                    <span>{c.name}</span>
+                                                  </div>
+                                                ),
+                                              )}
                                             </div>
                                           )}
-                                          {record.assignedToGroups.length > 0 && (
+                                          {record.assignedToGroups.length >
+                                            0 && (
                                             <div className="flex flex-col gap-1">
-                                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Phòng ban/Nhóm</p>
-                                              {record.assignedToGroups.map(g => (
-                                                <div key={g.id} className="flex items-center gap-1.5 text-xs">
-                                                  <UsersIcon className="size-3 text-amber-500" />
-                                                  <span>{g.name}</span>
-                                                </div>
-                                              ))}
+                                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                                                Phòng ban/Nhóm
+                                              </p>
+                                              {record.assignedToGroups.map(
+                                                (g) => (
+                                                  <div
+                                                    key={g.id}
+                                                    className="flex items-center gap-1.5 text-xs"
+                                                  >
+                                                    <UsersIcon className="size-3 text-amber-500" />
+                                                    <span>{g.name}</span>
+                                                  </div>
+                                                ),
+                                              )}
                                             </div>
                                           )}
-                                          {record.assignedToUsers.length > 0 && (
+                                          {record.assignedToUsers.length >
+                                            0 && (
                                             <div className="flex flex-col gap-1">
-                                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Cá nhân</p>
-                                              {record.assignedToUsers.map(u => (
-                                                <div key={u.id} className="flex items-center gap-1.5 text-xs">
-                                                  <UserIcon className="size-3 text-primary" />
-                                                  <span>{u.name}</span>
-                                                </div>
-                                              ))}
+                                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                                                Cá nhân
+                                              </p>
+                                              {record.assignedToUsers.map(
+                                                (u) => (
+                                                  <div
+                                                    key={u.id}
+                                                    className="flex items-center gap-1.5 text-xs"
+                                                  >
+                                                    <UserIcon className="size-3 text-primary" />
+                                                    <span>{u.name}</span>
+                                                  </div>
+                                                ),
+                                              )}
                                             </div>
                                           )}
                                         </div>
@@ -396,21 +495,45 @@ export default function MeetingRecordsPage() {
                                   <TooltipContent>Xem chi tiết</TooltipContent>
                                 </Tooltip> */}
 
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                    asChild
-                                  >
-                                    <a href={buildDownloadUrl(record.audioUrl)} download>
-                                      <DownloadIcon className="size-3.5" />
-                                    </a>
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Tải audio gốc</TooltipContent>
-                              </Tooltip>
+                              {record.isSelfUpload && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                      asChild
+                                    >
+                                      <a
+                                        href={buildDownloadUrl(record.audioUrl)}
+                                        download
+                                      >
+                                        <DownloadIcon className="size-3.5" />
+                                      </a>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Tải audio gốc</TooltipContent>
+                                </Tooltip>
+                              )}
+
+                              {record.isSelfUpload && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-8 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
+                                      onClick={() => {
+                                        setSelectedRecord(record);
+                                        setHistoryDialogOpen(true);
+                                      }}
+                                    >
+                                      <ActivityIcon className="size-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Xem tiến độ</TooltipContent>
+                                </Tooltip>
+                              )}
 
                               {canManage && (
                                 <Tooltip>
@@ -419,12 +542,13 @@ export default function MeetingRecordsPage() {
                                       <Button
                                         variant="ghost"
                                         size="icon"
-                                        disabled={isCompleted}
+                                        // disabled={isCompleted}
                                         className={cn(
                                           "size-8",
-                                          isCompleted
-                                            ? "text-muted-foreground/40 cursor-not-allowed"
-                                            : "text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
+                                          // isCompleted
+                                          //   ? "text-muted-foreground/40 cursor-not-allowed"
+                                          //   : "text-muted-foreground hover:text-blue-600 hover:bg-blue-50",
+                                          "text-muted-foreground hover:text-blue-600 hover:bg-blue-50",
                                         )}
                                         onClick={() => {
                                           setSelectedRecord(record);
@@ -436,7 +560,8 @@ export default function MeetingRecordsPage() {
                                     </span>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    {isCompleted ? "Tệp đã xử lý xong, không thể giao việc" : "Giao hồ sơ"}
+                                    {/* {isCompleted ? "Tệp đã xử lý xong, không thể giao việc" : "Giao hồ sơ"} */}
+                                    Giao hồ sơ
                                   </TooltipContent>
                                 </Tooltip>
                               )}
@@ -472,12 +597,34 @@ export default function MeetingRecordsPage() {
         onOpenChange={setAssignDialogOpen}
         fileId={selectedRecord?.id || null}
         filename={selectedRecord?.filename || ""}
-        initialData={selectedRecord ? {
-          userId: selectedRecord.assignedToUsers[0]?.id ? String(selectedRecord.assignedToUsers[0].id) : undefined,
-          groups: selectedRecord.assignedToGroups.map(g => ({ id: String(g.id), name: g.name })),
-          companies: selectedRecord.assignedToCompanies.map(c => ({ id: String(c.id), name: c.name })),
-        } : undefined}
-        isReadOnly={selectedRecord ? recordStatusIsAllSuccess(selectedRecord) : false}
+        initialData={
+          selectedRecord
+            ? {
+                users: selectedRecord.assignedToUsers.map((u) => ({
+                  id: String(u.id),
+                  name: u.name,
+                })),
+                groups: selectedRecord.assignedToGroups.map((g) => ({
+                  id: String(g.id),
+                  name: g.name,
+                })),
+                companies: selectedRecord.assignedToCompanies.map((c) => ({
+                  id: String(c.id),
+                  name: c.name,
+                })),
+              }
+            : undefined
+        }
+        isReadOnly={
+          selectedRecord ? recordStatusIsAllSuccess(selectedRecord) : false
+        }
+      />
+
+      <FileHistoryDialog
+        open={historyDialogOpen}
+        onOpenChange={setHistoryDialogOpen}
+        fileId={selectedRecord?.id || null}
+        filename={selectedRecord?.filename}
       />
 
       <AudioPreviewDialog
@@ -485,7 +632,6 @@ export default function MeetingRecordsPage() {
         isOpen={!!previewRecord}
         onClose={() => setPreviewRecord(null)}
       />
-
     </div>
   );
 }
@@ -502,7 +648,8 @@ function StatusIndicator({ record }: { record: FileRecord }) {
   return (
     <div className="flex items-center gap-1.5">
       {steps.map((step) => {
-        const status = record.fileStatus[step.key as keyof typeof record.fileStatus];
+        const status =
+          record.fileStatus[step.key as keyof typeof record.fileStatus];
         return (
           <TooltipProvider key={step.key}>
             <Tooltip>
@@ -518,7 +665,14 @@ function StatusIndicator({ record }: { record: FileRecord }) {
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <span className="text-xs font-medium">{step.label}: {status === "success" ? "Xong" : status === "processing" ? "Đang xử lý" : "Chờ"}</span>
+                <span className="text-xs font-medium">
+                  {step.label}:{" "}
+                  {status === "success"
+                    ? "Xong"
+                    : status === "processing"
+                      ? "Đang xử lý"
+                      : "Chờ"}
+                </span>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -531,7 +685,7 @@ function StatusIndicator({ record }: { record: FileRecord }) {
 function AudioPreviewDialog({
   file,
   isOpen,
-  onClose
+  onClose,
 }: {
   file: FileRecord | null;
   isOpen: boolean;
@@ -543,20 +697,34 @@ function AudioPreviewDialog({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle className="text-base line-clamp-2 break-all pr-6" title={file.title || file.filename}>
+          <DialogTitle
+            className="text-base line-clamp-2 break-all pr-6"
+            title={file.title || file.filename}
+          >
             {file.title || file.filename}
           </DialogTitle>
-          <DialogDescription className="text-xs line-clamp-2 break-all" title={file.filename}>
+          <DialogDescription
+            className="text-xs line-clamp-2 break-all"
+            title={file.filename}
+          >
             {file.filename}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
-          <audio controls className="w-full h-10 accent-primary" src={file.audioUrl} autoPlay>
+          <audio
+            controls
+            className="w-full h-10 accent-primary"
+            src={file.audioUrl}
+            autoPlay
+            {...(!file.isSelfUpload && { controlsList: "nodownload" })}
+          >
             Trình duyệt của bạn không hỗ trợ audio player.
           </audio>
         </div>
         <div className="flex justify-end">
-          <Button variant="outline" size="sm" onClick={onClose}>Đóng</Button>
+          <Button variant="outline" size="sm" onClick={onClose}>
+            Đóng
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -16,7 +16,8 @@ import {
   FilterIcon,
   DownloadIcon,
   AudioLinesIcon as AudioIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  ActivityIcon,
 } from "lucide-react";
 
 import { ReportPreviewDialog } from "@/app/(main)/history/_components/ReportPreviewDialog";
@@ -93,6 +94,7 @@ import { cn, formatDate } from "@/lib/utils";
 import { PermissionGuard } from "@/components/iam/shared/permission-guard";
 import { EmptyState } from "@/components/iam/shared/empty-state";
 import { useDebounce } from "@/hooks/use-debounce";
+import { FileHistoryDialog } from "@/app/(main)/meeting-records/_components/file-history-dialog";
 
 const STEP_OPTIONS = [
   { value: "transcribe", label: "Chuyển văn bản" },
@@ -112,6 +114,7 @@ export default function HistoryPage() {
   const canSendMail = hasPermission("send_mail");
 
   const [previewAudioRecord, setPreviewAudioRecord] = useState<FileRecord | null>(null);
+  const [historyFileRecord, setHistoryFileRecord] = useState<FileRecord | null>(null);
   const [previewReportRecordId, setPreviewReportRecordId] = useState<number | null>(null);
   const [isLabelingDialogOpen, setIsLabelingDialogOpen] = useState(false);
   const [isTranscriptEditorOpen, setIsTranscriptEditorOpen] = useState(false);
@@ -435,40 +438,58 @@ export default function HistoryPage() {
                                 </Tooltip>
                               )}
 
-                              <DropdownMenu>
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                        >
-                                          <DownloadIcon className="size-3.5" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Tải xuống</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                                <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Tùy chọn tải xuống</DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem asChild disabled={!record.transcribeUrl}>
-                                    <a href={record.transcribeUrl || "#"} download className="flex items-center gap-2 cursor-pointer">
-                                      <FileTextIcon className="size-3.5 text-blue-500" />
-                                      <span className="text-xs">Tải bản gỡ băng (.txt)</span>
-                                    </a>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem asChild disabled={!record.audioUrl}>
-                                    <a href={record.audioUrl || "#"} download className="flex items-center gap-2 cursor-pointer">
-                                      <AudioIcon className="size-3.5 text-emerald-500" />
-                                      <span className="text-xs">Tải tệp âm thanh</span>
-                                    </a>
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                              {record.isSelfUpload && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-8 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
+                                      onClick={() => setHistoryFileRecord(record)}
+                                    >
+                                      <ActivityIcon className="size-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Xem chi tiết lịch sử</TooltipContent>
+                                </Tooltip>
+                              )}
+
+                              {record.isSelfUpload && (
+                                <DropdownMenu>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                          >
+                                            <DownloadIcon className="size-3.5" />
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Tải xuống</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Tùy chọn tải xuống</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild disabled={!record.transcribeUrl}>
+                                      <a href={record.transcribeUrl || "#"} download className="flex items-center gap-2 cursor-pointer">
+                                        <FileTextIcon className="size-3.5 text-blue-500" />
+                                        <span className="text-xs">Tải bản gỡ băng (.txt)</span>
+                                      </a>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild disabled={!record.audioUrl}>
+                                      <a href={record.audioUrl || "#"} download className="flex items-center gap-2 cursor-pointer">
+                                        <AudioIcon className="size-3.5 text-emerald-500" />
+                                        <span className="text-xs">Tải tệp âm thanh</span>
+                                      </a>
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
                             </TooltipProvider>
                           </div>
                         </TableCell>
@@ -566,6 +587,13 @@ export default function HistoryPage() {
         onClose={() => setPreviewAudioRecord(null)}
       />
 
+      <FileHistoryDialog
+        open={historyFileRecord !== null}
+        onOpenChange={(open) => !open && setHistoryFileRecord(null)}
+        fileId={historyFileRecord?.id ?? null}
+        filename={historyFileRecord?.filename}
+      />
+
     </PermissionGuard>
   );
 }
@@ -633,7 +661,13 @@ function AudioPreviewDialog({ file, isOpen, onClose }: { file: FileRecord | null
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-blue-500/20 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
             <div className="relative bg-card border border-border/50 rounded-xl p-4 shadow-sm">
-              <audio controls className="w-full h-12 accent-primary custom-audio-player" src={file.audioUrl} autoPlay>
+              <audio
+                controls
+                className="w-full h-12 accent-primary custom-audio-player"
+                src={file.audioUrl}
+                autoPlay
+                {...(!file.isSelfUpload && { controlsList: "nodownload" })}
+              >
                 Trình duyệt của bạn không hỗ trợ audio player.
               </audio>
             </div>

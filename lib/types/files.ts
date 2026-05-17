@@ -30,6 +30,7 @@ export interface UpstreamFileRecord {
   processed_at: string | null;
   size?: number;
   duration?: number;
+  is_self_upload: boolean;
 }
 
 /** Frontend normalized types (camelCase) */
@@ -63,6 +64,26 @@ export interface FileRecord {
   processedAt: string | null;
   size?: number;
   duration?: number;
+  isSelfUpload: boolean;
+}
+
+export interface FileHistoryItem {
+  user_id: number;
+  user_name: string;
+  user_type: "uploader" | "assignee";
+  transcribe_url: string | null;
+  report: string | null;
+  processed_at: string | null;
+  step_status: {
+    transcribe: string;
+    summary: string;
+    report: string;
+    send_email: string;
+  };
+}
+
+export interface FileHistoryResponse {
+  data: FileHistoryItem[];
 }
 
 export interface FileUploadResponse {
@@ -80,4 +101,5 @@ export interface FilesQueryParams {
   search?: string | null;
   assigned_filter?: boolean | null;
   self_upload?: boolean | null;
+  fail_files?: boolean | null;
 }

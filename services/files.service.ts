@@ -7,6 +7,10 @@ import {
   type FilesQueryParams,
   type FileRecordStatus,
   type FileHistoryResponse,
+  type UpstreamMyHistoryRecord,
+  type MyHistoryRecord,
+  type MyHistoryQueryParams,
+  type MyUploadsQueryParams,
 } from "@/lib/types/files";
 
 /**
@@ -50,6 +54,26 @@ function normalizeFileRecord(record: UpstreamFileRecord): FileRecord {
   };
 }
 
+function normalizeMyHistoryRecord(r: UpstreamMyHistoryRecord): MyHistoryRecord {
+  return {
+    historyId: r.history_id ?? r.file_id,
+    fileId: r.file_id,
+    filename: r.filename,
+    title: r.title,
+    createTime: r.create_time,
+    userType: r.user_type ?? "assignee",
+    transcribeUrl: r.transcribe_url,
+    report: r.report,
+    processedAt: r.processed_at,
+    stepStatus: {
+      report: r.step_status?.report ?? "waiting",
+      summary: r.step_status?.summary ?? "waiting",
+      sendEmail: r.step_status?.send_email ?? "waiting",
+      transcribe: r.step_status?.transcribe ?? "waiting",
+    },
+  };
+}
+
 export const filesService = {
   /**
    * Fetch list of files with optional filters and pagination
@@ -81,6 +105,28 @@ export const filesService = {
   getFileHistory: async (fileId: number): Promise<FileHistoryResponse> => {
     const response = await api.get<FileHistoryResponse>(`/files/${fileId}/history`);
     return response.data;
+  },
+
+  /**
+   * Fetch processing history for the current user (assigned files)
+   */
+  getMyHistory: async (params?: MyHistoryQueryParams): Promise<PaginatedResponse<MyHistoryRecord>> => {
+    const response = await api.get<PaginatedResponse<UpstreamMyHistoryRecord>>("/files/my-history", { params });
+    return {
+      data: response.data.data.map(normalizeMyHistoryRecord),
+      meta: response.data.meta,
+    };
+  },
+
+  /**
+   * Fetch files uploaded by the current user
+   */
+  getMyUploads: async (params?: MyUploadsQueryParams): Promise<PaginatedResponse<FileRecord>> => {
+    const response = await api.get<PaginatedResponse<UpstreamFileRecord>>("/files/my-uploads", { params });
+    return {
+      data: response.data.data.map(normalizeFileRecord),
+      meta: response.data.meta,
+    };
   },
 
   /**

@@ -24,18 +24,21 @@ export function useUsers(params?: {
 /**
  * Hook để lấy danh sách người dùng có phân trang (vô hạn)
  */
-export function useInfiniteUsers(params?: { 
-  search?: string; 
+export function useInfiniteUsers(params?: {
+  search?: string;
   page_size?: number;
   search_companyid?: number;
   search_groupid?: number;
   is_active?: boolean;
+  enabled?: boolean;
 }) {
+  const { enabled = true, ...queryParams } = params ?? {}
   return useInfiniteQuery({
-    queryKey: ["iam", "users", "infinite", params],
-    queryFn: ({ pageParam = 1 }) => 
-      iamService.getUsers({ ...params, page: pageParam as number }),
+    queryKey: ["iam", "users", "infinite", queryParams],
+    queryFn: ({ pageParam = 1 }) =>
+      iamService.getUsers({ ...queryParams, page: pageParam as number }),
     initialPageParam: 1,
+    enabled,
     getNextPageParam: (lastPage) => {
       const { page, total_pages } = lastPage.meta
       return page < total_pages ? page + 1 : undefined

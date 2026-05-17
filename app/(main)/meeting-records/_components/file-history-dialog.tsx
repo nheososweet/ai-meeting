@@ -23,6 +23,10 @@ import {
   Loader2Icon,
   UserIcon,
   UploadCloudIcon,
+  FileCheckIcon,
+  FileTextIcon,
+  MailIcon,
+  DownloadIcon,
 } from "lucide-react"
 import { useFileHistory } from "@/hooks/services/use-file-history"
 import { type FileHistoryItem } from "@/lib/types/files"
@@ -33,6 +37,10 @@ interface FileHistoryDialogProps {
   onOpenChange: (open: boolean) => void
   fileId: number | null
   filename?: string
+  canSendMail?: boolean
+  onPreviewReport?: (url: string, filename: string) => void
+  onPreviewTranscript?: (transcribeUrl: string, userId: number) => void
+  onSendEmail?: () => void
 }
 
 const HISTORY_STEPS = [
@@ -67,8 +75,28 @@ function StepStatusIcon({ status, label }: { status: string; label: string }) {
   )
 }
 
-function UserHistoryCard({ item }: { item: FileHistoryItem }) {
+interface UserHistoryCardProps {
+  item: FileHistoryItem
+  canSendMail?: boolean
+  onPreviewReport?: (url: string, filename: string) => void
+  onPreviewTranscript?: (transcribeUrl: string, userId: number) => void
+  onSendEmail?: () => void
+}
+
+function UserHistoryCard({
+  item,
+  canSendMail,
+  onPreviewReport,
+  onPreviewTranscript,
+  onSendEmail,
+}: UserHistoryCardProps) {
   const isUploader = item.user_type === "uploader"
+
+  const hasReport = !!item.report && !!onPreviewReport
+  const hasTranscript = !!item.transcribe_url && !!onPreviewTranscript
+  const hasEmail = !!canSendMail && !!onSendEmail
+  const hasDownload = !!item.transcribe_url
+  const hasAnyAction = hasReport || hasTranscript || hasEmail || hasDownload
 
   return (
     <div className="rounded-lg border border-border/60 bg-card p-4 space-y-3">
@@ -101,6 +129,78 @@ function UserHistoryCard({ item }: { item: FileHistoryItem }) {
           Hoàn thành lúc: <span className="font-medium text-foreground">{formatDate(item.processed_at)}</span>
         </p>
       )}
+
+      {hasAnyAction && (
+        <div className="flex items-center gap-1 pt-1 border-t border-border/40">
+          <TooltipProvider>
+            {hasReport && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 text-emerald-600 hover:bg-emerald-50"
+                    onClick={() => onPreviewReport!(item.report!, item.report!)}
+                  >
+                    <FileCheckIcon className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Xem Biên bản</TooltipContent>
+              </Tooltip>
+            )}
+
+            {hasTranscript && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                    onClick={() => onPreviewTranscript!(item.transcribe_url!, item.user_id)}
+                  >
+                    <FileTextIcon className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Xem bản gỡ băng</TooltipContent>
+              </Tooltip>
+            )}
+
+            {hasEmail && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
+                    onClick={() => onSendEmail!()}
+                  >
+                    <MailIcon className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Gửi Email</TooltipContent>
+              </Tooltip>
+            )}
+
+            {item.transcribe_url && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                    asChild
+                  >
+                    <a href={item.transcribe_url} download>
+                      <DownloadIcon className="size-3.5" />
+                    </a>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Tải bản gỡ băng</TooltipContent>
+              </Tooltip>
+            )}
+          </TooltipProvider>
+        </div>
+      )}
     </div>
   )
 }
@@ -110,6 +210,10 @@ export function FileHistoryDialog({
   onOpenChange,
   fileId,
   filename,
+  canSendMail,
+  onPreviewReport,
+  onPreviewTranscript,
+  onSendEmail,
 }: FileHistoryDialogProps) {
   const { data, isLoading } = useFileHistory(open ? fileId : null)
 
@@ -141,7 +245,14 @@ export function FileHistoryDialog({
           ) : (
             <div className="space-y-3">
               {data.data.map((item) => (
-                <UserHistoryCard key={item.user_id} item={item} />
+                <UserHistoryCard
+                  key={item.user_id}
+                  item={item}
+                  canSendMail={canSendMail}
+                  onPreviewReport={onPreviewReport}
+                  onPreviewTranscript={onPreviewTranscript}
+                  onSendEmail={onSendEmail}
+                />
               ))}
             </div>
           )}

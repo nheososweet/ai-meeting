@@ -27,12 +27,7 @@ import {
   PlayIcon,
   ActivityIcon,
 } from "lucide-react";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarGroup,
-  AvatarGroupCount,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Tooltip,
   TooltipContent,
@@ -350,23 +345,29 @@ export default function MeetingRecordsPage() {
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <div className="flex items-center cursor-help">
-                                        <AvatarGroup>
+                                        <div className="flex -space-x-2">
                                           {allAssignees
                                             .slice(0, displayLimit)
                                             .map((assignee) => (
                                               <Avatar
                                                 key={`${assignee.type}-${assignee.id}`}
-                                                className="size-6 border-2 border-background"
+                                                className={cn(
+                                                  "size-7 ring-2 ring-background",
+                                                  assignee.type === "company"
+                                                    ? "bg-blue-100"
+                                                    : assignee.type === "group"
+                                                      ? "bg-amber-100"
+                                                      : "bg-primary/10",
+                                                )}
                                               >
                                                 <AvatarFallback
                                                   className={cn(
-                                                    "text-xs font-bold uppercase",
+                                                    "text-[10px] font-bold uppercase",
                                                     assignee.type === "company"
-                                                      ? "bg-blue-100 text-blue-700"
-                                                      : assignee.type ===
-                                                          "group"
-                                                        ? "bg-amber-100 text-amber-700"
-                                                        : "bg-primary/10 text-primary",
+                                                      ? "text-blue-700"
+                                                      : assignee.type === "group"
+                                                        ? "text-amber-700"
+                                                        : "text-primary",
                                                   )}
                                                 >
                                                   {assignee.name.charAt(0)}
@@ -374,11 +375,13 @@ export default function MeetingRecordsPage() {
                                               </Avatar>
                                             ))}
                                           {totalAssignees > displayLimit && (
-                                            <AvatarGroupCount>
-                                              +{totalAssignees - displayLimit}
-                                            </AvatarGroupCount>
+                                            <Avatar className="size-7 ring-2 ring-background">
+                                              <AvatarFallback className="text-[10px] font-medium text-muted-foreground">
+                                                +{totalAssignees - displayLimit}
+                                              </AvatarFallback>
+                                            </Avatar>
                                           )}
-                                        </AvatarGroup>
+                                        </div>
                                       </div>
                                     </TooltipTrigger>
                                     <TooltipContent

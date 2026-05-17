@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronRightIcon, ChevronDownIcon, UsersIcon, ShieldIcon, PlusIcon, PencilIcon, MoreHorizontalIcon } from "lucide-react"
+import { ChevronRightIcon, ChevronDownIcon, UsersIcon, ShieldIcon, PlusIcon, PencilIcon, Trash2Icon, MoreHorizontalIcon } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,10 +69,11 @@ interface TreeItemProps {
   onAssignPerms: (group: Group) => void
   onAddChild: (group: Group) => void
   onEdit: (group: Group) => void
+  onDelete: (group: Group) => void
   canManage: boolean
 }
 
-function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeItemProps) {
+function TreeItem({ node, onAssignPerms, onAddChild, onEdit, onDelete, canManage }: TreeItemProps) {
   const { hasPermission } = useAuth()
   const [isExpanded, setIsExpanded] = React.useState(true)
   const hasChildren = node.children.length > 0
@@ -156,6 +157,14 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
               >
                 <PencilIcon className="size-3" />
               </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                onClick={() => onDelete(node)}
+              >
+                <Trash2Icon className="size-3" />
+              </Button>
             </>
           )}
         </div>
@@ -185,6 +194,10 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
                     <PencilIcon className="mr-2 size-3.5" />
                     <span>Sửa</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onDelete(node)} className="text-xs text-destructive focus:bg-destructive/10 focus:text-destructive">
+                    <Trash2Icon className="mr-2 size-3.5" />
+                    <span>Xóa</span>
+                  </DropdownMenuItem>
                 </>
               )}
             </DropdownMenuContent>
@@ -202,6 +215,7 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
               onAssignPerms={onAssignPerms}
               onAddChild={onAddChild}
               onEdit={onEdit}
+              onDelete={onDelete}
               canManage={canManage}
             />
           ))}
@@ -220,6 +234,7 @@ export interface GroupTreeViewProps {
   onAssignPerms: (group: Group) => void
   onAddChild: (group: Group) => void
   onEdit: (group: Group) => void
+  onDelete: (group: Group) => void
   canManage: boolean
   isLoading?: boolean
 }
@@ -229,6 +244,7 @@ export function GroupTreeView({
   onAssignPerms,
   onAddChild,
   onEdit,
+  onDelete,
   canManage,
   isLoading
 }: GroupTreeViewProps) {
@@ -262,6 +278,7 @@ export function GroupTreeView({
           onAssignPerms={onAssignPerms}
           onAddChild={onAddChild}
           onEdit={onEdit}
+          onDelete={onDelete}
           canManage={canManage}
         />
       ))}

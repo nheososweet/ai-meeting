@@ -12,12 +12,8 @@ import {
   SearchIcon,
   ClockIcon,
   CheckCircle2Icon,
-  UserIcon,
-  FilterIcon,
-  DownloadIcon,
-  AudioLinesIcon as AudioIcon,
-  ChevronDownIcon,
   ActivityIcon,
+  DownloadIcon,
 } from "lucide-react";
 
 import { ReportPreviewDialog } from "@/app/(main)/history/_components/ReportPreviewDialog";
@@ -35,15 +31,6 @@ import { useHistoryToast } from "@/app/(main)/history/_hooks/useHistoryToast";
 import { useHistoryTranscriptPreview } from "@/app/(main)/history/_hooks/useHistoryTranscriptPreview";
 import { useFilesQuery } from "@/hooks/services/use-files";
 import { FileRecord } from "@/lib/types/files";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { useAuth } from "@/lib/auth/auth-context";
 import {
   Table,
@@ -60,11 +47,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -77,20 +59,8 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { PermissionGuard } from "@/components/iam/shared/permission-guard";
 import { EmptyState } from "@/components/iam/shared/empty-state";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -116,6 +86,7 @@ export default function HistoryPage() {
   const [previewAudioRecord, setPreviewAudioRecord] = useState<FileRecord | null>(null);
   const [historyFileRecord, setHistoryFileRecord] = useState<FileRecord | null>(null);
   const [previewReportRecordId, setPreviewReportRecordId] = useState<number | null>(null);
+  const [historyPreviewReport, setHistoryPreviewReport] = useState<{ url: string; filename: string } | null>(null);
   const [isLabelingDialogOpen, setIsLabelingDialogOpen] = useState(false);
   const [isTranscriptEditorOpen, setIsTranscriptEditorOpen] = useState(false);
   const [isSavingTranscript, setIsSavingTranscript] = useState(false);
@@ -376,7 +347,7 @@ export default function HistoryPage() {
                           <div className="flex items-center justify-end gap-1">
                             <TooltipProvider>
 
-                              {record.report && (
+                              {record.report && !record.isSelfUpload && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Button
@@ -394,19 +365,21 @@ export default function HistoryPage() {
                                 </Tooltip>
                               )}
 
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                    onClick={() => handlePreviewTranscript(record as any)}
-                                  >
-                                    <FileTextIcon className="size-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Xem bản gỡ băng</TooltipContent>
-                              </Tooltip>
+                              {!record.isSelfUpload && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                      onClick={() => handlePreviewTranscript(record as any)}
+                                    >
+                                      <FileTextIcon className="size-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Xem bản gỡ băng</TooltipContent>
+                                </Tooltip>
+                              )}
 
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -422,7 +395,7 @@ export default function HistoryPage() {
                                 <TooltipContent>Nghe lại</TooltipContent>
                               </Tooltip>
 
-                              {canSendMail && (
+                              {canSendMail && !record.isSelfUpload && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Button
@@ -435,6 +408,24 @@ export default function HistoryPage() {
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>Gửi Email</TooltipContent>
+                                </Tooltip>
+                              )}
+
+                              {record.audioUrl && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                      asChild
+                                    >
+                                      <a href={record.audioUrl} download>
+                                        <DownloadIcon className="size-3.5" />
+                                      </a>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Tải tệp âm thanh</TooltipContent>
                                 </Tooltip>
                               )}
 
@@ -452,43 +443,6 @@ export default function HistoryPage() {
                                   </TooltipTrigger>
                                   <TooltipContent>Xem chi tiết lịch sử</TooltipContent>
                                 </Tooltip>
-                              )}
-
-                              {record.isSelfUpload && (
-                                <DropdownMenu>
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                          >
-                                            <DownloadIcon className="size-3.5" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                      </TooltipTrigger>
-                                      <TooltipContent>Tải xuống</TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                  <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Tùy chọn tải xuống</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem asChild disabled={!record.transcribeUrl}>
-                                      <a href={record.transcribeUrl || "#"} download className="flex items-center gap-2 cursor-pointer">
-                                        <FileTextIcon className="size-3.5 text-blue-500" />
-                                        <span className="text-xs">Tải bản gỡ băng (.txt)</span>
-                                      </a>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild disabled={!record.audioUrl}>
-                                      <a href={record.audioUrl || "#"} download className="flex items-center gap-2 cursor-pointer">
-                                        <AudioIcon className="size-3.5 text-emerald-500" />
-                                        <span className="text-xs">Tải tệp âm thanh</span>
-                                      </a>
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
                               )}
                             </TooltipProvider>
                           </div>
@@ -514,7 +468,7 @@ export default function HistoryPage() {
       <TranscriptPreviewDialog
         open={previewTranscriptRecordId !== null}
         transcriptRecordId={previewTranscriptRecordId}
-        transcriptRecordFilename={activeTranscriptRecord?.filename}
+        transcriptRecordFilename={activeTranscriptRecord?.filename ?? historyFileRecord?.filename}
         transcriptContent={activeTranscriptContent}
         isLoading={
           previewTranscriptRecordId !== null &&
@@ -528,7 +482,7 @@ export default function HistoryPage() {
         onCopyTranscript={handleCopyTranscriptPreview}
         onOpenLabeling={() => setIsLabelingDialogOpen(true)}
         onOpenEdit={() => setIsTranscriptEditorOpen(true)}
-        audioUrl={activeTranscriptRecord?.audioUrl}
+        audioUrl={activeTranscriptRecord?.audioUrl ?? historyFileRecord?.audioUrl}
       />
 
       <TranscriptEditorDialog
@@ -562,6 +516,15 @@ export default function HistoryPage() {
         onOpenChange={(nextOpen) => !nextOpen && setPreviewReportRecordId(null)}
       />
 
+      <ReportPreviewDialog
+        open={historyPreviewReport !== null}
+        reportRecordId={null}
+        reportRecordFilename={historyPreviewReport?.filename}
+        reportUrl={historyPreviewReport?.url}
+        reportFileName={historyPreviewReport?.filename ?? ""}
+        onOpenChange={(nextOpen) => !nextOpen && setHistoryPreviewReport(null)}
+      />
+
       <SendEmailDialog
         open={sendEmailRecordId !== null}
         recordFilename={selectedSendEmailRecord?.filename}
@@ -592,6 +555,17 @@ export default function HistoryPage() {
         onOpenChange={(open) => !open && setHistoryFileRecord(null)}
         fileId={historyFileRecord?.id ?? null}
         filename={historyFileRecord?.filename}
+        canSendMail={canSendMail}
+        onPreviewReport={(url, filename) => setHistoryPreviewReport({ url, filename })}
+        onPreviewTranscript={(transcribeUrl, userId) =>
+          handlePreviewTranscript({
+            id: (historyFileRecord?.id ?? 0) * 10000 + userId,
+            transcribeUrl,
+            filename: historyFileRecord?.filename ?? "",
+            audioUrl: historyFileRecord?.audioUrl ?? null,
+          } as any)
+        }
+        onSendEmail={() => handleOpenSendEmailDialog(historyFileRecord!.id)}
       />
 
     </PermissionGuard>

@@ -9,8 +9,9 @@ import { EmptyState } from "@/components/iam/shared/empty-state"
 import { PermissionsDialog } from "@/components/iam/shared/permissions-dialog"
 
 import { useCompanies, useInfiniteCompanies } from "@/hooks/iam/use-companies"
-import { useGroups, useAssignGroupPermissions, useGroupPermissions } from "@/hooks/iam/use-groups"
+import { useGroups, useAssignGroupPermissions, useGroupPermissions, useDeleteGroup } from "@/hooks/iam/use-groups"
 import { CreateGroupDialog, EditGroupDialog } from "./_components/group-dialogs"
+import { DeleteGroupDialog } from "./_components/delete-group-dialog"
 import { IAMCombobox } from "@/components/iam/shared/iam-combobox"
 import type { Group } from "@/lib/types/iam"
 import { GroupTreeView } from "@/components/iam/groups/group-tree-view"
@@ -28,8 +29,10 @@ export default function GroupsPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [permDialogOpen, setPermDialogOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null)
+  const [groupToDelete, setGroupToDelete] = useState<Group | null>(null)
   const [parentGroupId, setParentGroupId] = useState<string>("__none__")
 
   // Data fetching
@@ -58,6 +61,15 @@ export default function GroupsPage() {
 
   // Mutations
   const assignPermsMutation = useAssignGroupPermissions()
+  const deleteMutation = useDeleteGroup()
+
+  function handleDelete() {
+    if (!groupToDelete) return
+    deleteMutation.mutate(
+      { id: groupToDelete.id, name: groupToDelete.name },
+      { onSuccess: () => setDeleteOpen(false) }
+    )
+  }
 
   async function handleSavePermissions(permissions: string[]) {
     if (!selectedGroup) return
@@ -137,6 +149,10 @@ export default function GroupsPage() {
               setSelectedGroup(group)
               setEditOpen(true)
             }}
+            onDelete={(group) => {
+              setGroupToDelete(group)
+              setDeleteOpen(true)
+            }}
           />
         )}
       </div>
@@ -153,6 +169,15 @@ export default function GroupsPage() {
 
       {/* Dialog Sửa Tên Nhóm */}
       <EditGroupDialog open={editOpen} onOpenChange={setEditOpen} group={selectedGroup} />
+
+      {/* Dialog Xóa Nhóm */}
+      <DeleteGroupDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        group={groupToDelete}
+        onConfirm={handleDelete}
+        loading={deleteMutation.isPending}
+      />
 
       {/* Dialog Phân Quyền */}
       <PermissionsDialog

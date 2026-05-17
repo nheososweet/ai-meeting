@@ -127,6 +127,12 @@ export const iamService = {
     await api.put(`/org/groups/${groupId}`, { name })
   },
 
+  deleteGroup: async (groupId: number): Promise<{ message: string }> => {
+    // API DELETE /org/groups/{group_id}
+    const { data } = await api.delete<{ message: string }>(`/org/groups/${groupId}`)
+    return data
+  },
+
   // ── Users ───────────────────────────────────────────────
 
   getUsers: async (params?: {

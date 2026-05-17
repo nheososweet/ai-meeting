@@ -124,7 +124,7 @@ export function UserPermissionsDialog({
                   <h3 className="text-sm font-bold uppercase tracking-wider text-foreground/70 flex-1">
                     {group.name}
                   </h3>
-                  <span className="text-[11px] font-medium text-muted-foreground tabular-nums">
+                  <span className="text-[12px] font-medium text-muted-foreground tabular-nums">
                     {group.items.length}
                   </span>
                 </div>
@@ -141,7 +141,7 @@ export function UserPermissionsDialog({
                         <span className="text-sm font-medium leading-tight text-foreground">
                           {item.label}
                         </span>
-                        <span className="text-[10px] font-mono text-muted-foreground/50 uppercase">
+                        <span className="text-[11px] font-mono text-muted-foreground/50 uppercase">
                           {item.code}
                         </span>
                       </div>

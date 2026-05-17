@@ -717,7 +717,7 @@ export default function MeetingPage() {
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-bold text-foreground">{segment.speaker}</span>
                             <div className="flex items-center gap-2">
-                              <span className="rounded-full bg-muted/60 px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">{formatTimestamp(segment.startSecond)} - {formatTimestamp(segment.endSecond)}</span>
+                              <span className="rounded-full bg-muted/60 px-2 py-0.5 font-mono text-[12px] font-medium text-muted-foreground">{formatTimestamp(segment.startSecond)} - {formatTimestamp(segment.endSecond)}</span>
                               {activeMeeting.audioUrl && (
                                 <button
                                   onClick={() => playSegment(segment.id, segment.startSecond, segment.endSecond)}

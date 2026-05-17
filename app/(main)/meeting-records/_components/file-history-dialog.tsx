@@ -119,7 +119,7 @@ function UserHistoryCard({
         {HISTORY_STEPS.map((step) => (
           <div key={step.key} className="flex flex-col items-center gap-1">
             <StepStatusIcon status={item.step_status[step.key]} label={step.label} />
-            <span className="text-[10px] text-muted-foreground/70 leading-none">{step.label}</span>
+            <span className="text-[11px] text-muted-foreground/70 leading-none">{step.label}</span>
           </div>
         ))}
       </div>

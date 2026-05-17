@@ -362,7 +362,7 @@ export default function MeetingRecordsPage() {
                                               >
                                                 <AvatarFallback
                                                   className={cn(
-                                                    "text-[10px] font-bold uppercase",
+                                                    "text-[11px] font-bold uppercase",
                                                     assignee.type === "company"
                                                       ? "text-blue-700"
                                                       : assignee.type === "group"
@@ -376,7 +376,7 @@ export default function MeetingRecordsPage() {
                                             ))}
                                           {totalAssignees > displayLimit && (
                                             <Avatar className="size-7 ring-2 ring-background">
-                                              <AvatarFallback className="text-[10px] font-medium text-muted-foreground">
+                                              <AvatarFallback className="text-[11px] font-medium text-muted-foreground">
                                                 +{totalAssignees - displayLimit}
                                               </AvatarFallback>
                                             </Avatar>

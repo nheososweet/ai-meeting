@@ -68,7 +68,7 @@ export function DataTablePagination({
                 if (has_prev) onPageChange(page - 1);
               }}
               className={cn(
-                "cursor-pointer h-8 text-[11px]",
+                "cursor-pointer h-8 text-[12px]",
                 (!has_prev || isFetching) && "pointer-events-none opacity-50"
               )}
               text="Trước"
@@ -90,7 +90,7 @@ export function DataTablePagination({
                       if (p !== page) onPageChange(p);
                     }}
                     className={cn(
-                      "cursor-pointer h-8 w-8 text-[11px]",
+                      "cursor-pointer h-8 w-8 text-[12px]",
                       isFetching && p !== page && "pointer-events-none opacity-50"
                     )}
                   >
@@ -116,7 +116,7 @@ export function DataTablePagination({
                 if (has_next) onPageChange(page + 1);
               }}
               className={cn(
-                "cursor-pointer h-8 text-[11px]",
+                "cursor-pointer h-8 text-[12px]",
                 (!has_next || isFetching) && "pointer-events-none opacity-50"
               )}
               text="Sau"

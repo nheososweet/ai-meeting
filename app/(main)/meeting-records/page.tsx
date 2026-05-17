@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { usePaginationState } from "@/hooks/use-pagination";
 import { Button } from "@/components/ui/button";
@@ -60,8 +60,14 @@ import {
   useMyUploadsQuery,
 } from "@/hooks/services/use-files";
 import { UploadFileDialog } from "./_components/upload-dialog";
-import { buildDownloadUrl } from "@/app/(main)/history/_lib/file-utils";
+import { buildDownloadUrl, resolveReportFilename } from "@/app/(main)/history/_lib/file-utils";
 import { useHistoryToast } from "@/app/(main)/history/_hooks/useHistoryToast";
+import { useHistoryTranscriptPreview } from "@/app/(main)/history/_hooks/useHistoryTranscriptPreview";
+import { useHistoryEmail } from "@/app/(main)/history/_hooks/useHistoryEmail";
+import { TranscriptPreviewDialog } from "@/app/(main)/history/_components/TranscriptPreviewDialog";
+import { ReportPreviewDialog } from "@/app/(main)/history/_components/ReportPreviewDialog";
+import { SendEmailDialog } from "@/app/(main)/history/_components/SendEmailDialog";
+import { reformatTranscriptTimestamps } from "@/app/(main)/workspace/_lib/transcript-utils";
 import { AssignFileDialog } from "./_components/assign-file-dialog";
 import { FileHistoryDialog } from "./_components/file-history-dialog";
 import { type FileRecord, type MyHistoryRecord } from "@/lib/types/files";
@@ -321,7 +327,7 @@ function AssignedTab() {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <TooltipProvider>
-                            <Tooltip>
+                            {/* <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
@@ -336,7 +342,7 @@ function AssignedTab() {
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Xem tiến độ</TooltipContent>
-                            </Tooltip>
+                            </Tooltip> */}
 
                             {record.transcribeUrl && (
                               <Tooltip>
@@ -398,6 +404,7 @@ function UploadsTab({
 }) {
   const { hasPermission } = useAuth();
   const canManage = hasPermission("assign_files");
+  const canSendMail = hasPermission("send_mail");
 
   const [search, setSearch] = useState("");
   const [statusStep, setStatusStep] = useState<string>("upload");
@@ -406,6 +413,10 @@ function UploadsTab({
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [previewRecord, setPreviewRecord] = useState<FileRecord | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<FileRecord | null>(null);
+  const [historyPreviewReport, setHistoryPreviewReport] = useState<{
+    url: string;
+    filename: string;
+  } | null>(null);
 
   const debouncedSearch = useDebounce(search, 500);
   const { page, setPage } = usePaginationState([
@@ -424,6 +435,54 @@ function UploadsTab({
 
   const records = data?.data || [];
   const meta = data?.meta;
+
+  const adaptedRecords = useMemo(
+    () => records.map((r) => ({ ...r, reportUrl: r.report })),
+    [records],
+  );
+
+  const {
+    previewTranscriptByRecord,
+    loadingTranscriptRecordId,
+    previewTranscriptRecordId,
+    activeTranscriptRecord,
+    handlePreviewTranscript,
+    handleCopyTranscriptPreview,
+    closeTranscriptPreview,
+  } = useHistoryTranscriptPreview({
+    records: adaptedRecords as any,
+    showActionToast,
+  });
+
+  const {
+    sendEmailRecordId,
+    selectedSendEmailRecord,
+    emailRecipientsInput,
+    emailSubjectInput,
+    emailBodyInput,
+    emailIsHtml,
+    emailValidationError,
+    emailTemplateValidationError,
+    isSendingEmail,
+    handleOpenSendEmailDialog,
+    handleSendEmailDialogOpenChange,
+    handleEmailRecipientsInputChange,
+    handleEmailSubjectInputChange,
+    handleEmailBodyInputChange,
+    handleEmailIsHtmlChange,
+    handleSendEmail,
+  } = useHistoryEmail({
+    records: adaptedRecords as any,
+    showActionToast,
+    canSendMail,
+  });
+
+  const activeTranscriptContent = useMemo(() => {
+    const raw = previewTranscriptRecordId
+      ? (previewTranscriptByRecord[previewTranscriptRecordId] ?? "")
+      : "";
+    return reformatTranscriptTimestamps(raw);
+  }, [previewTranscriptRecordId, previewTranscriptByRecord]);
 
   return (
     <>
@@ -683,12 +742,73 @@ function UploadsTab({
         onOpenChange={setHistoryDialogOpen}
         fileId={selectedRecord?.id || null}
         filename={selectedRecord?.filename}
+        canSendMail={canSendMail}
+        onPreviewReport={(url, filename) =>
+          setHistoryPreviewReport({ url, filename })
+        }
+        onPreviewTranscript={(transcribeUrl, userId) =>
+          handlePreviewTranscript({
+            id: (selectedRecord?.id ?? 0) * 10000 + userId,
+            transcribeUrl,
+            filename: selectedRecord?.filename ?? "",
+            audioUrl: selectedRecord?.audioUrl ?? null,
+          } as any)
+        }
+        onSendEmail={() => handleOpenSendEmailDialog(selectedRecord!.id)}
       />
 
       <AudioPreviewDialog
         file={previewRecord}
         isOpen={!!previewRecord}
         onClose={() => setPreviewRecord(null)}
+      />
+
+      <TranscriptPreviewDialog
+        open={previewTranscriptRecordId !== null}
+        transcriptRecordId={previewTranscriptRecordId}
+        transcriptRecordFilename={
+          activeTranscriptRecord?.filename ?? selectedRecord?.filename
+        }
+        transcriptContent={activeTranscriptContent}
+        isLoading={
+          previewTranscriptRecordId !== null &&
+          loadingTranscriptRecordId === previewTranscriptRecordId
+        }
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) closeTranscriptPreview();
+        }}
+        onCopyTranscript={handleCopyTranscriptPreview}
+        audioUrl={
+          activeTranscriptRecord?.audioUrl ?? selectedRecord?.audioUrl
+        }
+      />
+
+      <ReportPreviewDialog
+        open={historyPreviewReport !== null}
+        reportRecordId={null}
+        reportRecordFilename={historyPreviewReport?.filename}
+        reportUrl={historyPreviewReport?.url}
+        reportFileName={historyPreviewReport?.filename ?? ""}
+        onOpenChange={(nextOpen) => !nextOpen && setHistoryPreviewReport(null)}
+      />
+
+      <SendEmailDialog
+        open={sendEmailRecordId !== null}
+        recordFilename={selectedSendEmailRecord?.filename}
+        reportUrl={selectedSendEmailRecord?.reportUrl}
+        emailSubjectInput={emailSubjectInput}
+        emailBodyInput={emailBodyInput}
+        emailIsHtml={emailIsHtml}
+        emailRecipientsInput={emailRecipientsInput}
+        emailValidationError={emailValidationError}
+        emailTemplateValidationError={emailTemplateValidationError}
+        isSendingEmail={isSendingEmail}
+        onOpenChange={handleSendEmailDialogOpenChange}
+        onEmailSubjectInputChange={handleEmailSubjectInputChange}
+        onEmailBodyInputChange={handleEmailBodyInputChange}
+        onEmailIsHtmlChange={handleEmailIsHtmlChange}
+        onEmailRecipientsInputChange={handleEmailRecipientsInputChange}
+        onSendEmail={handleSendEmail}
       />
     </>
   );

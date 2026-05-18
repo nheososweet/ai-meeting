@@ -13,6 +13,7 @@ type PipelineProgressCardProps = {
   pipelineSteps: PipelineStep[];
   canRetryPipeline: boolean;
   failedStepId: PipelineStep["id"] | null;
+  errorMessage?: string;
   onRetryPipeline: () => void;
 };
 
@@ -21,6 +22,7 @@ export function PipelineProgressCard({
   pipelineSteps,
   canRetryPipeline,
   failedStepId,
+  errorMessage,
   onRetryPipeline,
 }: PipelineProgressCardProps) {
   return (
@@ -56,10 +58,15 @@ export function PipelineProgressCard({
           ) : null}
         </div>
         {failedStepId ? (
-          <p className="mt-2 text-xs text-rose-600 dark:text-rose-300">
-            Đã phát hiện lỗi ở bước: {failedStepId}. Bạn có thể thử lại để chạy
-            lại quy trình.
-          </p>
+          <div className="mt-2 rounded-md bg-rose-50 px-3 py-2 dark:bg-rose-950/40">
+            <p className="text-xs font-medium text-rose-700 dark:text-rose-300">
+              Lỗi tại bước: <span className="font-semibold">{failedStepId}</span>
+            </p>
+            {errorMessage ? (
+              <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errorMessage}</p>
+            ) : null}
+            <p className="mt-1 text-xs text-rose-500 dark:text-rose-500">Bạn có thể thử lại để chạy lại quy trình.</p>
+          </div>
         ) : null}
         <ul className="mt-3 space-y-2">
           {pipelineSteps.map((step) => {

@@ -29,6 +29,7 @@ import {
   parseTranscriptSegments,
 } from "@/app/(main)/workspace/_lib/transcript-utils";
 import { meetingRecords } from "@/lib/mock/meetings";
+import { parseApiError } from "@/lib/api-error";
 import { initialMeeting } from "@/app/(main)/meeting/_lib/initial-meeting";
 import { useBackgroundTask } from "@/hooks/use-background-task";
 import type { MeetingPipelineSteps, PipelineStepStatus as BubbleStepStatus } from "@/lib/types/background-tasks";
@@ -90,6 +91,7 @@ export function MeetingPipelineProvider({ children }: { children: React.ReactNod
   const processingRunIdRef = useRef(0);
   const timerMapRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
   const taskIdRef = useRef<string | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   const { addTask, updateTask, removeTask, scheduleAutoDismiss } = useBackgroundTask();
   const queryClient = useQueryClient();
@@ -107,6 +109,39 @@ export function MeetingPipelineProvider({ children }: { children: React.ReactNod
   }, []);
 
   useEffect(() => () => clearAllTimers(), [clearAllTimers]);
+
+  // ─── Wake Lock helpers ──────────────────────────────────────────────────────
+
+  const acquireWakeLock = useCallback(async () => {
+    if (typeof window === "undefined" || !("wakeLock" in navigator)) return;
+    try {
+      wakeLockRef.current = await (navigator as unknown as { wakeLock: { request: (type: string) => Promise<WakeLockSentinel> } }).wakeLock.request("screen");
+    } catch {
+      // Không hỗ trợ hoặc bị từ chối — bỏ qua, không block pipeline
+    }
+  }, []);
+
+  const releaseWakeLock = useCallback(() => {
+    wakeLockRef.current?.release().catch(() => {});
+    wakeLockRef.current = null;
+  }, []);
+
+  // Re-acquire wake lock khi màn hình mở khóa và pipeline đang chạy;
+  // cũng gợi ý nguyên nhân nếu pipeline đã fail ở bước diarize
+  useEffect(() => {
+    const onVisibilityChange = async () => {
+      if (document.visibilityState !== "visible") return;
+      if (activeMeeting.processingStatus === "processing") {
+        await acquireWakeLock();
+        return;
+      }
+      if (activeMeeting.processingStatus === "error" && failedStepId === "raw_transcript") {
+        setNotice('Có vẻ màn hình bị khóa trong khi đang xử lý. Giữ màn hình sáng và nhấn "Thử lại" để tiếp tục.');
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [activeMeeting.processingStatus, failedStepId, acquireWakeLock]);
 
   // ─── Pipeline step helpers ──────────────────────────────────────────────────
 
@@ -194,6 +229,8 @@ export function MeetingPipelineProvider({ children }: { children: React.ReactNod
       steps: { raw_transcript: "processing", diarization: "waiting", speaker_summary: "waiting", minutes: "waiting" },
       createdAt: Date.now(),
     });
+
+    void acquireWakeLock();
 
     // ── STEP 1: raw_transcript ──────────────────────────────────────────────
     setNotice("Đang chuyển tệp âm thanh thành văn bản...");
@@ -329,8 +366,9 @@ export function MeetingPipelineProvider({ children }: { children: React.ReactNod
                 try {
                   const saved = await updateReport({ id: apiResult.id, textContent: nextMinutes });
                   finalReportUrl = saved.reportUrl;
-                } catch {
-                  setNotice("Lưu tự động thất bại. Vui lòng lưu biên bản thủ công.");
+                } catch (saveError) {
+                  const saveMsg = parseApiError(saveError);
+                  setNotice(`Lưu tự động thất bại: ${saveMsg}. Vui lòng lưu biên bản thủ công.`);
                 }
               }
 
@@ -358,14 +396,16 @@ export function MeetingPipelineProvider({ children }: { children: React.ReactNod
                 status: "completed", progress: 100, completedAt: Date.now(),
                 steps: { raw_transcript: "success", diarization: "success", speaker_summary: "success", minutes: "success" },
               });
+              releaseWakeLock();
               scheduleAutoDismiss(taskId, 30_000);
               queryClient.invalidateQueries({ queryKey: ["files-infinite"] });
 
             } catch (error) {
+              releaseWakeLock();
               clearTimerByKey("summary");
               if (minutesTimer) { clearInterval(minutesTimer); timerMapRef.current.delete("minutes"); }
               if (processingRunIdRef.current !== runId) return;
-              const msg = error instanceof Error ? error.message : String(error);
+              const msg = parseApiError(error);
               markPipelineAsError(`Lỗi tạo biên bản: ${msg}`, "minutes");
               updateTask(taskId, { status: "failed", errorMessage: msg });
               scheduleAutoDismiss(taskId, 60_000);
@@ -375,9 +415,10 @@ export function MeetingPipelineProvider({ children }: { children: React.ReactNod
         timerMapRef.current.set("diar", diarTimer);
 
       } catch (error) {
+        releaseWakeLock();
         clearTimerByKey("raw");
         if (processingRunIdRef.current !== runId) return;
-        const msg = error instanceof Error ? error.message : "Không thể gọi API diarize/transcribe.";
+        const msg = parseApiError(error);
         markPipelineAsError(`Lỗi tạo bản gỡ băng gốc: ${msg}`, "raw_transcript");
         updateTask(taskId, { status: "failed", errorMessage: msg });
         scheduleAutoDismiss(taskId, 60_000);

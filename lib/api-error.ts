@@ -12,7 +12,16 @@ const errorMap: Record<string, string> = {
 
 export function parseApiError(error: any): string {
   if (!error?.response) {
-    return error?.message || "Không thể kết nối đến máy chủ"
+    if (error?.code === "ECONNABORTED") {
+      return "Yêu cầu quá thời gian chờ. File có thể quá lớn hoặc máy chủ đang bận, vui lòng thử lại sau."
+    }
+    if (error?.code === "ERR_NETWORK" || error?.message === "Network Error") {
+      return "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại."
+    }
+    if (error?.code === "ERR_CANCELED") {
+      return "Yêu cầu đã bị hủy."
+    }
+    return error?.message || "Không thể kết nối đến máy chủ."
   }
 
   const { data, status } = error.response

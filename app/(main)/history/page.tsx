@@ -163,6 +163,15 @@ function HistoryAssignedTab() {
   const [openReportUrl, setOpenReportUrl] = useState<string | null>(null);
   const [openReportFilename, setOpenReportFilename] = useState<string>("");
 
+  // Edit / labeling dialog state
+  const [isLabelingDialogOpen, setIsLabelingDialogOpen] = useState(false);
+  const [isTranscriptEditorOpen, setIsTranscriptEditorOpen] = useState(false);
+  const [isSavingTranscript, setIsSavingTranscript] = useState(false);
+  const [transcriptEditorError, setTranscriptEditorError] = useState<string | null>(null);
+
+  const updateTranscribeMutation = useUpdateTranscribeMutation();
+  const { showActionToast } = useHistoryToast();
+
   const debouncedSearch = useDebounce(search, 500);
   const { page, setPage } = usePaginationState([
     debouncedSearch,
@@ -210,6 +219,38 @@ function HistoryAssignedTab() {
       : "";
     if (navigator.clipboard) {
       navigator.clipboard.writeText(content);
+    }
+  }
+
+  function handleLabelingSuccess(newRawTranscript: string) {
+    if (openTranscriptFileId) {
+      setTranscriptCache((prev) => ({
+        ...prev,
+        [openTranscriptFileId]: newRawTranscript,
+      }));
+    }
+  }
+
+  async function handleSaveEditedTranscript(content: string) {
+    if (!openTranscriptFileId) return;
+    setTranscriptEditorError(null);
+    setIsSavingTranscript(true);
+    try {
+      await updateTranscribeMutation.mutateAsync({
+        id: openTranscriptFileId,
+        textContent: content,
+      });
+      setTranscriptCache((prev) => ({
+        ...prev,
+        [openTranscriptFileId]: content,
+      }));
+      setIsTranscriptEditorOpen(false);
+      showActionToast("Đã lưu bản gỡ băng thành công.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Lỗi không xác định";
+      setTranscriptEditorError(`Lỗi khi lưu bản gỡ băng: ${message}`);
+    } finally {
+      setIsSavingTranscript(false);
     }
   }
 
@@ -432,6 +473,30 @@ function HistoryAssignedTab() {
           if (!next) setOpenTranscriptFileId(null);
         }}
         onCopyTranscript={handleCopyTranscript}
+        onOpenLabeling={() => setIsLabelingDialogOpen(true)}
+        onOpenEdit={() => setIsTranscriptEditorOpen(true)}
+      />
+
+      <TranscriptEditorDialog
+        open={isTranscriptEditorOpen}
+        onOpenChange={setIsTranscriptEditorOpen}
+        rawTranscript={activeTranscriptContent}
+        isSaving={isSavingTranscript}
+        onSave={handleSaveEditedTranscript}
+        error={transcriptEditorError}
+      />
+
+      <HistorySpeakersLabelingDialog
+        open={isLabelingDialogOpen}
+        onOpenChange={setIsLabelingDialogOpen}
+        recordId={openTranscriptFileId ?? 0}
+        rawTranscript={
+          openTranscriptFileId
+            ? (transcriptCache[openTranscriptFileId] ?? "")
+            : ""
+        }
+        onSuccess={handleLabelingSuccess}
+        showActionToast={(msg) => showActionToast(msg)}
       />
 
       <ReportPreviewDialog

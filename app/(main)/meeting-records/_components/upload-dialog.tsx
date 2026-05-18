@@ -93,7 +93,7 @@ export function UploadFileDialog({ open, onOpenChange, showActionToast }: Upload
               className="cursor-pointer"
             />
             <p className="text-xs text-muted-foreground italic">
-              * Chỉ hỗ trợ tệp định dạng .mp3, .wav, .m4a
+              * Chỉ hỗ trợ tệp định dạng .mp3, .wav, .m4a (tối đa 1GB)
             </p>
             {errors.file && (
               <p className="text-xs text-destructive">

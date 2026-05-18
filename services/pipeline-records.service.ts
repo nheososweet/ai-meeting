@@ -1,6 +1,48 @@
 import { api, pipelineApi } from "@/services/pipeline-api";
 import { type PaginatedResponse } from "@/lib/types/iam";
 
+// ─── Task Polling ─────────────────────────────────────────────────────────────
+
+interface TaskPollingResponse {
+  task_id: string;
+  status: string; // "processing" = đang chờ, bất kỳ giá trị khác = xong
+}
+
+function isProcessingResponse(data: unknown): data is TaskPollingResponse {
+  if (!data || typeof data !== "object") return false;
+  const d = data as Record<string, unknown>;
+  return typeof d.task_id === "string" && d.status === "processing";
+}
+
+async function getTaskStatus(taskId: string): Promise<unknown> {
+  const response = await api.get(`/tasks/${taskId}`);
+  return response.data;
+}
+
+export async function pollTaskUntilDone(
+  taskId: string,
+  signal?: AbortSignal,
+  intervalMs = 10000,
+): Promise<unknown> {
+  while (true) {
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    try {
+      const data = await getTaskStatus(taskId);
+      if (!isProcessingResponse(data)) return data; // hoàn thành!
+    } catch {
+      // Network error (screen lock, mất mạng) → không throw, đợi rồi retry
+      if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    }
+    await new Promise<void>((res, rej) => {
+      const t = setTimeout(res, intervalMs);
+      signal?.addEventListener("abort", () => {
+        clearTimeout(t);
+        rej(new DOMException("Aborted", "AbortError"));
+      }, { once: true });
+    });
+  }
+}
+
 interface UpstreamDiarizeTranscribeResponse {
   id?: unknown;
   filename?: unknown;
@@ -246,6 +288,8 @@ function parseSendMailResponse(data: unknown): SendMailResponse {
 export async function diarizeAndTranscribe(input: {
   file: File;
   language?: string;
+  onTaskId?: (taskId: string) => void;
+  signal?: AbortSignal;
 }): Promise<DiarizeTranscribeResponse> {
   const formData = new FormData();
   formData.append("file", input.file, input.file.name);
@@ -256,7 +300,13 @@ export async function diarizeAndTranscribe(input: {
     formData,
   );
 
-  const payload = response.data;
+  let rawData: unknown = response.data;
+  if (isProcessingResponse(rawData)) {
+    input.onTaskId?.(rawData.task_id);
+    rawData = await pollTaskUntilDone(rawData.task_id, input.signal);
+  }
+
+  const payload = rawData as UpstreamDiarizeTranscribeResponse;
 
   const rawTranscription = ensureStringArray(
     Array.isArray(payload.raw_transcription)
@@ -302,6 +352,8 @@ export async function diarizeAndTranscribe(input: {
 export async function diarizeAndTranscribeByFileId(input: {
   fileId: number;
   language?: string;
+  onTaskId?: (taskId: string) => void;
+  signal?: AbortSignal;
 }): Promise<DiarizeTranscribeResponse> {
   const formData = new URLSearchParams();
   formData.append("file_id", String(input.fileId));
@@ -317,7 +369,13 @@ export async function diarizeAndTranscribeByFileId(input: {
     },
   );
 
-  const payload = response.data;
+  let rawData: unknown = response.data;
+  if (isProcessingResponse(rawData)) {
+    input.onTaskId?.(rawData.task_id);
+    rawData = await pollTaskUntilDone(rawData.task_id, input.signal);
+  }
+
+  const payload = rawData as UpstreamDiarizeTranscribeResponse;
 
   const rawTranscription = ensureStringArray(
     Array.isArray(payload.raw_transcription)
@@ -427,6 +485,8 @@ export async function generateSummaryAndMinutes(input: {
   transcriptLines: string[];
   model?: string;
   fileId?: number;
+  onTaskId?: (taskId: string) => void;
+  signal?: AbortSignal;
 }): Promise<SummaryAndMinutesResponse> {
   const mergedTranscript = input.transcriptLines
     .map((line) => String(line ?? "").trim())
@@ -453,7 +513,13 @@ export async function generateSummaryAndMinutes(input: {
 
   const response = await pipelineApi.post<UpstreamChatResponse>("/chat", requestBody);
 
-  const reply = response.data?.reply;
+  let chatRawData: unknown = response.data;
+  if (isProcessingResponse(chatRawData)) {
+    input.onTaskId?.(chatRawData.task_id);
+    chatRawData = await pollTaskUntilDone(chatRawData.task_id, input.signal);
+  }
+
+  const reply = (chatRawData as UpstreamChatResponse)?.reply;
 
   if (typeof reply !== "string" || !reply.trim()) {
     throw new Error("Chat API không trả về nội dung reply hợp lệ.");

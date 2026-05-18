@@ -240,7 +240,7 @@ export function PermissionsDialog({
                                 >
                                   {permLabel}
                                 </Label>
-                                <span className="text-[10px] font-mono text-muted-foreground/60 uppercase">
+                                <span className="text-[11px] font-mono text-muted-foreground/60 uppercase">
                                   {permId}
                                 </span>
                               </div>

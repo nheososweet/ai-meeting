@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, useInfiniteQuery, keepPreviousData } from "@tanstack/react-query";
 import { filesService } from "@/services/files.service";
-import { type FilesQueryParams } from "@/lib/types/files";
+import { type FilesQueryParams, type MyHistoryQueryParams, type MyUploadsQueryParams } from "@/lib/types/files";
 
 /**
  * Hook to fetch files list
@@ -29,6 +29,22 @@ export function useFilesInfiniteQuery(params?: Omit<FilesQueryParams, "page">) {
   });
 }
 
+export function useMyHistoryQuery(params?: MyHistoryQueryParams) {
+  return useQuery({
+    queryKey: ["my-history", params],
+    queryFn: () => filesService.getMyHistory(params),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useMyUploadsQuery(params?: MyUploadsQueryParams) {
+  return useQuery({
+    queryKey: ["my-uploads", params],
+    queryFn: () => filesService.getMyUploads(params),
+    placeholderData: keepPreviousData,
+  });
+}
+
 /**
  * Hook to upload a file
  */
@@ -41,6 +57,7 @@ export function useUploadFileMutation() {
     onSuccess: () => {
       // Invalidate and refetch files list
       queryClient.invalidateQueries({ queryKey: ["files"] });
+      queryClient.invalidateQueries({ queryKey: ["my-uploads"] });
     },
   });
 }

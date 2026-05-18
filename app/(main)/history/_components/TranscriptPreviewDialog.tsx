@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { CopyIcon, Edit3Icon, LoaderCircleIcon, PauseIcon, PlayIcon, UsersIcon } from "lucide-react";
+import { CopyIcon, Edit3Icon, LanguagesIcon, LoaderCircleIcon, PauseIcon, PlayIcon, UsersIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,7 @@ import { formatHeaderTimestamp } from "@/app/(main)/workspace/_lib/format-utils"
 import { getSpeakerColor } from "@/app/(main)/workspace/_lib/transcript-utils";
 import { useAuth } from "@/lib/auth/auth-context";
 import { PERMISSIONS } from "@/lib/types/iam";
+import { TranslateDialog } from "@/app/(main)/meeting/_components/TranslateDialog";
 
 type TranscriptPreviewDialogProps = {
   open: boolean;
@@ -63,6 +64,7 @@ export function TranscriptPreviewDialog({
 
   const { hasPermission } = useAuth();
   const canEdit = hasPermission(PERMISSIONS.PROCESS_PIPELINE);
+  const canTranslate = hasPermission(PERMISSIONS.TRANSLATE);
 
   function playSegment(segmentId: string, start: number, end: number) {
     const audio = audioRef.current;
@@ -199,6 +201,22 @@ export function TranscriptPreviewDialog({
             <CopyIcon className="size-4" />
             Sao chép bản gỡ băng
           </Button>
+          {canTranslate && transcriptContent && !isLoading && (
+            <TranslateDialog
+              initialText={transcriptContent}
+              trigger={
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-1.5 border-emerald-200 bg-emerald-50/30 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-950/20 dark:text-emerald-400"
+                  disabled={!transcriptRecordId || isLoading}
+                >
+                  <LanguagesIcon className="size-4" />
+                  Dịch bản gỡ băng
+                </Button>
+              }
+            />
+          )}
           {canEdit && onOpenEdit && (
             <Button
               type="button"

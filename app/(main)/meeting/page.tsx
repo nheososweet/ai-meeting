@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { parseApiError } from "@/lib/api-error";
 import {
   CheckCircle2Icon,
   ChevronDownIcon,
@@ -338,7 +339,7 @@ export default function MeetingPage() {
         showActionToast("Đã lưu biên bản thành công.");
         setIsEmailDialogOpen(true);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Lỗi không xác định";
+        const message = parseApiError(error);
         setMinutesValidationError(`Lỗi khi lưu biên bản: ${message}`);
         setNotice(`Lỗi lưu biên bản: ${message}`);
       } finally {
@@ -382,7 +383,7 @@ export default function MeetingPage() {
       setIsTranscriptEditorOpen(false);
       showActionToast("Đã lưu bản gỡ băng thành công.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Lỗi không xác định";
+      const message = parseApiError(error);
       setTranscriptValidationError(`Lỗi khi lưu bản gỡ băng: ${message}`);
     } finally {
       setIsSavingTranscript(false);
@@ -438,7 +439,7 @@ export default function MeetingPage() {
           ? `Đã gửi ${sendResult.sent}/${sendResult.total} email, còn ${sendResult.failed} lỗi.`
           : "Đã gửi email thành công.");
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = parseApiError(error);
         setNotice(`Gửi email thất bại: ${errorMessage}`);
         showActionToast(`Gửi email thất bại: ${errorMessage}`);
       } finally {
@@ -598,6 +599,7 @@ export default function MeetingPage() {
                       pipelineSteps={pipelineSteps}
                       canRetryPipeline={canRetryPipeline}
                       failedStepId={failedStepId}
+                      errorMessage={failedStepId ? notice : undefined}
                       onRetryPipeline={handleRetryPipeline}
                     />
                   </div>
@@ -717,7 +719,7 @@ export default function MeetingPage() {
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-bold text-foreground">{segment.speaker}</span>
                             <div className="flex items-center gap-2">
-                              <span className="rounded-full bg-muted/60 px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">{formatTimestamp(segment.startSecond)} - {formatTimestamp(segment.endSecond)}</span>
+                              <span className="rounded-full bg-muted/60 px-2 py-0.5 font-mono text-[12px] font-medium text-muted-foreground">{formatTimestamp(segment.startSecond)} - {formatTimestamp(segment.endSecond)}</span>
                               {activeMeeting.audioUrl && (
                                 <button
                                   onClick={() => playSegment(segment.id, segment.startSecond, segment.endSecond)}

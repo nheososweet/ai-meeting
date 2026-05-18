@@ -30,6 +30,7 @@ export interface UpstreamFileRecord {
   processed_at: string | null;
   size?: number;
   duration?: number;
+  is_self_upload: boolean;
 }
 
 /** Frontend normalized types (camelCase) */
@@ -63,6 +64,26 @@ export interface FileRecord {
   processedAt: string | null;
   size?: number;
   duration?: number;
+  isSelfUpload: boolean;
+}
+
+export interface FileHistoryItem {
+  user_id: number;
+  user_name: string;
+  user_type: "uploader" | "assignee";
+  transcribe_url: string | null;
+  report: string | null;
+  processed_at: string | null;
+  step_status: {
+    transcribe: string;
+    summary: string;
+    report: string;
+    send_email: string;
+  };
+}
+
+export interface FileHistoryResponse {
+  data: FileHistoryItem[];
 }
 
 export interface FileUploadResponse {
@@ -80,4 +101,63 @@ export interface FilesQueryParams {
   search?: string | null;
   assigned_filter?: boolean | null;
   self_upload?: boolean | null;
+  fail_files?: boolean | null;
+}
+
+// ── GET /files/my-history ──────────────────────────────────────
+
+export interface UpstreamMyHistoryRecord {
+  history_id: number | null;
+  file_id: number;
+  filename: string;
+  title: string;
+  create_time: string;
+  user_type: "uploader" | "assignee" | null;
+  transcribe_url: string | null;
+  report: string | null;
+  processed_at: string | null;
+  step_status: {
+    report: string;
+    summary: string;
+    send_email: string;
+    transcribe: string;
+  } | null;
+}
+
+export interface MyHistoryRecord {
+  historyId: number | null;
+  fileId: number;
+  filename: string;
+  title: string;
+  createTime: string;
+  userType: "uploader" | "assignee";
+  transcribeUrl: string | null;
+  report: string | null;
+  processedAt: string | null;
+  stepStatus: {
+    report: string;
+    summary: string;
+    sendEmail: string;
+    transcribe: string;
+  };
+}
+
+export interface MyHistoryQueryParams {
+  page?: number;
+  page_size?: number;
+  status_step?: string | null;
+  status_value?: string | null;
+  search?: string | null;
+  is_history?: boolean;
+}
+
+// ── GET /files/my-uploads ─────────────────────────────────────
+// Response shape giống UpstreamFileRecord → dùng lại FileRecord + normalizeFileRecord
+
+export interface MyUploadsQueryParams {
+  page?: number;
+  page_size?: number;
+  status_step?: string | null;
+  status_value?: string | null;
+  search?: string | null;
 }

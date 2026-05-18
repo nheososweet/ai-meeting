@@ -1025,7 +1025,7 @@ export default function WorkspacePage() {
                             <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-semibold text-foreground">
                               {segment.speaker}
                             </span>
-                            <span className="text-[11px] font-medium text-muted-foreground">
+                            <span className="text-[12px] font-medium text-muted-foreground">
                               {formatTimelineSecond(segment.startSecond)} -{" "}
                               {formatTimelineSecond(segment.endSecond)}
                             </span>

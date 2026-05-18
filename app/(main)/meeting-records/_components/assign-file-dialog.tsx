@@ -16,10 +16,11 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { IAMCombobox } from "@/components/iam/shared/iam-combobox"
-import { useAuth } from "@/lib/auth/auth-context"
+import { ConfirmDialog } from "@/components/iam/shared/confirm-dialog"
 import { useInfiniteUsers } from "@/hooks/iam/use-users"
 import { AssignmentOrgTree, type SelectionItem } from "./assignment-org-tree"
 import { useAssignFile } from "@/hooks/services/use-assign-file"
+import { useFileHistory } from "@/hooks/services/use-file-history"
 import { Loader2Icon, UserIcon, ShieldCheckIcon } from "lucide-react"
 
 interface AssignFileDialogProps {
@@ -28,7 +29,7 @@ interface AssignFileDialogProps {
   fileId: number | null
   filename?: string
   initialData?: {
-    userId?: string
+    users?: SelectionItem[]
     groups: SelectionItem[]
     companies: SelectionItem[]
   }
@@ -43,29 +44,45 @@ export function AssignFileDialog({
   initialData,
   isReadOnly = false,
 }: AssignFileDialogProps) {
-  const { currentUser } = useAuth()
-
   // Form State
-  const [selectedUserId, setSelectedUserId] = useState<string>("")
+  const [selectedUsers, setSelectedUsers] = useState<SelectionItem[]>([])
   const [selectedGroups, setSelectedGroups] = useState<SelectionItem[]>([])
   const [selectedCompanies, setSelectedCompanies] = useState<SelectionItem[]>([])
+  const [showRemoveWarning, setShowRemoveWarning] = useState(false)
 
   const assignMutation = useAssignFile()
+  const { data: historyData } = useFileHistory(open ? fileId : null)
 
   // Reset/Initialize state when opening
   useEffect(() => {
     if (open) {
       if (initialData) {
-        setSelectedUserId(initialData.userId || "")
+        setSelectedUsers(initialData.users || [])
         setSelectedGroups(initialData.groups || [])
         setSelectedCompanies(initialData.companies || [])
       } else {
-        setSelectedUserId("")
+        setSelectedUsers([])
         setSelectedGroups([])
         setSelectedCompanies([])
       }
+      setShowRemoveWarning(false)
     }
   }, [open, initialData])
+
+  // Compute removed users: assignees in history that are no longer selected
+  const historyAssignees = (historyData?.data ?? []).filter(h => h.user_type === "assignee")
+  const removedUsers = historyAssignees.filter(h =>
+    !selectedUsers.some(u => String(u.id) === String(h.user_id))
+  )
+
+  const handleUserToggle = (user: SelectionItem) => {
+    if (isReadOnly) return
+    setSelectedUsers((prev) =>
+      prev.some(u => String(u.id) === String(user.id))
+        ? prev.filter(u => String(u.id) !== String(user.id))
+        : [...prev, user]
+    )
+  }
 
   const handleCompanyToggle = (company: SelectionItem) => {
     if (isReadOnly) return
@@ -85,93 +102,116 @@ export function AssignFileDialog({
     )
   }
 
-  const handleSubmit = async () => {
-    if (!fileId || isReadOnly) return
-
+  const doSubmit = () => {
+    if (!fileId) return
     const payload = {
-      assignee_user_ids: selectedUserId ? [Number(selectedUserId)] : [],
+      assignee_user_ids: selectedUsers.map(u => Number(u.id)),
       assignee_group_ids: selectedGroups.map(g => Number(g.id)),
       assignee_company_ids: selectedCompanies.map(c => Number(c.id)),
     }
-
     assignMutation.mutate(
       { fileId, payload },
       {
         onSuccess: () => {
+          setShowRemoveWarning(false)
           onOpenChange(false)
         },
       }
     )
   }
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col overflow-hidden p-0">
-        <DialogHeader className="p-6 pb-2">
-          <DialogTitle className="flex items-center gap-2">
-            <ShieldCheckIcon className="size-5 text-primary" />
-            {isReadOnly ? "Chi tiết phân phối" : "Phân phối hồ sơ"}
-          </DialogTitle>
-          <DialogDescription className="line-clamp-1">
-            {isReadOnly
-              ? `Xem danh sách nhân sự/tổ chức được cấp quyền cho tệp `
-              : `Giao quyền tiếp cận tệp `
-            }
-            <span className="font-semibold text-foreground italic">{filename}</span>
-          </DialogDescription>
-        </DialogHeader>
+  const handleSubmit = () => {
+    if (!fileId || isReadOnly) return
+    if (removedUsers.length > 0) {
+      setShowRemoveWarning(true)
+      return
+    }
+    doSubmit()
+  }
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          <FieldGroup className="space-y-6">
-            {/* 1. User Section (Single Select) */}
-            <Field>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 rounded-md bg-blue-50 text-blue-600">
-                  <UserIcon className="size-4" />
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col overflow-hidden p-0">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheckIcon className="size-5 text-primary" />
+              {isReadOnly ? "Chi tiết phân phối" : "Phân phối hồ sơ"}
+            </DialogTitle>
+            <DialogDescription className="line-clamp-1">
+              {isReadOnly
+                ? `Xem danh sách nhân sự/tổ chức được cấp quyền cho tệp `
+                : `Giao quyền tiếp cận tệp `
+              }
+              <span className="font-semibold text-foreground italic">{filename}</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <FieldGroup className="space-y-6">
+              {/* 1. User Section (Multi Select) */}
+              <Field>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 rounded-md bg-blue-50 text-blue-600">
+                    <UserIcon className="size-4" />
+                  </div>
+                  <FieldLabel className="mb-0 text-sm font-semibold">Cá nhân phụ trách</FieldLabel>
                 </div>
-                <FieldLabel className="mb-0 text-sm font-semibold">Cá nhân phụ trách (Tối đa 1)</FieldLabel>
-              </div>
-              <IAMCombobox
-                value={selectedUserId}
-                onValueChange={setSelectedUserId}
-                placeholder="Tìm kiếm người dùng..."
-                searchPlaceholder="Gõ tên hoặc email..."
-                useInfiniteHook={useInfiniteUsers}
-                className="w-full"
+                <IAMCombobox
+                  multiple={true}
+                  selectedItems={selectedUsers}
+                  onToggle={handleUserToggle}
+                  placeholder="Tìm kiếm người dùng..."
+                  searchPlaceholder="Gõ tên hoặc email..."
+                  useInfiniteHook={useInfiniteUsers}
+                  className="w-full"
+                  disabled={isReadOnly}
+                />
+              </Field>
+
+              <div className="border-t border-border/40" />
+
+              {/* 2. Unified Org Tree Section */}
+              <AssignmentOrgTree
+                selectedCompanies={selectedCompanies}
+                selectedGroups={selectedGroups}
+                onCompanyToggle={handleCompanyToggle}
+                onGroupToggle={handleGroupToggle}
                 disabled={isReadOnly}
               />
-            </Field>
+              {!isReadOnly && (
+                <p className="text-xs text-muted-foreground italic">
+                  * Lưu ý: Việc gán cho Công ty và Phòng ban là độc lập. Hãy check vào từng đối tượng cụ thể bạn muốn cấp quyền.
+                </p>
+              )}
+            </FieldGroup>
+          </div>
 
-            <div className="border-t border-border/40" />
-
-            {/* 2. Unified Org Tree Section */}
-            <AssignmentOrgTree
-              selectedCompanies={selectedCompanies}
-              selectedGroups={selectedGroups}
-              onCompanyToggle={handleCompanyToggle}
-              onGroupToggle={handleGroupToggle}
-              disabled={isReadOnly}
-            />
-            {!isReadOnly && (
-              <p className="text-xs text-muted-foreground italic">
-                * Lưu ý: Việc gán cho Công ty và Phòng ban là độc lập. Hãy check vào từng đối tượng cụ thể bạn muốn cấp quyền.
-              </p>
-            )}
-          </FieldGroup>
-        </div>
-
-        <DialogFooter className="p-6 pt-2 border-t bg-muted/5">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={assignMutation.isPending}>
-            {isReadOnly ? "Đóng" : "Hủy"}
-          </Button>
-          {!isReadOnly && (
-            <Button onClick={handleSubmit} disabled={assignMutation.isPending} className="px-8">
-              {assignMutation.isPending && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
-              Cập nhật phân quyền
+          <DialogFooter className="p-6 pt-2 border-t bg-muted/5">
+            <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={assignMutation.isPending}>
+              {isReadOnly ? "Đóng" : "Hủy"}
             </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            {!isReadOnly && (
+              <Button onClick={handleSubmit} disabled={assignMutation.isPending} className="px-8">
+                {assignMutation.isPending && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
+                Cập nhật phân quyền
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={showRemoveWarning}
+        onOpenChange={setShowRemoveWarning}
+        title="Xóa lịch sử xử lý"
+        description={`Các thành viên sau đang có lịch sử xử lý với tệp này: ${removedUsers.map(u => u.user_name).join(", ")}. Nếu tiếp tục, toàn bộ lịch sử của họ sẽ bị xóa vĩnh viễn.`}
+        confirmLabel="Tiếp tục"
+        cancelLabel="Quay lại"
+        variant="destructive"
+        loading={assignMutation.isPending}
+        onConfirm={doSubmit}
+      />
+    </>
   )
 }

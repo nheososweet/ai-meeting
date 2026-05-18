@@ -162,14 +162,23 @@ export function FileSelector({
     isLoading,
     isError,
     refetch
-  } = useFilesInfiniteQuery({
-    assigned_filter,
-    self_upload,
-    status_step: "transcribe",
-    status_value: statusTab,
-    search: debouncedSearch || undefined,
-    page_size: 20,
-  });
+  } = useFilesInfiniteQuery(
+    statusTab === "fail"
+      ? {
+          fail_files: true,
+          ...(self_upload ? { self_upload: true } : {}),
+          search: debouncedSearch || undefined,
+          page_size: 20,
+        }
+      : {
+          assigned_filter,
+          self_upload,
+          status_step: "transcribe",
+          status_value: "waiting",
+          search: debouncedSearch || undefined,
+          page_size: 20,
+        }
+  );
 
   const { ref, inView } = useInView();
 

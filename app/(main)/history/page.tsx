@@ -115,7 +115,7 @@ export default function HistoryPage() {
                 value="uploads"
                 className="h-8 rounded-md px-3 text-sm font-medium transition-all data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
               >
-                File tải lên
+                Tệp tải lên
               </TabsTrigger>
             </TabsList>
           </div>
@@ -612,9 +612,9 @@ function HistoryUploadsTab() {
   const activeReportFileName =
     activeReportRecord?.reportUrl && activeReportRecord.filename
       ? resolveReportFilename(
-          activeReportRecord.filename,
-          activeReportRecord.reportUrl,
-        )
+        activeReportRecord.filename,
+        activeReportRecord.reportUrl,
+      )
       : undefined;
 
   const activeTranscriptContent = useMemo(() => {

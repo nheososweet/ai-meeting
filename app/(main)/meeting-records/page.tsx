@@ -141,7 +141,7 @@ export default function MeetingRecordsPage() {
               value="uploads"
               className="h-8 rounded-md px-3 text-sm font-medium transition-all data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
             >
-              File tải lên
+              Tệp tải lên
             </TabsTrigger>
           </TabsList>
         </div>
@@ -717,19 +717,19 @@ function UploadsTab({
         initialData={
           selectedRecord
             ? {
-                users: selectedRecord.assignedToUsers.map((u) => ({
-                  id: String(u.id),
-                  name: u.name,
-                })),
-                groups: selectedRecord.assignedToGroups.map((g) => ({
-                  id: String(g.id),
-                  name: g.name,
-                })),
-                companies: selectedRecord.assignedToCompanies.map((c) => ({
-                  id: String(c.id),
-                  name: c.name,
-                })),
-              }
+              users: selectedRecord.assignedToUsers.map((u) => ({
+                id: String(u.id),
+                name: u.name,
+              })),
+              groups: selectedRecord.assignedToGroups.map((g) => ({
+                id: String(g.id),
+                name: g.name,
+              })),
+              companies: selectedRecord.assignedToCompanies.map((c) => ({
+                id: String(c.id),
+                name: c.name,
+              })),
+            }
             : undefined
         }
         isReadOnly={

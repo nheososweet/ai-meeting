@@ -57,6 +57,7 @@ export function useUploadFileMutation() {
     onSuccess: () => {
       // Invalidate and refetch files list
       queryClient.invalidateQueries({ queryKey: ["files"] });
+      queryClient.invalidateQueries({ queryKey: ["my-uploads"] });
     },
   });
 }

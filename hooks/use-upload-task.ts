@@ -32,6 +32,7 @@ export function useUploadTask() {
           completedAt: Date.now(),
         });
         queryClient.invalidateQueries({ queryKey: ["files"] });
+        queryClient.invalidateQueries({ queryKey: ["my-uploads"] });
         scheduleAutoDismiss(taskId, 8_000);
       } catch (err) {
         updateTask(taskId, {

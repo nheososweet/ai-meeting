@@ -87,14 +87,14 @@ export function AdminView() {
                         {record.title || record.filename}
                       </p>
                       <span className={cn(
-                        "text-[10px] font-extrabold px-2.5 py-1 rounded-md uppercase tracking-wider",
+                        "text-xs font-extrabold px-2.5 py-1 rounded-md uppercase tracking-wider",
                         record.status === "completed" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
                           record.status === "failed" ? "bg-rose-100 text-rose-700 border border-rose-200" : "bg-blue-50 text-blue-700 border border-blue-200"
                       )}>
                         {record.status}
                       </span>
                     </div>
-                    <div className="flex items-center gap-6 mt-1.5 text-[11px] text-muted-foreground font-medium">
+                    <div className="flex items-center gap-6 mt-1.5 text-xs text-muted-foreground font-medium">
                       <div className="flex items-center gap-1.5">
                         <ClockIcon className="size-3.5 text-primary/50" />
                         {formatDate(record.createTime)}

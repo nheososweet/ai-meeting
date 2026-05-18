@@ -146,7 +146,7 @@ export default function RolesPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-background sticky top-0">
-                    <TableHead className="w-[80px]">ID</TableHead>
+                    <TableHead className="w-[80px]">STT</TableHead>
                     <TableHead>Tên Vai trò</TableHead>
                     <TableHead>Mô tả</TableHead>
                     <TableHead className="hidden md:table-cell">Ngày tạo</TableHead>
@@ -154,13 +154,13 @@ export default function RolesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {roles.map((role) => {
+                  {roles.map((role, index) => {
                     const isSystemRole = role.name === "admin"
 
                     return (
                       <TableRow key={role.id} className="group/row">
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          #{role.id}
+                        <TableCell className="text-xs text-muted-foreground">
+                          {index + 1}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">

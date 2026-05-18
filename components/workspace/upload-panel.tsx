@@ -47,7 +47,7 @@ function UploadPanelView({
   return (
     <div className="mt-5 space-y-3">
       <label className="text-sm font-medium text-foreground">
-        Tải lên tệp MP3, WAV
+        Tải lên tệp MP3, WAV, M4A
       </label>
 
       <div
@@ -74,7 +74,7 @@ function UploadPanelView({
               Kéo thả tệp vào đây hoặc <span className="text-primary hover:underline">Chọn tệp từ máy</span>
             </p>
             <p className="text-xs text-muted-foreground">
-              Hỗ trợ MP3, WAV. Giới hạn 200 MB.
+              Hỗ trợ MP3, WAV, M4A. Giới hạn 200 MB.
             </p>
           </div>
 
@@ -82,7 +82,7 @@ function UploadPanelView({
             ref={fileInputRef}
             type="file"
             className="hidden"
-            accept=".mp3,.wav"
+            accept=".mp3,.wav,.m4a"
             onChange={onFileChange}
             disabled={busyProcessing}
           />
@@ -101,7 +101,7 @@ function UploadPanelView({
             <p className="text-xs font-medium text-foreground">
               Tệp đã chọn: {selectedFileName}
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {selectedFileSizeLabel} • {selectedFileDurationLabel}
             </p>
           </div>

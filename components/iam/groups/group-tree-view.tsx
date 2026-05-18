@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronRightIcon, ChevronDownIcon, UsersIcon, ShieldIcon, PlusIcon, PencilIcon, MoreHorizontalIcon } from "lucide-react"
+import { ChevronRightIcon, ChevronDownIcon, UsersIcon, ShieldIcon, PlusIcon, PencilIcon, Trash2Icon, MoreHorizontalIcon } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,10 +69,11 @@ interface TreeItemProps {
   onAssignPerms: (group: Group) => void
   onAddChild: (group: Group) => void
   onEdit: (group: Group) => void
+  onDelete: (group: Group) => void
   canManage: boolean
 }
 
-function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeItemProps) {
+function TreeItem({ node, onAssignPerms, onAddChild, onEdit, onDelete, canManage }: TreeItemProps) {
   const { hasPermission } = useAuth()
   const [isExpanded, setIsExpanded] = React.useState(true)
   const hasChildren = node.children.length > 0
@@ -118,7 +119,7 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <UsersIcon className="size-4 text-primary/70 shrink-0" />
           <span className="font-medium text-sm truncate">{node.name}</span>
-          <span className="hidden sm:inline-block text-[10px] text-muted-foreground/60 px-1.5 py-0.5 bg-muted rounded border border-border/40">
+          <span className="hidden sm:inline-block text-xs text-muted-foreground/60 px-1.5 py-0.5 bg-muted rounded border border-border/40">
             ID: {node.id}
           </span>
         </div>
@@ -129,7 +130,7 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-[11px] px-2"
+              className="h-7 text-xs px-2"
               onClick={() => onAssignPerms(node)}
             >
               <ShieldIcon className="mr-1.5 size-3" />
@@ -142,7 +143,7 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-[11px] px-2"
+                className="h-7 text-xs px-2"
                 onClick={() => onAddChild(node)}
               >
                 <PlusIcon className="mr-1.5 size-3" />
@@ -155,6 +156,14 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
                 onClick={() => onEdit(node)}
               >
                 <PencilIcon className="size-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                onClick={() => onDelete(node)}
+              >
+                <Trash2Icon className="size-3" />
               </Button>
             </>
           )}
@@ -185,6 +194,10 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
                     <PencilIcon className="mr-2 size-3.5" />
                     <span>Sửa</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onDelete(node)} className="text-xs text-destructive focus:bg-destructive/10 focus:text-destructive">
+                    <Trash2Icon className="mr-2 size-3.5" />
+                    <span>Xóa</span>
+                  </DropdownMenuItem>
                 </>
               )}
             </DropdownMenuContent>
@@ -202,6 +215,7 @@ function TreeItem({ node, onAssignPerms, onAddChild, onEdit, canManage }: TreeIt
               onAssignPerms={onAssignPerms}
               onAddChild={onAddChild}
               onEdit={onEdit}
+              onDelete={onDelete}
               canManage={canManage}
             />
           ))}
@@ -220,6 +234,7 @@ export interface GroupTreeViewProps {
   onAssignPerms: (group: Group) => void
   onAddChild: (group: Group) => void
   onEdit: (group: Group) => void
+  onDelete: (group: Group) => void
   canManage: boolean
   isLoading?: boolean
 }
@@ -229,6 +244,7 @@ export function GroupTreeView({
   onAssignPerms,
   onAddChild,
   onEdit,
+  onDelete,
   canManage,
   isLoading
 }: GroupTreeViewProps) {
@@ -262,6 +278,7 @@ export function GroupTreeView({
           onAssignPerms={onAssignPerms}
           onAddChild={onAddChild}
           onEdit={onEdit}
+          onDelete={onDelete}
           canManage={canManage}
         />
       ))}

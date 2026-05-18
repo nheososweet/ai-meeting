@@ -157,7 +157,7 @@ export function TranscriptEditorDialog({
                         className="text-sm font-bold text-foreground bg-transparent border-b border-transparent hover:border-border focus:border-primary focus:outline-none px-1 -ml-1 transition-colors w-1/3"
                         placeholder="Tên người nói"
                       />
-                      <span className="rounded-full bg-muted/60 px-2.5 py-0.5 font-mono text-[10px] text-muted-foreground border border-border/50 shrink-0">
+                      <span className="rounded-full bg-muted/60 px-2.5 py-0.5 font-mono text-xs text-muted-foreground border border-border/50 shrink-0">
                         {block.displayTime}
                       </span>
                     </div>

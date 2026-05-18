@@ -56,7 +56,7 @@ export function StatsCard({
               {isLoading ? (
                 <Skeleton className="h-3 w-3/4" />
               ) : (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {description}
                 </p>
               )}

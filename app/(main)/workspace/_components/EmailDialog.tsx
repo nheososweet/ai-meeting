@@ -68,7 +68,7 @@ export function EmailDialog({
           {!canSendEmail ? (
             <div className="group relative">
               <InfoIcon className="size-4 text-muted-foreground" />
-              <div className="pointer-events-none absolute right-0 top-5 z-10 hidden w-64 rounded-md border border-border/70 bg-popover px-2 py-1.5 text-[11px] leading-4 text-popover-foreground shadow-md group-hover:block">
+              <div className="pointer-events-none absolute right-0 top-5 z-10 hidden w-64 rounded-md border border-border/70 bg-popover px-2 py-1.5 text-xs leading-4 text-popover-foreground shadow-md group-hover:block">
                 Vui lòng xem, chỉnh sửa và lưu biên bản để gửi email.
               </div>
             </div>
@@ -92,7 +92,7 @@ export function EmailDialog({
               href={reportUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-muted-foreground transition-colors hover:text-primary hover:underline hover:underline-offset-2"
+              className="block w-full overflow-hidden text-ellipsis whitespace-nowrap text-xs text-muted-foreground transition-colors hover:text-primary hover:underline hover:underline-offset-2"
               title={reportUrl}
             >
               {reportUrl}
@@ -135,7 +135,7 @@ export function EmailDialog({
 
           {emailIsHtml ? (
             <div className="space-y-1 rounded-md border border-border/70 bg-muted/20 p-3">
-              <p className="text-[11px] font-medium text-muted-foreground">
+              <p className="text-xs font-medium text-muted-foreground">
                 Xem trước email
               </p>
               <div

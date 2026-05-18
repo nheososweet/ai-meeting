@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Search, LogOutIcon, ShieldIcon, ChevronsUpDownIcon } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -15,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { UserPermissionsDialog } from "@/components/layout/user-permissions-dialog";
 
 function getInitials(name: string): string {
   if (!name) return "KH";
@@ -33,6 +35,7 @@ function getRoleLabel(role: string): string {
 
 export function AppHeader() {
   const { currentUser, logout } = useAuth();
+  const [showPermissions, setShowPermissions] = useState(false);
 
   return (
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center border-b border-border/30 bg-transparent">
@@ -58,6 +61,7 @@ export function AppHeader() {
         {/* Right: User Menu */}
         <div className="ml-auto flex items-center gap-4">
           {currentUser ? (
+            <>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-2 outline-none rounded-md px-2 py-1.5 hover:bg-muted/50 transition-colors">
                 <Avatar className="size-8 rounded-md overflow-hidden">
@@ -69,7 +73,7 @@ export function AppHeader() {
                   <span className="text-sm font-semibold text-foreground leading-none">
                     {currentUser.name}
                   </span>
-                  <span className="text-[11px] text-muted-foreground mt-1 leading-none capitalize">
+                  <span className="text-sm font-medium text-muted-foreground mt-1 leading-none capitalize">
                     {getRoleLabel(currentUser.role)}
                   </span>
                 </div>
@@ -85,17 +89,17 @@ export function AppHeader() {
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">{currentUser.name}</span>
-                      <span className="truncate text-xs text-muted-foreground">{currentUser.email}</span>
+                      <span className="truncate text-sm font-medium text-muted-foreground">{currentUser.email}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem className="gap-2 cursor-pointer">
+                  <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setShowPermissions(true)}>
                     <ShieldIcon className="size-4 text-muted-foreground" />
-                    <span className="flex-1">{getRoleLabel(currentUser.role)}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded text-muted-foreground capitalize">
-                      {currentUser.scope}
+                    <span className="flex-1">Quyền hạn</span>
+                    <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                      {currentUser.permissions?.length ?? 0}
                     </span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
@@ -106,6 +110,12 @@ export function AppHeader() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <UserPermissionsDialog
+              open={showPermissions}
+              onOpenChange={setShowPermissions}
+            />
+            </>
           ) : (
             <div className="flex items-center gap-2 opacity-50">
               <div className="size-8 rounded-sm bg-muted border border-border flex items-center justify-center text-muted-foreground">

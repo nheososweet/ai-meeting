@@ -1,15 +1,19 @@
-export const MAX_UPLOAD_SIZE_BYTES = 200 * 1024 * 1024;
+export const MAX_UPLOAD_SIZE_BYTES = 1 * 1024 * 1024 * 1024;
 
 export const ACCEPTED_AUDIO_MIME_TYPES = new Set([
   "audio/wav",
   "audio/x-wav",
   "audio/mp3",
   "audio/mpeg",
+  "audio/x-m4a",
+  "audio/m4a",
+  "audio/mp4",
 ]);
 
 export const ACCEPTED_AUDIO_EXTENSIONS = new Set([
   "wav",
   "mp3",
+  "m4a",
 ]);
 
 export type PipelineStepStatus = "pending" | "running" | "completed" | "error";

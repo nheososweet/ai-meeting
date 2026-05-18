@@ -79,7 +79,7 @@ export function EffectivePermissions({ user }: EffectivePermissionsProps) {
             groupRoleNames.map((item, i) => (
               <Badge key={i} variant="outline" className="text-xs gap-1">
                 {item.roleName}
-                <span className="text-[10px] text-muted-foreground">({item.groupName})</span>
+                <span className="text-xs text-muted-foreground">({item.groupName})</span>
               </Badge>
             ))
           )}
@@ -94,7 +94,7 @@ export function EffectivePermissions({ user }: EffectivePermissionsProps) {
         </div>
         <div className="flex flex-wrap gap-1">
           {effectivePerms.map((code) => (
-            <Badge key={code} variant="outline" className="text-[11px] font-normal">
+            <Badge key={code} variant="outline" className="text-xs font-medium">
               {getPermLabel(code, mockPermissions) || code}
             </Badge>
           ))}

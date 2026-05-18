@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,8 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2Icon, UploadIcon } from "lucide-react";
-import { useUploadFileMutation } from "@/hooks/services/use-files";
+import { UploadIcon } from "lucide-react";
+import { useUploadTask } from "@/hooks/use-upload-task";
 import { type ActionToastVariant } from "@/app/(main)/history/_hooks/useHistoryToast";
 
 const uploadSchema = z.object({
@@ -27,10 +26,10 @@ const uploadSchema = z.object({
     .refine((files) => {
       if (!files?.[0]) return false;
       const file = files[0] as File;
-      const validExtensions = ["mp3", "wav"];
+      const validExtensions = ["mp3", "wav", "m4a"];
       const extension = file.name.split(".").pop()?.toLowerCase();
       return extension && validExtensions.includes(extension);
-    }, "Chỉ hỗ trợ định dạng MP3, WAV"),
+    }, "Chỉ hỗ trợ định dạng MP3, WAV, M4A"),
 });
 
 type UploadFormValues = z.infer<typeof uploadSchema>;
@@ -42,7 +41,7 @@ interface UploadDialogProps {
 }
 
 export function UploadFileDialog({ open, onOpenChange, showActionToast }: UploadDialogProps) {
-  const uploadMutation = useUploadFileMutation();
+  const { startUpload } = useUploadTask();
 
   const {
     register,
@@ -53,16 +52,12 @@ export function UploadFileDialog({ open, onOpenChange, showActionToast }: Upload
     resolver: zodResolver(uploadSchema),
   });
 
-  const onSubmit = async (data: UploadFormValues) => {
+  const onSubmit = (data: UploadFormValues) => {
     const file = data.file[0] as File;
-    try {
-      await uploadMutation.mutateAsync({ file, title: data.title });
-      showActionToast("Tải lên bản ghi thành công", "success");
-      onOpenChange(false);
-      reset();
-    } catch (error) {
-      showActionToast("Tải lên thất bại. Vui lòng thử lại.", "error");
-    }
+    startUpload({ file, title: data.title });
+    onOpenChange(false);
+    reset();
+    showActionToast("Đang tải lên trong nền. Theo dõi tiến độ ở góc phải bên dưới.", "info");
   };
 
   return (
@@ -93,12 +88,12 @@ export function UploadFileDialog({ open, onOpenChange, showActionToast }: Upload
             <Input
               id="file"
               type="file"
-              accept=".mp3,.wav"
+              accept=".mp3,.wav,.m4a"
               {...register("file")}
               className="cursor-pointer"
             />
-            <p className="text-[10px] text-muted-foreground italic">
-              * Chỉ hỗ trợ tệp định dạng .mp3, .wav (Tối đa 200MB)
+            <p className="text-xs text-muted-foreground italic">
+              * Chỉ hỗ trợ tệp định dạng .mp3, .wav, .m4a (tối đa 1GB)
             </p>
             {errors.file && (
               <p className="text-xs text-destructive">
@@ -111,22 +106,12 @@ export function UploadFileDialog({ open, onOpenChange, showActionToast }: Upload
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={uploadMutation.isPending}
             >
               Hủy
             </Button>
-            <Button type="submit" disabled={uploadMutation.isPending}>
-              {uploadMutation.isPending ? (
-                <>
-                  <Loader2Icon className="mr-2 size-4 animate-spin" />
-                  Đang tải lên...
-                </>
-              ) : (
-                <>
-                  <UploadIcon className="mr-2 size-4" />
-                  Tải lên
-                </>
-              )}
+            <Button type="submit">
+              <UploadIcon className="mr-2 size-4" />
+              Tải lên
             </Button>
           </DialogFooter>
         </form>

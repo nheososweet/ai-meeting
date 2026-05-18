@@ -71,6 +71,25 @@ export function useUpdateGroup() {
 }
 
 /**
+ * Hook để xóa một phòng ban/nhóm (kèm toàn bộ nhóm con và thành viên)
+ */
+export function useDeleteGroup() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id }: { id: number; name: string }) =>
+      iamService.deleteGroup(id),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["iam", "groups"] })
+      toast.success(`Xóa nhóm "${variables.name}" thành công`)
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error))
+    },
+  })
+}
+
+/**
  * Hook để lấy danh sách quyền đã gán của một phòng ban/nhóm
  */
 export function useGroupPermissions(groupId: number | undefined) {

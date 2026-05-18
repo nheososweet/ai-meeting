@@ -251,7 +251,7 @@ export default function UsersPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-background sticky top-0">
-                    <TableHead className="w-[80px]">ID</TableHead>
+                    <TableHead className="w-[80px]">STT</TableHead>
                     <TableHead>Tài khoản</TableHead>
                     <TableHead>Vai trò & Phạm vi</TableHead>
                     <TableHead>Trạng thái</TableHead>
@@ -261,10 +261,10 @@ export default function UsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
+                  {users.map((user, index) => (
                     <TableRow key={user.id} className="group/row">
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        #{user.id}
+                      <TableCell className="text-xs text-muted-foreground">
+                        {index + 1}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
@@ -276,12 +276,12 @@ export default function UsersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1.5">
-                          <Badge variant={(typeof user.role === 'object' ? user.role.name : user.role) === "admin" ? "default" : "secondary"} className="h-5 text-[10px] uppercase tracking-wider px-1.5">
+                          <Badge variant={(typeof user.role === 'object' ? user.role.name : user.role) === "admin" ? "default" : "secondary"} className="h-5 text-xs uppercase tracking-wider px-1.5">
                             {typeof user.role === 'object' ? user.role.name : user.role}
                           </Badge>
                           {(typeof user.role === 'object' ? user.role.name : user.role) === "admin" && (
                             <Badge variant="outline" className={cn(
-                              "h-5 text-[10px] uppercase tracking-wider px-1.5",
+                              "h-5 text-xs uppercase tracking-wider px-1.5",
                               user.scope === "global" ? "border-amber-500/50 text-amber-600 bg-amber-500/5" :
                                 user.scope === "company" ? "border-blue-500/50 text-blue-600 bg-blue-500/5" :
                                   "border-green-500/50 text-green-600 bg-green-500/5"
@@ -294,7 +294,7 @@ export default function UsersPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={user.is_active ? "outline" : "destructive"} className={cn(
-                          "h-5 text-[10px] uppercase tracking-wider px-1.5",
+                          "h-5 text-xs uppercase tracking-wider px-1.5",
                           user.is_active ? "border-emerald-500/50 text-emerald-600 bg-emerald-500/5" : "border-red-500/50 text-red-600 bg-red-500/5"
                         )}>
                           <span className={cn("mr-1.5 size-1.5 rounded-full", user.is_active ? "bg-emerald-500" : "bg-red-500")} />

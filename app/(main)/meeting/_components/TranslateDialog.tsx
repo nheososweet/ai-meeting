@@ -58,7 +58,7 @@ export function TranslateDialog({ initialText, trigger }: TranslateDialogProps) 
     <>
       <div onClick={handleOpen} className="cursor-pointer">
         {trigger || (
-          <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-[11px] font-semibold text-emerald-600 hover:bg-emerald-50">
+          <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-50">
             <LanguagesIcon className="size-3.5" />
             Dịch bản gỡ băng
           </Button>
@@ -89,7 +89,7 @@ export function TranslateDialog({ initialText, trigger }: TranslateDialogProps) 
                   Văn bản gốc
                 </label>
                 <div className="flex items-center gap-3">
-                   <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Ngôn ngữ đích:</span>
+                   <span className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Ngôn ngữ đích:</span>
                    <input 
                       value={targetLanguage}
                       onChange={(e) => setTargetLanguage(e.target.value)}
@@ -133,7 +133,7 @@ export function TranslateDialog({ initialText, trigger }: TranslateDialogProps) 
                     variant="outline" 
                     size="sm" 
                     onClick={handleCopy}
-                    className="h-8 gap-1.5 text-[11px] font-bold rounded-lg border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 transition-colors shadow-sm"
+                    className="h-8 gap-1.5 text-xs font-bold rounded-lg border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 transition-colors shadow-sm"
                   >
                     {copied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
                     {copied ? "Đã chép" : "Sao chép"}
@@ -145,7 +145,7 @@ export function TranslateDialog({ initialText, trigger }: TranslateDialogProps) 
                  {mutation.isPending ? (
                    <div className="h-full w-full rounded-xl border border-dashed border-border/60 bg-background flex flex-col items-center justify-center gap-3">
                       <div className="size-10 rounded-full border-3 border-primary/20 border-t-primary animate-spin" />
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest animate-pulse">Đang xử lý...</p>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest animate-pulse">Đang xử lý...</p>
                    </div>
                  ) : translatedText ? (
                    <div className="h-full w-full p-4 overflow-auto text-sm leading-relaxed rounded-xl border border-border/40 bg-background whitespace-pre-wrap">
@@ -156,7 +156,7 @@ export function TranslateDialog({ initialText, trigger }: TranslateDialogProps) 
                       <div className="size-12 rounded-full bg-muted/20 flex items-center justify-center text-muted-foreground/30">
                         <LanguagesIcon className="size-6" />
                       </div>
-                      <p className="text-[11px] font-medium text-muted-foreground/60 italic">Kết quả sẽ được hiển thị tại đây</p>
+                      <p className="text-xs font-medium text-muted-foreground/60 italic">Kết quả sẽ được hiển thị tại đây</p>
                    </div>
                  )}
               </div>

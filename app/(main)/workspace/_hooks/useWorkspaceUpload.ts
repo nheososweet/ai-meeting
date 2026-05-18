@@ -98,7 +98,7 @@ export function useWorkspaceUpload({
     if (!isSupportedAudioFile(file)) {
       clearUploadState();
       setUploadWarning(
-        "Định dạng không hỗ trợ. Chỉ nhận MP3 hoặc WAV.",
+        "Định dạng không hỗ trợ. Chỉ nhận MP3, WAV hoặc M4A.",
       );
       onSetNotice("File không hợp lệ, vui lòng chọn tệp audio đúng định dạng.");
       return;
